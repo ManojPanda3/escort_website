@@ -1,3 +1,6 @@
+'use client'
+
+import { useEffect, useLayoutEffect, useState } from 'react'
 import { NavBar } from '@/components/nav-bar'
 import { Hero } from '@/components/hero'
 import { FeaturedEscorts } from '@/components/featured-escorts'
@@ -5,6 +8,7 @@ import { CategoryTabs } from '@/components/category-tabs'
 import { EscortCard } from '@/components/escort-card'
 import { StoryCircle } from '@/components/story-circle'
 import { Footer } from '@/components/footer'
+import { supabase } from '@/lib/supabase'
 
 const stories = [
   { name: 'Emma', image: '/placeholder.svg?height=200&width=200', hasNewStory: true },
@@ -17,58 +21,40 @@ const stories = [
   { name: 'Charlotte', image: '/placeholder.svg?height=200&width=200', hasNewStory: false },
 ]
 
-const escorts = [
-  {
-    name: 'Emma',
-    age: 23,
-    location: 'Sydney CBD',
-    measurements: '34C-24-36',
-    price: '$400/hr',
-    image: '/placeholder.svg?height=600&width=400',
-    availability: 'Available Today 10 AM - Late',
-    isVerified: true,
-    isVip: true,
-    isOnline: true
-  },
-  {
-    name: 'Sophia',
-    age: 25,
-    location: 'Melbourne CBD',
-    measurements: '36D-26-36',
-    price: '$350/hr',
-    image: '/placeholder.svg?height=600&width=400',
-    availability: 'Available Tomorrow',
-    isVerified: true,
-    isOnline: false
-  },
-  {
-    name: 'Isabella',
-    age: 22,
-    location: 'Brisbane CBD',
-    measurements: '32C-23-34',
-    price: '$300/hr',
-    image: '/placeholder.svg?height=600&width=400',
-    availability: 'Available Now',
-    isVip: true,
-    isOnline: true
-  },
-  {
-    name: 'Olivia',
-    age: 24,
-    location: 'Perth CBD',
-    measurements: '34D-25-36',
-    price: '$450/hr',
-    image: '/placeholder.svg?height=600&width=400',
-    availability: 'Available Today',
-    isVerified: true,
-    isVip: true,
-    isOnline: false
-  },
-]
-
 export default function Page() {
+  const [escorts, setEscorts] = useState([])
+
+  useEffect(() => {
+    async function fetchEscorts() {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('type', 'escort')
+        .limit(4)
+
+      if (error) console.error('Error fetching escorts:', error)
+      else setEscorts(data || [])
+    }
+
+    fetchEscorts()
+  }, [])
+
+  useLayoutEffect(() => {
+    document.getElementById("mouse").onmousemove = e => {
+      const projects = document.getElementById("mouse")
+      const rect = projects.getBoundingClientRect(),
+        x = e.clientX - rect.left,
+        y = e.clientY - rect.top;
+
+      projects.style.setProperty("--mouse-x", `${x}px`);
+      projects.style.setProperty("--mouse-y", `${y}px`);
+    };
+
+  })
+
   return (
     <div className="min-h-screen bg-gradient-to-b from-black via-gray-900 to-black">
+      <div id="mouse" className="h-full w-full fixed top-0 left-0"></div>
       <NavBar />
       <Hero />
       <FeaturedEscorts />
@@ -95,8 +81,17 @@ export default function Page() {
         <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
           {escorts.map((escort) => (
             <EscortCard
-              key={escort.name}
-              {...escort}
+              key={escort.id}
+              name={escort.username}
+              age={escort.age}
+              location={escort.location}
+              measurements={escort.size}
+              price={escort.price}
+              image={escort.pic || '/placeholder.svg?height=600&width=400'}
+              availability={escort.availability}
+              isVerified={escort.is_verified}
+              isVip={escort.is_vip}
+              isOnline={false}
             />
           ))}
         </div>

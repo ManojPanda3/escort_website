@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect, useLayoutEffect } from 'react'
 import Link from 'next/link'
 import { Menu, Search, User, X } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -12,8 +12,30 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet"
+import { useRouter } from 'next/navigation'
+import { supabase } from '@/lib/supabase'
 
 export function NavBar() {
+  const [user, setUser] = useState(null)
+  const router = useRouter()
+
+  useEffect(() => {
+    const { data: authListener } = supabase.auth.onAuthStateChange(
+      (event, session) => {
+        setUser(session?.user ?? null)
+      }
+    )
+
+    return () => {
+      authListener.subscription.unsubscribe()
+    }
+  }, [])
+
+  const handleLogout = async () => {
+    await supabase.auth.signOut()
+    router.push('/')
+  }
+
   const cities = [
     'INTERNATIONAL',
     'AUSTRALIA',
@@ -42,9 +64,9 @@ export function NavBar() {
       {/* Top Cities Bar */}
       <div className="hidden lg:flex items-center justify-center gap-4 p-2 text-xs border-b border-border">
         {cities.map((city) => (
-          <Link 
+          <Link
             key={city}
-            href="#" 
+            href="#"
             className="hover:text-primary transition-colors"
           >
             {city}
@@ -78,7 +100,6 @@ export function NavBar() {
 
           {/* Right Section */}
           <div className="flex items-center gap-2">
-            <ThemeToggle />
 
             {/* Premium Button */}
             <Link
@@ -88,15 +109,23 @@ export function NavBar() {
               PREMIUM
             </Link>
 
+            <ThemeToggle />
             {/* Search */}
             <Button variant="ghost" size="icon" className="hidden sm:inline-flex">
               <Search className="h-5 w-5" />
             </Button>
 
             {/* User */}
-            <Button variant="ghost" size="icon">
-              <User className="h-5 w-5" />
-            </Button>
+            {user ? (
+              <Button variant="ghost" size="icon" onClick={handleLogout}>
+                <User className="h-5 w-5" />
+              </Button>
+            ) : (
+              <Button className="bg-primary hover:bg-primary/80 text-white font-bold py-2 px-4 rounded-full transition duration-300 text-black" onClick={() => router.push('/auth')}>
+                <User className="h-5 w-5" />
+                Login
+              </Button>
+            )}
 
             {/* Mobile Menu */}
             <Sheet>
@@ -145,7 +174,7 @@ export function NavBar() {
           </div>
         </div>
       </div>
-    </nav>
+    </nav >
   )
 }
 
