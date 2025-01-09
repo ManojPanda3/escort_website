@@ -1,8 +1,8 @@
 'use client'
 
-import { useState, useEffect, useLayoutEffect } from 'react'
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
-import { Menu, Search, User, X } from 'lucide-react'
+import { Menu, Search, User } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { ThemeToggle } from '@/components/ui/theme-toggle'
 import {
@@ -13,11 +13,12 @@ import {
   SheetTrigger,
 } from "@/components/ui/sheet"
 import { useRouter } from 'next/navigation'
-import { supabase } from '@/lib/supabase'
+import { createClientComponentClient } from '@supabase/auth-helpers-nextjs'
 
 export function NavBar() {
   const [user, setUser] = useState(null)
   const router = useRouter()
+  const supabase = createClientComponentClient()
 
   useEffect(() => {
     const { data: authListener } = supabase.auth.onAuthStateChange(
@@ -29,7 +30,7 @@ export function NavBar() {
     return () => {
       authListener.subscription.unsubscribe()
     }
-  }, [])
+  }, [supabase.auth])
 
   const handleLogout = async () => {
     await supabase.auth.signOut()
@@ -100,7 +101,6 @@ export function NavBar() {
 
           {/* Right Section */}
           <div className="flex items-center gap-2">
-
             {/* Premium Button */}
             <Link
               href="/premium"
@@ -121,8 +121,8 @@ export function NavBar() {
                 <User className="h-5 w-5" />
               </Button>
             ) : (
-              <Button className="bg-primary hover:bg-primary/80 text-white font-bold py-2 px-4 rounded-full transition duration-300 text-black" onClick={() => router.push('/auth')}>
-                <User className="h-5 w-5" />
+              <Button className="bg-primary hover:bg-primary/80 font-bold py-2 px-4 rounded-full transition duration-300 text-black" onClick={() => router.push('/auth')}>
+                <User className="h-5 w-5 mr-2" />
                 Login
               </Button>
             )}
@@ -174,7 +174,7 @@ export function NavBar() {
           </div>
         </div>
       </div>
-    </nav >
+    </nav>
   )
 }
 

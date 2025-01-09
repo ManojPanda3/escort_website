@@ -8,7 +8,7 @@ export function Hero() {
         <p className="text-xl md:text-2xl text-gray-300 mb-8">
           Experience the finest escorts in Australia
         </p>
-        <button className="bg-primary hover:bg-primary/80 font-bold py-3 px-8 rounded-full transition duration-300 text-black cursor-pointer">
+        <button className="bg-primary hover:bg-primary/80 text-white font-bold py-3 px-8 rounded-full transition duration-300">
           Explore Now
         </button>
       </div>

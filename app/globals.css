@@ -58,22 +58,40 @@
   }
 }
 
-#mouse::before {
+@layer utilities {
+  .glow\:amber-400::before {
     content: '';
     opacity: 0;
     position: absolute;
     height: 100%;
     width: 100%;
-    /* background: white; */
     top: 0;
     left: 0;
     background: radial-gradient(
         800px circle at var(--mouse-x) var(--mouse-y), 
-        rgba(255, 255, 255, 0.1),
-        transparent 40%);
-    transition: .5s all;
-}
-#mouse:hover::before {
+        rgba(251, 191, 36, 0.15),
+        transparent 40%
+    );
+    transition: opacity 0.5s;
+  }
+
+  .glow\:amber-400:hover::before {
     opacity: 1;
+  }
 }
 
+#mouse::before { 
+  content: ''; 
+  opacity: 0;
+  position: absolute; 
+  height: 100%;
+  width: 100%; 
+  /* background: white; */
+  top: 0;
+  left: 0;
+  background: radial-gradient( 800px circle at var(--mouse-x) var(--mouse-y), rgba(255, 255, 255, 0.1), transparent 40%); 
+  transition: .5s all;
+} 
+#mouse:hover::before { 
+  opacity: 1;
+}

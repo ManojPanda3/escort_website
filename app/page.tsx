@@ -1,6 +1,3 @@
-'use client'
-
-import { useEffect, useLayoutEffect, useState } from 'react'
 import { NavBar } from '@/components/nav-bar'
 import { Hero } from '@/components/hero'
 import { FeaturedEscorts } from '@/components/featured-escorts'
@@ -8,7 +5,9 @@ import { CategoryTabs } from '@/components/category-tabs'
 import { EscortCard } from '@/components/escort-card'
 import { StoryCircle } from '@/components/story-circle'
 import { Footer } from '@/components/footer'
-import { supabase } from '@/lib/supabase'
+import { MouseGlow } from '@/components/mouse-glow'
+import { createServerComponentClient } from '@supabase/auth-helpers-nextjs'
+import { cookies } from 'next/headers'
 
 const stories = [
   { name: 'Emma', image: '/placeholder.svg?height=200&width=200', hasNewStory: true },
@@ -21,40 +20,17 @@ const stories = [
   { name: 'Charlotte', image: '/placeholder.svg?height=200&width=200', hasNewStory: false },
 ]
 
-export default function Page() {
-  const [escorts, setEscorts] = useState([])
-
-  useEffect(() => {
-    async function fetchEscorts() {
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('type', 'escort')
-        .limit(4)
-
-      if (error) console.error('Error fetching escorts:', error)
-      else setEscorts(data || [])
-    }
-
-    fetchEscorts()
-  }, [])
-
-  useLayoutEffect(() => {
-    document.getElementById("mouse").onmousemove = e => {
-      const projects = document.getElementById("mouse")
-      const rect = projects.getBoundingClientRect(),
-        x = e.clientX - rect.left,
-        y = e.clientY - rect.top;
-
-      projects.style.setProperty("--mouse-x", `${x}px`);
-      projects.style.setProperty("--mouse-y", `${y}px`);
-    };
-
-  })
+export default async function Page() {
+  const supabase = createServerComponentClient({ cookies })
+  const { data: escorts } = await supabase
+    .from('profiles')
+    .select('*')
+    .eq('type', 'escort')
+    .limit(4)
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-black via-gray-900 to-black">
-      <div id="mouse" className="h-full w-full fixed top-0 left-0"></div>
+      <MouseGlow />
       <NavBar />
       <Hero />
       <FeaturedEscorts />
@@ -79,7 +55,7 @@ export default function Page() {
 
         {/* Escorts Grid */}
         <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-          {escorts.map((escort) => (
+          {escorts && escorts.map((escort) => (
             <EscortCard
               key={escort.id}
               name={escort.username}
