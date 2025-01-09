@@ -1,10 +1,39 @@
-.pyenv/
-pyenv/
-node_module/
-__pycahce__/
-*/__pycahce__/
-**/__pycahce__/
-.env
-.env*
+# Python related
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.sqlite3
+*.db
 
+# Virtual environment
+.env/
+.venv/
+env/
+venv/
+
+# Django settings
+*.log
+*.pot
+*.pyc
+
+# Pyenv settings
+.pyenv/
+
+# Node.js dependencies
+node_modules/
+
+# IDEs and editor folders
+.vscode/
+.idea/
+
+# MacOS related
+.DS_Store
+
+# Windows related
+Thumbs.db
+
+# Other
+*.bak
+*.swp
 
