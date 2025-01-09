@@ -1,5 +1,7 @@
 from django.shortcuts import render
+from dotenv import load_dotenv
 
-# Create your views here.
+load_dotenv()
+
 def index(request):
     return render(request, 'escort/index.html')
