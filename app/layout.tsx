@@ -1,19 +1,30 @@
-import type { Metadata } from 'next'
-import './globals.css'
-
-export const metadata: Metadata = {
-  title: 'All Nighter',
-  description: 'All Nighter',
-}
+import { ThemeProvider } from '@/components/theme-provider'
+import { MouseBubbles } from '@/components/mouse-bubbles'
+import { RoyalBackground } from '@/components/royal-background'
+import '@/app/globals.css'
 
 export default function RootLayout({
   children,
-}: Readonly<{
+}: {
   children: React.ReactNode
-}>) {
+}) {
   return (
-    <html lang="en">
-      <body>{children}</body>
+    <html lang="en" suppressHydrationWarning>
+      <body>
+        <ThemeProvider
+          attribute="class"
+          defaultTheme="dark"
+          enableSystem={false}
+        >
+          <RoyalBackground />
+          <MouseBubbles />
+          {children}
+        </ThemeProvider>
+      </body>
     </html>
   )
 }
+
+
+
+import './globals.css'
