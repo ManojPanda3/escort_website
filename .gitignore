@@ -1,0 +1,10 @@
+.pyenv/
+pyenv/
+node_module/
+__pycahce__/
+*/__pycahce__/
+**/__pycahce__/
+.env
+.env*
+
+
