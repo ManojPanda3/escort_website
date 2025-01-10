@@ -42,7 +42,7 @@ export default async function ProfilePage() {
   return (
     <main className="container mx-auto px-4 py-8">
       <ProfileHeader profile={profile} />
-      <ProfileTabs 
+      <ProfileTabs
         pictures={pictures || []}
         services={services || []}
         rates={rates || []}

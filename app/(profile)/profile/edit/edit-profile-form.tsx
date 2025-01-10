@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Image from 'next/image'
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs'
@@ -65,6 +65,7 @@ export function EditProfileForm({ profile }: EditProfileFormProps) {
 
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
+    console.log(file)
     if (!file) return
 
     setLoading(true)
@@ -72,15 +73,19 @@ export function EditProfileForm({ profile }: EditProfileFormProps) {
 
     const fileExt = file.name.split('.').pop()
     const fileName = `${Date.now()}.${fileExt}`
-    const filePath = `${profile?.id}/${fileName}`
+    const filePath = `public/${profile.id}/${fileName}`
 
-    const { error: uploadError } = await supabase.storage
-      .from('profile_pictures')
-      .upload(filePath, file)
+    const { data, error: uploadError } = await supabase.storage
+      .from('Nightly')
+      .upload(filePath, file);
+    const { data: { publicUrl } } = await supabase.storage.from("Nightly").getPublicUrl(filePath)
+    console.log(publicUrl, data)
 
     if (uploadError) {
       setError(uploadError.message)
+      console.log(uploadError)
     } else {
+      setFormData({ ...formData, profile_picture: publicUrl })
       const { error: updateError } = await supabase
         .from('users')
         .update({ profile_picture: filePath })

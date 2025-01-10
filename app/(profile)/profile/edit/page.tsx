@@ -12,11 +12,13 @@ export default async function EditProfilePage() {
     redirect('/auth/login')
   }
 
-  const { data: profile } = await supabase
+  console.log(session.user.id)
+  const { data: profile, error } = await supabase
     .from('users')
     .select('*')
     .eq('id', session.user.id)
     .single()
+  if (profile == null) redirect("/auth/login")
 
   return (
     <main className="container mx-auto px-4 py-8">

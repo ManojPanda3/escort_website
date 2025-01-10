@@ -2,7 +2,7 @@ import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs'
 import { cookies } from 'next/headers'
 import { NextRequest, NextResponse } from 'next/server'
 
-export async function PUT(request: NextRequest) {
+export async function POST(request: NextRequest) {
   const supabase = createRouteHandlerClient({ cookies })
   const { data: { session } } = await supabase.auth.getSession()
 
@@ -13,21 +13,15 @@ export async function PUT(request: NextRequest) {
     )
   }
 
-  const formData = await request.formData()
-  const updates = Object.fromEntries(formData.entries())
-
-  const { error } = await supabase
+  const body = await request.json()
+  const { data, error } = await supabase
     .from('users')
-    .update(updates)
+    .update(body)
     .eq('id', session.user.id)
-
+  console.log(data, error, session, body)
   if (error) {
     return NextResponse.json(
-      { error: error.message },```typescript file="app/api/profile/route.ts"
-error) {
-    return NextResponse.json(
-      { error: error.message },
-      { status: 400 }
+      { error: error.message }, { status: 500 }
     )
   }
 
