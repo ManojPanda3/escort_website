@@ -14,6 +14,7 @@ import {
 } from "@/components/ui/sheet"
 import { useRouter } from 'next/navigation'
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs'
+import Image from 'next/image'
 
 export function NavBar() {
   const [user, setUser] = useState(null)
@@ -21,6 +22,13 @@ export function NavBar() {
   const supabase = createClientComponentClient()
 
   useEffect(() => {
+    const fetchUser = async () => {
+      const { data: { user } } = await supabase.auth.getUser()
+      setUser(user)
+    }
+
+    fetchUser()
+
     const { data: authListener } = supabase.auth.onAuthStateChange(
       (event, session) => {
         setUser(session?.user ?? null)
@@ -117,11 +125,21 @@ export function NavBar() {
 
             {/* User */}
             {user ? (
-              <Button variant="ghost" size="icon" onClick={handleLogout}>
-                <User className="h-5 w-5" />
+              <Button variant="ghost" size="icon" onClick={() => router.push('/profile')}>
+                {user.user_metadata.avatar_url ? (
+                  <Image
+                    src={user.user_metadata.avatar_url}
+                    alt="Profile"
+                    width={32}
+                    height={32}
+                    className="rounded-full"
+                  />
+                ) : (
+                  <User className="h-5 w-5" />
+                )}
               </Button>
             ) : (
-              <Button className="bg-primary hover:bg-primary/80 font-bold py-2 px-4 rounded-full transition duration-300 text-black" onClick={() => router.push('/auth')}>
+              <Button className="bg-primary hover:bg-primary/80 font-bold py-2 px-4 rounded-full transition duration-300 text-black" onClick={() => router.push('/auth/login')}>
                 <User className="h-5 w-5 mr-2" />
                 Login
               </Button>
@@ -177,4 +195,5 @@ export function NavBar() {
     </nav>
   )
 }
+
 

@@ -9,6 +9,66 @@ if (!supabaseUrl || !supabaseAnonKey) {
 
 export const supabase = createClient(supabaseUrl, supabaseAnonKey)
 
+import { supabase } from './supabaseClient';
+
+export const createUserTablesIfNotExist = async () => {
+  const query = `
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1
+    FROM information_schema.tables
+    WHERE table_schema = 'public' AND table_name = 'user'
+  ) THEN
+    CREATE TABLE public.user (
+      id UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
+      email TEXT UNIQUE NOT NULL,
+      username TEXT UNIQUE NOT NULL,
+      name TEXT,
+      isVip BOOLEAN DEFAULT FALSE,
+      stories UUID[], 
+      price TEXT, 
+      available BOOLEAN, 
+      location TEXT,
+      age INTEGER CHECK (age >= 18 AND age <= 100),
+      profile_picture TEXT 
+      purches UUID[]
+    );
+  END IF;
+END $$;
+  `;
+  const { error } = await supabase.rpc('pg_execute', { query });
+
+  if (error) {
+    console.error('Error creating table:', error.message);
+  }
+}
+
+export const createStoryTablesIfNotExist = async () => {
+  const query = `
+  DO $$
+    BEGIN
+      IF NOT EXISTS (
+        SELECT 1
+        FROM information_schema.tables
+        WHERE table_schema = 'public' AND table_name = 'story'
+      ) THEN
+        CREATE TABLE public.story (
+          id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+          video TEXT NOT NULL,
+          title TEXT NOT NULL,
+          likes INTEGER
+        );
+      END IF;
+    END $$;
+`;
+  const { error } = await supabase.rpc('pg_execute', { query });
+
+  if (error) {
+    console.error('Error creating table:', error.message);
+  }
+}
+
 export async function getProfile(userId: string) {
   const { data, error } = await supabase
     .from('profiles')
