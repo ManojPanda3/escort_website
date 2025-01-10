@@ -1,4 +1,5 @@
 import { ThemeProvider } from '@/components/theme-provider'
+import { MouseBubbles } from '@/components/mouse-bubbles'
 import { RoyalBackground } from '@/components/royal-background'
 import '@/app/globals.css'
 
@@ -16,6 +17,7 @@ export default function RootLayout({
           enableSystem={false}
         >
           <RoyalBackground />
+          <MouseBubbles />
           {children}
         </ThemeProvider>
       </body>

@@ -6,7 +6,8 @@ import { EscortCard } from '@/components/escort-card'
 import { StoryCircle } from '@/components/story-circle'
 import { Footer } from '@/components/footer'
 import { MouseGlow } from '@/components/mouse-glow'
-import { supabase } from '@/lib/supabase'
+import { createServerComponentClient } from '@supabase/auth-helpers-nextjs'
+import { cookies } from 'next/headers'
 
 const stories = [
   { name: 'Emma', image: '/placeholder.svg?height=200&width=200', hasNewStory: true },
@@ -20,13 +21,12 @@ const stories = [
 ]
 
 export default async function Page() {
-  const { data: escorts, error } = await supabase
+  const supabase = createServerComponentClient({ cookies })
+  const { data: escorts } = await supabase
     .from('profiles')
     .select('*')
     .eq('type', 'escort')
     .limit(4)
-  if (error)
-    console.error("Error while loading profile")
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-black via-gray-900 to-black">

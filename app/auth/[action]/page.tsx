@@ -14,7 +14,7 @@ import { AlertCircle } from 'lucide-react'
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 
 export default function AuthPage() {
-  const { action } = useParams() as { action: 'login' | 'singup' }
+  const { action } = useParams() as { action: 'login' | 'signup' }
   const router = useRouter()
   const supabase = createClientComponentClient()
 
@@ -25,7 +25,7 @@ export default function AuthPage() {
   const [userType, setUserType] = useState('general')
   const [ageProofFile, setAgeProofFile] = useState<File | null>(null)
   const [age, setAge] = useState<string>('')
-  const [isLogin, setIsLogin] = useState(action !== "singup")
+  const [isLogin, setIsLogin] = useState(action !== "signup")
   const [error, setError] = useState('')
   const [agreeToTerms, setAgreeToTerms] = useState(false)
 
@@ -39,65 +39,34 @@ export default function AuthPage() {
     checkSession()
   }, [router, supabase])
 
-  if (action !== "login" && action !== "singup") {
+  if (action !== "login" && action !== "signup") {
     notFound()
   }
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
-      const file = e.target.files[0];
-
-      // Check if file is an image
+      const file = e.target.files[0]
       if (!file.type.startsWith('image/')) {
-        setError('Please upload an image file');
-        return;
+        setError('Please upload an image file')
+        return
       }
-
-      // Check file size
       if (file.size > 5 * 1024 * 1024) {
-        setError('File size should be less than 5MB');
-        return;
+        setError('File size should be less than 5MB')
+        return
       }
-      console.log("convert the image to webp")
-
-      // Convert the image to WebP format
-      const reader = new FileReader();
-      reader.onload = () => {
-        const img = new Image();
-        img.onload = () => {
-          const canvas = document.createElement('canvas');
-          const ctx = canvas.getContext('2d');
-          if (ctx) {
-            canvas.width = img.width;
-            ctx.drawImage(img, 0, 0);
-            canvas.height = img.height;
-
-            // Convert to WebP
-            canvas.toBlob((blob) => {
-              if (blob) {
-                const webpFile = new File([blob], file.name.replace(/\.[^/.]+$/, "") + ".webp", {
-                  type: 'image/webp',
-                });
-                setAgeProofFile(webpFile);
-                setError('');
-              }
-            }, 'image/webp');
-          }
-        };
-        img.src = reader.result as string;
-      };
-      reader.readAsDataURL(file);
+      setAgeProofFile(file)
+      setError('')
     }
-  };
+  }
 
   const handleAuth = async (e: React.FormEvent) => {
     e.preventDefault()
     setError('')
 
     if (isLogin) {
-      const { error } = await supabase.auth.singInWithPassword({ email, password })
+      const { error } = await supabase.auth.signInWithPassword({ email, password })
       if (error) setError(error.message)
-      else router.push('/profile')
+      else router.push('/') // Redirect to home page after login
     } else {
       if (!agreeToTerms) {
         setError('You must agree to the terms and conditions')
@@ -115,19 +84,17 @@ export default function AuthPage() {
         formData.append('ageProof', ageProofFile)
       }
 
-      const response = await fetch('/api/auth/singup', {
+      const response = await fetch('/api/auth/signup', {
         method: 'POST',
         body: formData,
       })
 
       const data = await response.json()
-      console.log(data)
 
       if (response.ok) {
-        alert(data.message)
-        router.push('/auth/login')
+        router.push('/profile/edit') // Redirect to edit profile after signup
       } else {
-        setError(data.error || 'An error occurred during singup')
+        setError(data.error || 'An error occurred during signup')
       }
     }
   }
@@ -136,7 +103,7 @@ export default function AuthPage() {
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-r from-black via-gray-900 to-black">
       <div className="bg-background/80 backdrop-blur-sm p-8 rounded-lg shadow-lg w-full max-w-md">
         <h2 className="text-3xl font-bold text-center mb-6 bg-gradient-to-r from-amber-200 to-yellow-400 bg-clip-text text-transparent">
-          {isLogin ? 'Login' : 'sing Up'}
+          {isLogin ? 'Login' : 'Sign Up'}
         </h2>
         {error && (
           <Alert variant="destructive" className="mb-4">
@@ -244,21 +211,20 @@ export default function AuthPage() {
           )}
 
           <Button type="submit" className="w-full bg-gradient-to-r from-amber-400 to-amber-600 text-black">
-            {isLogin ? 'Login' : 'sing Up'}
+            {isLogin ? 'Login' : 'Sign Up'}
           </Button>
         </form>
         <p className="mt-4 text-center">
           {isLogin ? "Don't have an account? " : "Already have an account? "}
           <Link
-            href={`/auth/${isLogin ? 'singup' : 'login'}`}
+            href={`/auth/${isLogin ? 'signup' : 'login'}`}
             className="text-amber-400 hover:text-amber-300"
           >
-            {isLogin ? 'sing Up' : 'Login'}
+            {isLogin ? 'Sign Up' : 'Login'}
           </Link>
         </p>
       </div>
     </div>
   )
 }
-
 

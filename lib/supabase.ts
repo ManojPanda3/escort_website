@@ -1,73 +1,13 @@
 import { createClient } from '@supabase/supabase-js'
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+const supabaseUrl = "https://isogrkikdwmiagdbwctx.supabase.co"
+const supabaseAnonKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imlzb2dya2lrZHdtaWFnZGJ3Y3R4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzY0MjcyMDksImV4cCI6MjA1MjAwMzIwOX0.hsaqUbyus2e-Zxnq0qgoF8EJDUlmrGl11bkdBSHqqvc"
 
 if (!supabaseUrl || !supabaseAnonKey) {
   throw new Error('Missing Supabase environment variables')
 }
 
 export const supabase = createClient(supabaseUrl, supabaseAnonKey)
-
-import { supabase } from './supabaseClient';
-
-export const createUserTablesIfNotExist = async () => {
-  const query = `
-DO $$
-BEGIN
-  IF NOT EXISTS (
-    SELECT 1
-    FROM information_schema.tables
-    WHERE table_schema = 'public' AND table_name = 'user'
-  ) THEN
-    CREATE TABLE public.user (
-      id UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
-      email TEXT UNIQUE NOT NULL,
-      username TEXT UNIQUE NOT NULL,
-      name TEXT,
-      isVip BOOLEAN DEFAULT FALSE,
-      stories UUID[], 
-      price TEXT, 
-      available BOOLEAN, 
-      location TEXT,
-      age INTEGER CHECK (age >= 18 AND age <= 100),
-      profile_picture TEXT 
-      purches UUID[]
-    );
-  END IF;
-END $$;
-  `;
-  const { error } = await supabase.rpc('pg_execute', { query });
-
-  if (error) {
-    console.error('Error creating table:', error.message);
-  }
-}
-
-export const createStoryTablesIfNotExist = async () => {
-  const query = `
-  DO $$
-    BEGIN
-      IF NOT EXISTS (
-        SELECT 1
-        FROM information_schema.tables
-        WHERE table_schema = 'public' AND table_name = 'story'
-      ) THEN
-        CREATE TABLE public.story (
-          id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-          video TEXT NOT NULL,
-          title TEXT NOT NULL,
-          likes INTEGER
-        );
-      END IF;
-    END $$;
-`;
-  const { error } = await supabase.rpc('pg_execute', { query });
-
-  if (error) {
-    console.error('Error creating table:', error.message);
-  }
-}
 
 export async function getProfile(userId: string) {
   const { data, error } = await supabase
