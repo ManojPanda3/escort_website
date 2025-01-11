@@ -176,7 +176,7 @@ export function EditProfileForm({ profile }: EditProfileFormProps) {
               <Input
                 type="file"
                 accept="image/*"
-                onChange={(e) => handleImageUpload(e, setCoverImage)}
+                onChange={(e) => handleImageUpload(e, setProfilePicture)}
                 disabled={loading}
               />
             </div>
