@@ -23,9 +23,6 @@ export async function PUT(request: NextRequest) {
 
   if (error) {
     return NextResponse.json(
-      { error: error.message },```typescript file="app/api/profile/route.ts"
-error) {
-    return NextResponse.json(
       { error: error.message },
       { status: 400 }
     )

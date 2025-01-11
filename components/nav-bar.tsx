@@ -17,7 +17,7 @@ import { createClientComponentClient } from '@supabase/auth-helpers-nextjs'
 import Image from 'next/image'
 
 export function NavBar() {
-  const [user, setUser] = useState(null)
+  const [user, setUser] = useState<any>(null)
   const router = useRouter()
   const supabase = createClientComponentClient()
 
