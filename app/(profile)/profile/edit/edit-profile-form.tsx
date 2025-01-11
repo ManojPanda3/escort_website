@@ -3,7 +3,6 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Image from 'next/image'
-import imageCompression from 'browser-image-compression'
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -19,7 +18,6 @@ import {
 } from '@/components/ui/select'
 import { AlertCircle, Loader2 } from 'lucide-react'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
-import { Checkbox } from '@/components/ui/checkbox'
 
 interface EditProfileFormProps {
   profile: any
@@ -28,99 +26,71 @@ interface EditProfileFormProps {
 export function EditProfileForm({ profile }: EditProfileFormProps) {
   const router = useRouter()
   const supabase = createClientComponentClient()
-
-  // Separate states for each field
-  const [name, setName] = useState(profile?.name || '')
-  const [about, setAbout] = useState(profile?.about || '')
-  const [location, setLocation] = useState(profile?.location || '')
-  const [placeOfService, setPlaceOfService] = useState(profile?.place_of_service || '')
-  const [phoneNumber, setPhoneNumber] = useState(profile?.phone_number || '')
-  const [height, setHeight] = useState(profile?.height || '')
-  const [dressSize, setDressSize] = useState(profile?.dress_size || '')
-  const [hairColor, setHairColor] = useState(profile?.hair_color || '')
-  const [eyeColor, setEyeColor] = useState(profile?.eye_color || '')
-  const [bodyType, setBodyType] = useState(profile?.body_type || '')
-  const [profilePicture, setProfilePicture] = useState(profile?.profile_picture || '')
-  const [interest, setInterest] = useState(profile?.interest || '')
-  const [isTraveling, setIsTraveling] = useState(profile?.is_traveling || false)
-  const [travelingLocation, setTravelingLocation] = useState(profile?.traveling_location || '')
-  const [coverImage, setCoverImage] = useState(profile?.cover_image || '')
-
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
-
-  // Handle image upload and convert to WebP
-  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>, setStateFunc) => {
-    const file = e.target.files?.[0]
-    if (!file) return
-
-    setLoading(true)
-    setError('')
-
-    try {
-      const options = {
-        maxSizeMB: 1,
-        maxWidthOrHeight: 800,
-        useWebWorker: true,
-        fileType: 'image/webp',
-      }
-      const compressedFile = await imageCompression(file, options)
-
-      // Convert to Base64
-      const reader = new FileReader()
-      reader.readAsDataURL(compressedFile)
-      reader.onloadend = () => {
-        setStateFunc(reader.result as string)
-      }
-    } catch (error) {
-      setError('Failed to process image. Please try again.')
-      console.error(error)
-    }
-
-    setLoading(false)
-  }
+  const [formData, setFormData] = useState({
+    name: profile?.name || '',
+    about: profile?.about || '',
+    location: profile?.location || '',
+    place_of_service: profile?.place_of_service || '',
+    phone_number: profile?.phone_number || '',
+    height: profile?.height || '',
+    dress_size: profile?.dress_size || '',
+    hair_color: profile?.hair_color || '',
+    eye_color: profile?.eye_color || '',
+    body_type: profile?.body_type || '',
+    is_traveling: profile?.is_traveling || false,
+    traveling_location: profile?.traveling_location || '',
+    interest: profile?.interest || '',
+  })
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setLoading(true)
     setError('')
 
-    // Construct `sending_body` with only updated fields
-    const sending_body: Record<string, any> = {}
-    if (profile.name !== name) sending_body.name = name
-    if (profile.about !== about) sending_body.about = about
-    if (profile.location !== location) sending_body.location = location
-    if (profile.place_of_service !== placeOfService) sending_body.place_of_service = placeOfService
-    if (profile.phone_number !== phoneNumber) sending_body.phone_number = phoneNumber
-    if (profile.height !== height) sending_body.height = parseInt(height)
-    if (profile.dress_size !== dressSize) sending_body.dress_size = parseInt(dressSize)
-    if (profile.hair_color !== hairColor) sending_body.hair_color = hairColor
-    if (profile.eye_color !== eyeColor) sending_body.eye_color = eyeColor
-    if (profile.body_type !== bodyType) sending_body.body_type = bodyType
-    if (profile.profile_picture !== profilePicture) sending_body.profile_picture = profilePicture
-    if (profile.interest !== interest) sending_body.interest = interest
-    if (profile.is_traveling !== isTraveling) sending_body.is_traveling = isTraveling
-    if (profile.traveling_location !== travelingLocation) sending_body.traveling_location = travelingLocation
-    if (profile.cover_image !== coverImage) sending_body.cover_image = coverImage
+    const { error } = await supabase
+      .from('users')
+      .update(formData)
+      .eq('id', profile.id)
 
-    try {
-      const response = await fetch('/api/profile/update', {
-        method: 'PUT',
-        body: JSON.stringify(sending_body),
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      })
+    if (error) {
+      setError(error.message)
+    } else {
+      router.refresh()
+    }
 
-      if (response.status !== 200) {
-        const data = await response.json()
-        setError(data.message)
+    setLoading(false)
+  }
+
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    setLoading(true)
+    setError('')
+
+    const fileExt = file.name.split('.').pop()
+    const fileName = `${Date.now()}.${fileExt}`
+    const filePath = `${profile.id}/${fileName}`
+
+    const { error: uploadError } = await supabase.storage
+      .from('profile_pictures')
+      .upload(filePath, file)
+
+    if (uploadError) {
+      setError(uploadError.message)
+    } else {
+      const { error: updateError } = await supabase
+        .from('users')
+        .update({ profile_picture: filePath })
+        .eq('id', profile.id)
+
+      if (updateError) {
+        setError(updateError.message)
       } else {
         router.refresh()
       }
-    } catch (error) {
-      setError('Failed to update profile.')
-      console.error(error)
     }
 
     setLoading(false)
@@ -141,34 +111,13 @@ export function EditProfileForm({ profile }: EditProfileFormProps) {
         )}
 
         <form onSubmit={handleSubmit} className="space-y-6">
-          {/* Profile Picture */}
-          <div className="space-y-2">
-            <Label>Cover Image</Label>
-            <div className="flex items-center gap-4">
-              <div className="h-20 w-full rounded-sm relative full overflow-hidden">
-                <Image
-                  src={coverImage || '/placeholder.svg?height=200&width=200'}
-                  alt={name || ''}
-                  fill
-                  className="object-cover"
-                />
-              </div>
-              <Input
-                type="file"
-                accept="image/*"
-                onChange={(e) => handleImageUpload(e, setCoverImage)}
-                disabled={loading}
-              />
-            </div>
-          </div>
-          {/* Profile Picture */}
           <div className="space-y-2">
             <Label>Profile Picture</Label>
             <div className="flex items-center gap-4">
               <div className="h-20 w-20 relative rounded-full overflow-hidden">
                 <Image
-                  src={profilePicture || '/placeholder.svg?height=200&width=200'}
-                  alt={name}
+                  src={profile.profile_picture || '/placeholder.svg?height=200&width=200'}
+                  alt={profile.name}
                   fill
                   className="object-cover"
                 />
@@ -176,174 +125,156 @@ export function EditProfileForm({ profile }: EditProfileFormProps) {
               <Input
                 type="file"
                 accept="image/*"
-                onChange={(e) => handleImageUpload(e, setProfilePicture)}
+                onChange={handleImageUpload}
                 disabled={loading}
               />
             </div>
           </div>
 
-          {/* Name */}
-          <div className="space-y-2">
-            <Label htmlFor="name">Name</Label>
-            <Input id="name" value={name} onChange={(e) => setName(e.target.value)} disabled={loading} />
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="name">Name</Label>
+              <Input
+                id="name"
+                value={formData.name}
+                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                disabled={loading}
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="location">Location</Label>
+              <Input
+                id="location"
+                value={formData.location}
+                onChange={(e) => setFormData({ ...formData, location: e.target.value })}
+                disabled={loading}
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="phone">Phone Number</Label>
+              <Input
+                id="phone"
+                value={formData.phone_number}
+                onChange={(e) => setFormData({ ...formData, phone_number: e.target.value })}
+                disabled={loading}
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="place_of_service">Place of Service</Label>
+              <Input
+                id="place_of_service"
+                value={formData.place_of_service}
+                onChange={(e) => setFormData({ ...formData, place_of_service: e.target.value })}
+                disabled={loading}
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="height">Height (cm)</Label>
+              <Input
+                id="height"
+                type="number"
+                value={formData.height}
+                onChange={(e) => setFormData({ ...formData, height: e.target.value })}
+                disabled={loading}
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="dress_size">Dress Size</Label>
+              <Input
+                id="dress_size"
+                type="number"
+                value={formData.dress_size}
+                onChange={(e) => setFormData({ ...formData, dress_size: e.target.value })}
+                disabled={loading}
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="hair_color">Hair Color</Label>
+              <Select
+                value={formData.hair_color}
+                onValueChange={(value) => setFormData({ ...formData, hair_color: value })}
+                disabled={loading}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select hair color" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="black">Black</SelectItem>
+                  <SelectItem value="brown">Brown</SelectItem>
+                  <SelectItem value="blonde">Blonde</SelectItem>
+                  <SelectItem value="red">Red</SelectItem>
+                  <SelectItem value="other">Other</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="eye_color">Eye Color</Label>
+              <Select
+                value={formData.eye_color}
+                onValueChange={(value) => setFormData({ ...formData, eye_color: value })}
+                disabled={loading}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select eye color" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="brown">Brown</SelectItem>
+                  <SelectItem value="blue">Blue</SelectItem>
+                  <SelectItem value="green">Green</SelectItem>
+                  <SelectItem value="hazel">Hazel</SelectItem>
+                  <SelectItem value="other">Other</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="body_type">Body Type</Label>
+              <Select
+                value={formData.body_type}
+                onValueChange={(value) => setFormData({ ...formData, body_type: value })}
+                disabled={loading}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select body type" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="slim">Slim</SelectItem>
+                  <SelectItem value="athletic">Athletic</SelectItem>
+                  <SelectItem value="curvy">Curvy</SelectItem>
+                  <SelectItem value="other">Other</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
           </div>
 
-          {/* Location */}
-          <div className="space-y-2">
-            <Label htmlFor="location">Location</Label>
-            <Input id="location" value={location} onChange={(e) => setLocation(e.target.value)} disabled={loading} />
-          </div>
-
-          {/* Phone Number */}
-          <div className="space-y-2">
-            <Label htmlFor="phone">Phone Number</Label>
-            <Input id="phone" value={phoneNumber} onChange={(e) => setPhoneNumber(e.target.value)} disabled={loading} />
-          </div>
-
-          {/* Place of Service */}
-          <div className="space-y-2">
-            <Label htmlFor="place_of_service">Place of Service</Label>
-            <Input
-              id="place_of_service"
-              value={placeOfService}
-              onChange={(e) => setPlaceOfService(e.target.value)}
-              disabled={loading}
-            />
-          </div>
-
-          {/* Height */}
-          <div className="space-y-2">
-            <Label htmlFor="height">Height (cm)</Label>
-            <Input
-              id="height"
-              type="number"
-              value={height}
-              onChange={(e) => setHeight(e.target.value)}
-              disabled={loading}
-            />
-          </div>
-
-          {/* Dress Size */}
-          <div className="space-y-2">
-            <Label htmlFor="dress_size">Dress Size</Label>
-            <Input
-              id="dress_size"
-              type="number"
-              value={dressSize}
-              onChange={(e) => setDressSize(e.target.value)}
-              disabled={loading}
-            />
-          </div>
-
-          {/* Hair Color */}
-          <div className="space-y-2">
-            <Label htmlFor="hair_color">Hair Color</Label>
-            <Select
-              value={hairColor}
-              onValueChange={(value) => setHairColor(value)}
-              disabled={loading}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Select hair color" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="black">Black</SelectItem>
-                <SelectItem value="brown">Brown</SelectItem>
-                <SelectItem value="blonde">Blonde</SelectItem>
-                <SelectItem value="red">Red</SelectItem>
-                <SelectItem value="other">Other</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-
-          {/* Eye Color */}
-          <div className="space-y-2">
-            <Label htmlFor="eye_color">Eye Color</Label>
-            <Select
-              value={eyeColor}
-              onValueChange={(value) => setEyeColor(value)}
-              disabled={loading}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Select eye color" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="brown">Brown</SelectItem>
-                <SelectItem value="blue">Blue</SelectItem>
-                <SelectItem value="green">Green</SelectItem>
-                <SelectItem value="hazel">Hazel</SelectItem>
-                <SelectItem value="other">Other</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-
-          {/* Body Type */}
-          <div className="space-y-2">
-            <Label htmlFor="body_type">Body Type</Label>
-            <Select
-              value={bodyType}
-              onValueChange={(value) => setBodyType(value)}
-              disabled={loading}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Select body type" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="slim">Slim</SelectItem>
-                <SelectItem value="athletic">Athletic</SelectItem>
-                <SelectItem value="curvy">Curvy</SelectItem>
-                <SelectItem value="other">Other</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-
-          {/* About */}
           <div className="space-y-2">
             <Label htmlFor="about">About</Label>
             <Textarea
               id="about"
-              value={about}
-              onChange={(e) => setAbout(e.target.value)}
+              value={formData.about}
+              onChange={(e) => setFormData({ ...formData, about: e.target.value })}
               disabled={loading}
+              className="min-h-[100px]"
             />
           </div>
 
-          {/* Interest */}
           <div className="space-y-2">
-            <Label htmlFor="interest">Interest</Label>
-            <Input
+            <Label htmlFor="interest">Interests</Label>
+            <Textarea
               id="interest"
-              value={interest}
-              onChange={(e) => setInterest(e.target.value)}
+              value={formData.interest}
+              onChange={(e) => setFormData({ ...formData, interest: e.target.value })}
               disabled={loading}
+              className="min-h-[100px]"
             />
           </div>
-
-
-          {/* Traveling */}
-          <div className="space-y-2">
-            <div className="flex items-center gap-4">
-              <Label>
-                <Checkbox
-                  checked={isTraveling}
-                  onClick={(e) => setIsTraveling(n => !n)}
-                />
-                Currently Traveling
-              </Label>
-            </div>
-          </div>
-          {/* Traveling Location */}
-          {isTraveling && (
-            <div className="space-y-2">
-              <Label htmlFor="traveling_location">Traveling Location</Label>
-              <Input
-                id="traveling_location"
-                value={travelingLocation}
-                onChange={(e) => setTravelingLocation(e.target.value)}
-                disabled={loading}
-              />
-            </div>
-          )}
 
           <Button type="submit" disabled={loading}>
             {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
