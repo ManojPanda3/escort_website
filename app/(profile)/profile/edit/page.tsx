@@ -11,8 +11,6 @@ export default async function EditProfilePage() {
   if (!session) {
     redirect('/auth/login')
   }
-
-  console.log(session.user.id)
   const { data: profile, error } = await supabase
     .from('users')
     .select('*')
