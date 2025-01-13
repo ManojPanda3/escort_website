@@ -1,8 +1,6 @@
 'use client'
-
 import { useReducer, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import Image from 'next/image'
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -18,6 +16,8 @@ import {
 } from '@/components/ui/select'
 import { AlertCircle, Loader2, Plus } from 'lucide-react'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
+import { Success } from '@/components/ui/success'
+import Image from 'next/image'
 
 interface EditProfileFormProps {
   profile: any
@@ -95,7 +95,10 @@ export function EditProfileForm({ profile }: EditProfileFormProps) {
       }
       body[data[0]] = data[1];
     })
-    console.log(body)
+    if (Object.keys(body).length == 0) {
+      setError('No Data was updated')
+      return;
+    }
 
     try {
       const response = await fetch('/api/profile/update', {
@@ -203,11 +206,7 @@ export function EditProfileForm({ profile }: EditProfileFormProps) {
           </Alert>
         )}
         {success && (
-          <Alert variant="destructive" className="mb-4">
-            <AlertCircle className="h-4 w-4" />
-            <AlertTitle>Error</AlertTitle>
-            <AlertDescription>{error}</AlertDescription>
-          </Alert>
+          <Success>{success}</Success>
         )}
 
         <form onSubmit={handleSubmit} className="space-y-6">

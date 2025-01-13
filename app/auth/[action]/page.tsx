@@ -12,6 +12,7 @@ import { Checkbox } from '@/components/ui/checkbox'
 import Link from 'next/link'
 import { AlertCircle } from 'lucide-react'
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
+import { Success } from "@/components/ui/success"
 
 export default function AuthPage() {
   const { action } = useParams() as { action: 'login' | 'signup' }
@@ -27,6 +28,7 @@ export default function AuthPage() {
   const [age, setAge] = useState<string>('')
   const [isLogin, setIsLogin] = useState(action !== "signup")
   const [error, setError] = useState('')
+  const [success, setSuccess] = useState('')
   const [agreeToTerms, setAgreeToTerms] = useState(false)
 
   useEffect(() => {
@@ -59,9 +61,35 @@ export default function AuthPage() {
     }
   }
 
+  const handleForgotPassword = async () => {
+    if (!email) {
+      setError('Please enter your email address')
+      setSuccess('')
+      return
+    }
+    
+    const response = await fetch('/api/auth/resetPassword', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ email }),
+    })
+
+    const data = await response.json()
+    if (response.ok) {
+      setSuccess('Password reset email sent! Please check your inbox.')
+      setError('')
+    } else {
+      setError(data.error || 'Failed to send reset email')
+      setSuccess('')
+    }
+  }
+
   const handleAuth = async (e: React.FormEvent) => {
     e.preventDefault()
     setError('')
+    setSuccess('')
 
     if (isLogin) {
       const { error } = await supabase.auth.signInWithPassword({ email, password })
@@ -111,6 +139,11 @@ export default function AuthPage() {
             <AlertTitle>Error</AlertTitle>
             <AlertDescription>{error}</AlertDescription>
           </Alert>
+        )}
+        {success && (
+          <Success className="mb-4">
+            {success}
+          </Success>
         )}
         <form onSubmit={handleAuth} className="space-y-4">
           <div>
@@ -213,8 +246,19 @@ export default function AuthPage() {
           <Button type="submit" className="w-full bg-gradient-to-r from-amber-400 to-amber-600 text-black">
             {isLogin ? 'Login' : 'Sign Up'}
           </Button>
+
         </form>
         <p className="mt-4 text-center">
+          {isLogin && (
+            <button
+              type="button"
+              onClick={handleForgotPassword}
+            className="text-amber-400 hover:text-amber-300"
+            >
+              Forgot Password?
+            </button>
+          )}
+          <br />
           {isLogin ? "Don't have an account? " : "Already have an account? "}
           <Link
             href={`/auth/${isLogin ? 'signup' : 'login'}`}
@@ -227,4 +271,3 @@ export default function AuthPage() {
     </div>
   )
 }
-

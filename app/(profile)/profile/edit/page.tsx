@@ -3,6 +3,7 @@ import { cookies } from 'next/headers'
 import { redirect } from 'next/navigation'
 import { EditProfileForm } from './edit-profile-form'
 import { SubscriptionPlans } from './subscription-plans'
+import { Success } from '@/components/ui/success'
 
 export default async function EditProfilePage() {
   const supabase = createServerComponentClient({ cookies })

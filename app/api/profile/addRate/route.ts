@@ -10,16 +10,16 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
-  const json = await request.json()
-  const { duration, price, description } = json
+  const { reason, price, duration, outcall } = await request.json()
 
   const { error } = await supabase
     .from('rates')
     .insert({
       owner: session.user.id,
-      duration,
+      reason,
       price,
-      description
+      duration,
+      outcall
     })
 
   if (error) {

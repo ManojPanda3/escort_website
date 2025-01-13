@@ -9,10 +9,9 @@ import { MapPin, Calendar, Star, Edit, Phone, Mail, Crown, Ruler, Eye, Palette }
 
 interface ProfileHeaderProps {
   profile: any
-  isOwnProfile?: boolean
 }
 
-export function ProfileHeader({ profile, isOwnProfile = false }: ProfileHeaderProps) {
+export function ProfileHeader({ profile }: ProfileHeaderProps) {
   return (
     <Card className="relative overflow-hidden bg-black/40 backdrop-blur-sm mb-8">
       {/* Cover Image */}
@@ -55,14 +54,13 @@ export function ProfileHeader({ profile, isOwnProfile = false }: ProfileHeaderPr
                 </h1>
                 <p className="text-muted-foreground">{profile.about}</p>
               </div>
-              {isOwnProfile && (
-                <Link href="/profile/edit">
-                  <Button variant="outline" size="sm">
-                    <Edit className="h-4 w-4 mr-2" />
-                    Edit Profile
-                  </Button>
-                </Link>
-              )}
+
+              <Link href="/profile/edit">
+                <Button variant="outline" size="sm">
+                  <Edit className="h-4 w-4 mr-2" />
+                  Edit Profile
+                </Button>
+              </Link>
             </div>
 
             {/* Stats Grid */}

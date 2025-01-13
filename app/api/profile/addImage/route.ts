@@ -12,6 +12,8 @@ export async function POST(request: NextRequest) {
 
   const formData = await request.formData()
   const file = formData.get('file') as File
+  const title = formData.get('title') as string
+  const isMain = formData.get('isMain') === 'true'
 
   if (!file) {
     return NextResponse.json({ error: 'No file provided' }, { status: 400 })
@@ -20,7 +22,7 @@ export async function POST(request: NextRequest) {
   const fileExt = file.name.split('.').pop()
   const fileName = `${session.user.id}/${Date.now()}.${fileExt}`
 
-  const { error: uploadError } = await supabase.storage
+  const { error: uploadError, data } = await supabase.storage
     .from('pictures')
     .upload(fileName, file)
 
@@ -36,14 +38,15 @@ export async function POST(request: NextRequest) {
     .from('pictures')
     .insert({
       owner: session.user.id,
-      url: publicUrl,
-      title: file.name
+      picture: publicUrl,
+      title,
+      "is main": isMain
     })
 
   if (dbError) {
     return NextResponse.json({ error: dbError.message }, { status: 400 })
   }
 
-  return NextResponse.json({ success: true })
+  return NextResponse.json({ success: true, message: 'Image added successfully', url: publicUrl })
 }
 

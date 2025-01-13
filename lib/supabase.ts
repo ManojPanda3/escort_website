@@ -1,7 +1,7 @@
 import { createClient } from '@supabase/supabase-js'
 
-const supabaseUrl = "https://isogrkikdwmiagdbwctx.supabase.co"
-const supabaseAnonKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imlzb2dya2lrZHdtaWFnZGJ3Y3R4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzY0MjcyMDksImV4cCI6MjA1MjAwMzIwOX0.hsaqUbyus2e-Zxnq0qgoF8EJDUlmrGl11bkdBSHqqvc"
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 
 if (!supabaseUrl || !supabaseAnonKey) {
   throw new Error('Missing Supabase environment variables')
@@ -46,4 +46,3 @@ export async function addStory(userId: string, title: string, videoLink: string)
 
   if (error) throw error
 }
-

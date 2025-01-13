@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
-import { Menu, Search, User } from 'lucide-react'
+import { LogOut, Menu, Search, User } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { ThemeToggle } from '@/components/ui/theme-toggle'
 import {
@@ -17,7 +17,7 @@ import { createClientComponentClient } from '@supabase/auth-helpers-nextjs'
 import Image from 'next/image'
 
 export function NavBar() {
-  const [user, setUser] = useState<any>(null)
+  const [user, setUser] = useState(null)
   const router = useRouter()
   const supabase = createClientComponentClient()
 
@@ -139,10 +139,7 @@ export function NavBar() {
                 )}
               </Button>
             ) : (
-              <Button className="bg-primary hover:bg-primary/80 font-bold py-2 px-4 rounded-full transition duration-300 text-black" onClick={() => router.push('/auth/login')}>
-                <User className="h-5 w-5 mr-2" />
-                Login
-              </Button>
+              <LoginBtn />
             )}
 
             {/* Mobile Menu */}
@@ -172,6 +169,14 @@ export function NavBar() {
                   >
                     PREMIUM
                   </Link>
+                  {user ?
+                    <button
+                      className="block py-2 text-sm font-semibold text-red-600 hover:text-red-300 transition-colors"
+                      onClick={handleLogout}
+                    >
+                      <LogOut />
+                    </button> : <LoginBtn className="rounded-sm" />
+                  }
                   <div className="pt-4 border-t">
                     <p className="text-sm font-medium mb-2">Popular Cities</p>
                     <div className="grid grid-cols-2 gap-2">
@@ -194,5 +199,15 @@ export function NavBar() {
       </div>
     </nav>
   )
+}
+
+const LoginBtn = ({ className }: { className?: string }) => {
+  const router = useRouter()
+  return (
+    <Button className={"bg-primary hover:bg-primary/80 font-bold py-2 px-4 rounded-full transition duration-300 text-black " + className} onClick={() => router?.push('/auth/login')}>
+      <User className="h-5 w-5 mr-2" />
+      Login
+    </Button>
+  );
 }
 

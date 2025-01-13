@@ -12,6 +12,7 @@ export async function POST(request: NextRequest) {
 
   const formData = await request.formData()
   const file = formData.get('file') as File
+  const title = formData.get('title') as string
 
   if (!file) {
     return NextResponse.json({ error: 'No file provided' }, { status: 400 })
@@ -20,7 +21,7 @@ export async function POST(request: NextRequest) {
   const fileExt = file.name.split('.').pop()
   const fileName = `${session.user.id}/${Date.now()}.${fileExt}`
 
-  const { error: uploadError } = await supabase.storage
+  const { error: uploadError, data } = await supabase.storage
     .from('stories')
     .upload(fileName, file)
 
@@ -32,18 +33,21 @@ export async function POST(request: NextRequest) {
     .from('stories')
     .getPublicUrl(fileName)
 
+  const isVideo = file.type.startsWith('video/')
+
   const { error: dbError } = await supabase
-    .from('stories')
+    .from('story')
     .insert({
-      user_id: session.user.id,
-      media_url: publicUrl,
-      type: file.type.startsWith('video/') ? 'video' : 'image'
+      owner: session.user.id,
+      url: publicUrl,
+      title,
+      isVideo
     })
 
   if (dbError) {
     return NextResponse.json({ error: dbError.message }, { status: 400 })
   }
 
-  return NextResponse.json({ success: true })
+  return NextResponse.json({ success: true, url: publicUrl })
 }
 
