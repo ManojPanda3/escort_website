@@ -8,11 +8,11 @@ import { cache } from 'react'
 // Create cached version of data fetching
 const getProfileData = cache(async (supabase: any, id: string) => {
   const [
-    { data: profile },
-    { data: pictures },
-    { data: services },
-    { data: rates },
-    { data: testimonials }
+    { data: profile ,error:profileError},
+    { data: pictures ,error:picturesError},
+    { data: services ,error:servicesError},
+    { data: rates ,error:ratesError},
+    { data: testimonials ,error:testimonialsError}
   ] = await Promise.all([
     supabase
       .from('users')
@@ -37,6 +37,15 @@ const getProfileData = cache(async (supabase: any, id: string) => {
       .select('*, users!testimonials_owner_fkey(*)')
       .eq('to', id)
   ])
+  const errors = [profileError,picturesError,servicesError,ratesError,testimonialsError]
+  if(errors.some(error => error !== null)){
+    const errorMessage = errors.map(error => {
+      if(error){
+         return error?.message
+        }
+      }).join(', ');
+    throw new Error('Failed to fetch profile data\nerrors are:\t'+errorMessage)
+  }
 
   return {
     profile,
@@ -54,13 +63,13 @@ export default async function UserProfilePage({
 }) {
   const id = params.id
   const supabase = createServerComponentClient({ cookies })
-  const {data:{session},error} = await supabase.auth.getSession();
-  if(error){
-    console.error(error.message)
-  }
-  if(session?.user.id === id){
-    redirect('/profile')
-  }
+  try{  
+    const {data:{session}} = await supabase.auth.getSession();
+}catch(error:any){
+  console.error("Either server error or user does not exist")
+  console.error(error.message)
+  redirect('/auth/login')
+}
 
   if (!id) {
     redirect('/auth/login')
@@ -77,7 +86,7 @@ export default async function UserProfilePage({
         services={userData.services}
         rates={userData.rates}
         testimonials={userData.testimonials}
-        ownerId={session?.user.id}
+        ownerId={session?.user.id.toString() || ''}
       />
     </main>
   )

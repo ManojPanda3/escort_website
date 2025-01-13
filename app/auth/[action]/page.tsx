@@ -1,7 +1,6 @@
 'use client'
-
 import { useState, useEffect } from 'react'
-import { useRouter, usePathname, useParams, notFound } from 'next/navigation'
+import { useRouter, useParams, notFound } from 'next/navigation'
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -67,22 +66,26 @@ export default function AuthPage() {
       setSuccess('')
       return
     }
-    
-    const response = await fetch('/api/auth/resetPassword', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ email }),
-    })
 
-    const data = await response.json()
-    if (response.ok) {
-      setSuccess('Password reset email sent! Please check your inbox.')
-      setError('')
-    } else {
-      setError(data.error || 'Failed to send reset email')
-      setSuccess('')
+    try {
+      const response = await fetch('/api/auth/resetPassword', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email }),
+      })
+
+      const data = await response.json()
+      if (response.ok) {
+        setSuccess('Password reset email sent! Please check your inbox.')
+        setError('')
+      } else {
+        setError(data.error || 'Failed to send reset email')
+        setSuccess('')
+      }
+    } catch (err) {
+      setError('Failed to connect to server')
     }
   }
 
@@ -92,38 +95,47 @@ export default function AuthPage() {
     setSuccess('')
 
     if (isLogin) {
-      const { error } = await supabase.auth.signInWithPassword({ email, password })
-      if (error) setError(error.message)
-      else router.push('/') // Redirect to home page after login
-    } else {
-      if (!agreeToTerms) {
-        setError('You must agree to the terms and conditions')
-        return
+      try {
+        const { error } = await supabase.auth.signInWithPassword({ email, password })
+        if (error) setError(error.message)
+        else router.push('/')
+      } catch (err) {
+        setError('Failed to login')
       }
+      return
+    }
 
+    if (!agreeToTerms) {
+      setError('You must agree to the terms and conditions')
+      return
+    }
+
+    try {
       const formData = new FormData()
       formData.append('email', email)
       formData.append('password', password)
       formData.append('username', username)
       formData.append('userType', userType)
-      if (userType === 'general') {
-        formData.append('age', age)
-      } else if (ageProofFile) {
+      formData.append('age', age)
+      
+      if (userType !== "general" && ageProofFile) {
         formData.append('ageProof', ageProofFile)
       }
 
       const response = await fetch('/api/auth/signup', {
         method: 'POST',
-        body: formData,
+        body: formData
       })
 
       const data = await response.json()
 
       if (response.ok) {
-        router.push('/profile/edit') // Redirect to edit profile after signup
+        router.push('/auth/login')
       } else {
-        setError(data.error || 'An error occurred during signup')
+        setError(data.message || 'An error occurred during signup')
       }
+    } catch (err) {
+      setError('Failed to connect to server')
     }
   }
 
@@ -199,20 +211,19 @@ export default function AuthPage() {
                   </SelectContent>
                 </Select>
               </div>
-              {userType === "general" ? (
-                <div>
-                  <Label htmlFor="age">Age</Label>
-                  <Input
-                    id="age"
-                    type="number"
-                    min="18"
-                    max="200"
-                    value={age}
-                    onChange={(e) => setAge(e.target.value)}
-                    required
-                  />
-                </div>
-              ) : (
+              <div>
+                <Label htmlFor="age">Age</Label>
+                <Input
+                  id="age"
+                  type="number"
+                  min="18"
+                  max="200"
+                  value={age}
+                  onChange={(e) => setAge(e.target.value)}
+                  required
+                />
+              </div>
+              {userType !== "general" &&
                 <div>
                   <Label htmlFor="ageProof">Age Proof (Image file)</Label>
                   <Input
@@ -226,7 +237,7 @@ export default function AuthPage() {
                     Please upload an image file (max 5MB) for age verification.
                   </p>
                 </div>
-              )}
+              }
               <div className="flex items-center space-x-2">
                 <Checkbox
                   id="terms"
@@ -253,7 +264,7 @@ export default function AuthPage() {
             <button
               type="button"
               onClick={handleForgotPassword}
-            className="text-amber-400 hover:text-amber-300"
+              className="text-amber-400 hover:text-amber-300"
             >
               Forgot Password?
             </button>

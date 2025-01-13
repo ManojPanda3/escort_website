@@ -79,6 +79,8 @@ export function ProfileTabs({
     }
   }
 
+        
+
   return (
     <>
       <Tabs defaultValue="pictures" className="space-y-4">
@@ -174,36 +176,38 @@ export function ProfileTabs({
 
         <TabsContent value="testimonials">
           <div className="space-y-4">
-            <Dialog>
-              <DialogTrigger asChild>
-                <Button className="w-full">
-                  <MessageSquare className="h-4 w-4 mr-2" />
-                  Add Testimonial
-                </Button>
-              </DialogTrigger>
-              <DialogContent>
-                <DialogHeader>
-                  <DialogTitle>Add a Testimonial</DialogTitle>
-                </DialogHeader>
-                <div className="space-y-4 pt-4">
-                  <div className="space-y-2">
-                    <Label>Comment</Label>
-                    <Textarea
-                      value={comment}
-                      onChange={(e) => setComment(e.target.value)}
-                      placeholder="Write your testimonial here..."
-                    />
-                  </div>
-                  <Button 
-                    className="w-full" 
-                    onClick={() => handleSubmitTestimonial(userId)}
-                    disabled={isSubmitting}
-                  >
-                    {isSubmitting ? "Submitting..." : "Submit Testimonial"}
+            {ownerId && ownerId !== userId &&
+              <Dialog>
+                <DialogTrigger asChild>
+                  <Button className="w-full">
+                    <MessageSquare className="h-4 w-4 mr-2" />
+                    Add Testimonial
                   </Button>
-                </div>
-              </DialogContent>
-            </Dialog>
+                </DialogTrigger>
+                <DialogContent>
+                  <DialogHeader>
+                    <DialogTitle>Add a Testimonial</DialogTitle>
+                  </DialogHeader>
+                  <div className="space-y-4 pt-4">
+                    <div className="space-y-2">
+                      <Label>Comment</Label>
+                      <Textarea
+                        value={comment}
+                        onChange={(e) => setComment(e.target.value)}
+                        placeholder="Write your testimonial here..."
+                      />
+                    </div>
+                    <Button
+                      className="w-full"
+                      onClick={() => handleSubmitTestimonial(userId)}
+                      disabled={isSubmitting}
+                    >
+                      {isSubmitting ? "Submitting..." : "Submit Testimonial"}
+                    </Button>
+                  </div>
+                </DialogContent>
+              </Dialog>
+            }
 
             <div className="grid gap-4">
               {testimonials.map((testimonial) => (
