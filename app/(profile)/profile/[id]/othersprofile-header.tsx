@@ -15,7 +15,7 @@ export function ProfileHeader({ profile }: ProfileHeaderProps) {
       {/* Cover Image */}
       <div className="h-48 relative">
         <Image
-          src={profile?.cover_image || 'https://imgs.search.brave.com/gJBcyGIBxiPG6wd99vZV6CQ7c9VihnehzcqTYSw6TqM/rs:fit:860:0:0:0/g:ce/aHR0cHM6Ly93YWxs/cGFwZXJhY2Nlc3Mu/Y29tL2Z1bGwvMzQ2/MTI0NC5wbmc'}
+          src={profile?.cover_image || '/placeholder.svg?height=800&width=600'}
           alt="Cover"
           fill
           className="object-cover"
@@ -29,7 +29,7 @@ export function ProfileHeader({ profile }: ProfileHeaderProps) {
           <div className="relative -mt-20 md:-mt-16">
             <div className="h-32 w-32 relative rounded-full overflow-hidden border-4 border-background">
               <Image
-                src={profile?.profile_picture || 'https://imgs.search.brave.com/Ia6PMpXrL6jf92_vHUSjrTC5xZ9YgEpJeS7zMeLKqY0/rs:fit:860:0:0:0/g:ce/aHR0cHM6Ly93d3cu/ZW50b2luLmNvbS9p/bWFnZXMvd2FpZnUx/LmpwZw'}
+                src={profile?.profile_picture || '/placeholder.svg?height=800&width=600'}
                 alt={profile?.name}
                 fill
                 className="object-cover"
@@ -62,7 +62,7 @@ export function ProfileHeader({ profile }: ProfileHeaderProps) {
                     <MapPin className="h-4 w-4 mr-1" />
                     Location
                   </div>
-                  <p className="font-medium">{profile?.location}</p>
+                  <p className="font-medium">{profile?.location_name}</p>
                 </div>
               }
               {profile?.phone_number &&

@@ -2,10 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
-import { LogOut, Menu, Search, User } from 'lucide-react'
-import { motion, AnimatePresence } from 'framer-motion'
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
-import { Input } from "@/components/ui/input"
+import { Menu, Search, User } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { ThemeToggle } from '@/components/ui/theme-toggle'
 import {
@@ -18,6 +15,9 @@ import {
 import { useRouter } from 'next/navigation'
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs'
 import Image from 'next/image'
+import { motion, AnimatePresence } from 'framer-motion'
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
+import { Input } from "@/components/ui/input"
 import {
   Select,
   SelectContent,
@@ -34,30 +34,12 @@ interface User {
 
 export function NavBar() {
   const [user, setUser] = useState(null)
-  const router = useRouter()
-  const supabase = createClientComponentClient()
   const [isSearchOpen, setIsSearchOpen] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
-  const [searchType, setSearchType] = useState('all')
   const [suggestions, setSuggestions] = useState<User[]>([])
-
-  useEffect(() => {
-    // Simulating fetching top users
-    const topUsers: User[] = [
-      { id: '1', username: 'user1', avatar: '/placeholder.svg' },
-      { id: '2', username: 'user2', avatar: '/placeholder.svg' },
-      { id: '3', username: 'user3', avatar: '/placeholder.svg' },
-    ]
-    setSuggestions(topUsers)
-  }, [])
-
-  const handleSearch = () => {
-    if (searchQuery.trim()) {
-      router.push(`/search?q=${encodeURIComponent(searchQuery)}&type=${searchType}`)
-      setIsSearchOpen(false)
-    }
-  }
-
+  const [searchType, setSearchType] = useState('all')
+  const router = useRouter()
+  const supabase = createClientComponentClient()
 
   useEffect(() => {
     const fetchUser = async () => {
@@ -78,10 +60,26 @@ export function NavBar() {
     }
   }, [supabase.auth])
 
+  useEffect(() => {
+    // Simulating fetching top users
+    const topUsers: User[] = [
+      { id: '1', username: 'user1', avatar: '/placeholder.svg' },
+      { id: '2', username: 'user2', avatar: '/placeholder.svg' },
+      { id: '3', username: 'user3', avatar: '/placeholder.svg' },
+    ]
+    setSuggestions(topUsers)
+  }, [])
 
   const handleLogout = async () => {
     await supabase.auth.signOut()
     router.push('/')
+  }
+
+  const handleSearch = () => {
+    if (searchQuery.trim()) {
+      router.push(`/search?q=${encodeURIComponent(searchQuery)}&type=${searchType}`)
+      setIsSearchOpen(false)
+    }
   }
 
   const cities = [
@@ -178,7 +176,10 @@ export function NavBar() {
                 )}
               </Button>
             ) : (
-              <LoginBtn />
+              <Button className="bg-primary hover:bg-primary/80 font-bold py-2 px-4 rounded-full transition duration-300 text-black" onClick={() => router.push('/auth/login')}>
+                <User className="h-5 w-5 mr-2" />
+                Login
+              </Button>
             )}
 
             {/* Mobile Menu */}
@@ -208,14 +209,6 @@ export function NavBar() {
                   >
                     PREMIUM
                   </Link>
-                  {user ?
-                    <button
-                      className="block py-2 text-sm font-semibold text-red-600 hover:text-red-300 transition-colors"
-                      onClick={handleLogout}
-                    >
-                      <LogOut />
-                    </button> : <LoginBtn className="rounded-sm" />
-                  }
                   <div className="pt-4 border-t">
                     <p className="text-sm font-medium mb-2">Popular Cities</p>
                     <div className="grid grid-cols-2 gap-2">
@@ -236,6 +229,7 @@ export function NavBar() {
           </div>
         </div>
       </div>
+
       {/* Search Popup */}
       <AnimatePresence>
         {isSearchOpen && (
@@ -293,13 +287,4 @@ export function NavBar() {
   )
 }
 
-const LoginBtn = ({ className }: { className?: string }) => {
-  const router = useRouter()
-  return (
-    <Button className={"bg-primary hover:bg-primary/80 font-bold py-2 px-4 rounded-full transition duration-300 text-black " + className} onClick={() => router?.push('/auth/login')}>
-      <User className="h-5 w-5 mr-2" />
-      Login
-    </Button>
-  );
-}
 

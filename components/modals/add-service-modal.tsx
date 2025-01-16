@@ -26,13 +26,13 @@ export function AddServiceModal({ isOpen, onClose }: AddServiceModalProps) {
       const response = await fetch('/api/profile/addService', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ type }),
+        body: JSON.stringify({ service:type }),
       })
 
       if (!response.ok) throw new Error('Failed to add service')
+      const data = await response.json()
 
-      router.refresh()
-      onClose()
+      onClose({id:data.id,service:type})
     } catch (error) {
       console.error('Error adding service:', error)
     } finally {

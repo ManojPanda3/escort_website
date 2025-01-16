@@ -8,6 +8,7 @@ import { Label } from '@/components/ui/label'
 import { Checkbox } from '@/components/ui/checkbox'
 import { useRouter } from 'next/navigation'
 import { Loader2 } from 'lucide-react'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 
 interface AddRateModalProps {
   isOpen: boolean
@@ -39,9 +40,15 @@ export function AddRateModal({ isOpen, onClose }: AddRateModalProps) {
       })
 
       if (!response.ok) throw new Error('Failed to add rate')
+      const data = await response.json()
 
-      router.refresh()
-      onClose()
+      onClose({
+        id: data.id,
+        reason,
+        price,
+        duration,
+        outcall,
+      })
     } catch (error) {
       console.error('Error adding rate:', error)
     } finally {
@@ -76,13 +83,18 @@ export function AddRateModal({ isOpen, onClose }: AddRateModalProps) {
           </div>
           <div>
             <Label htmlFor="duration">Duration</Label>
-            <Input
-              id="duration"
-              type="time"
-              value={duration}
-              onChange={(e) => setDuration(e.target.value)}
-              required
-            />
+            <Select onValueChange={setDuration} value={duration}>
+              <SelectTrigger>
+                <SelectValue placeholder="Select duration" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="30min">30 minutes</SelectItem>
+                <SelectItem value="1h">1 hour</SelectItem>
+                <SelectItem value="2h">2 hours</SelectItem>
+                <SelectItem value="3h">3 hours</SelectItem>
+                <SelectItem value="overnight">Overnight</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
           <div className="flex items-center space-x-2">
             <Checkbox
@@ -101,4 +113,3 @@ export function AddRateModal({ isOpen, onClose }: AddRateModalProps) {
     </Dialog>
   )
 }
-

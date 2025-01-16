@@ -2,13 +2,13 @@ import Link from 'next/link'
 
 export default function TermsPage() {
   return (
-    <div className="min-h-screen bg-gradient-to-b from-black via-gray-900 to-black py-12">
+    <div className="min-h-screen bg-gradient-to-b from-background via-background/80 to-background dark:from-black dark:via-gray-900 dark:to-black py-12">
       <div className="container mx-auto px-4">
-        <div className="prose prose-invert mx-auto">
+        <div className="prose dark:prose-invert mx-auto">
           <h1 className="text-4xl font-bold mb-8 text-center bg-gradient-to-r from-amber-200 to-yellow-400 bg-clip-text text-transparent">
             Terms and Conditions
           </h1>
-          
+
           <section className="mb-8">
             <h2>1. Overview</h2>
             <p>Welcome to All Nighter, a digital platform connecting users with independent adult service providers. Our platform, located at www.all-nighter.com, is operated by All Nighter ("we", "us", "our"). By using our platform, you agree to these terms and conditions.</p>
@@ -81,9 +81,9 @@ export default function TermsPage() {
           </section>
 
           <div className="text-center mt-12">
-            <Link 
-              href="/auth/signup" 
-              className="inline-block bg-gradient-to-r from-amber-400 to-amber-600 text-black px-8 py-3 rounded-full font-semibold hover:from-amber-500 hover:to-amber-700 transition-all duration-300"
+            <Link
+              href="/auth/signup"
+              className="inline-block bg-gradient-to-r from-amber-400 to-amber-600 dark:from-amber-500 dark:to-amber-700 text-black px-8 py-3 rounded-full font-semibold hover:from-amber-500 hover:to-amber-700 transition-all duration-300"
             >
               Accept & Continue
             </Link>
@@ -93,4 +93,3 @@ export default function TermsPage() {
     </div>
   )
 }
-

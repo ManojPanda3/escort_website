@@ -8,6 +8,7 @@ import { Footer } from '@/components/footer'
 import { MouseGlow } from '@/components/mouse-glow'
 import { createServerComponentClient } from '@supabase/auth-helpers-nextjs'
 import { cookies } from 'next/headers'
+import Link from 'next/link'
 
 const stories = [
   { name: 'Emma', image: '/placeholder.svg?height=200&width=200', hasNewStory: true },
@@ -22,19 +23,20 @@ const stories = [
 
 export default async function Page() {
   const supabase = createServerComponentClient({ cookies })
-  const { data: escorts } = await supabase
-    .from('profiles')
+  const { data: users } = await supabase
+    .from('users')
     .select('*')
-    .eq('type', 'escort')
+    .neq('user_type', 'general')
     .limit(4)
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-black via-gray-900 to-black">
+    <div className="min-h-screen bg-gradient-to-b from-background via-background/80 to-background dark:from-black dark:via-gray-900 dark:to-black">
       <MouseGlow />
       <NavBar />
       <Hero />
       <FeaturedEscorts />
-      <div className="container mx-auto px-4 py-6">
+      <div className="container mx-auto px-4 py-6 text-foreground">
+
         {/* Stories Section */}
         <div className="mb-8 overflow-x-auto">
           <div className="flex gap-4 pb-2">
@@ -48,27 +50,26 @@ export default async function Page() {
           </div>
         </div>
 
-        {/* Categories Section */}
         <div className="mb-8">
           <CategoryTabs />
         </div>
 
-        {/* Escorts Grid */}
         <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-          {escorts && escorts.map((escort) => (
-            <EscortCard
-              key={escort.id}
-              name={escort.username}
-              age={escort.age}
-              location={escort.location}
-              measurements={escort.size}
-              price={escort.price}
-              image={escort.pic || '/placeholder.svg?height=600&width=400'}
-              availability={escort.availability}
-              isVerified={escort.is_verified}
-              isVip={escort.is_vip}
-              isOnline={false}
-            />
+          {users && users.map((user) => (
+            <Link key={user.id} href={`/profile/${user.id}`}>
+              <EscortCard
+                name={user.username}
+                age={user.age}
+                location={user.location_name}
+                measurements={user.size}
+                price={user.price}
+                image={user.profile_picture || '/placeholder.svg?height=600&width=400'}
+                availability={user.availability}
+                isVerified={user.is_verified}
+                isVip={user.is_vip}
+                isOnline={false}
+              />
+            </Link>
           ))}
         </div>
       </div>
@@ -76,4 +77,3 @@ export default async function Page() {
     </div>
   )
 }
-

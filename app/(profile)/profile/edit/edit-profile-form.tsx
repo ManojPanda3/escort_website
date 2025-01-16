@@ -1,5 +1,5 @@
 'use client'
-import { useReducer, useRef, useState } from 'react'
+import { useEffect, useReducer, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs'
 import { Button } from '@/components/ui/button'
@@ -18,6 +18,7 @@ import { AlertCircle, Loader2, Plus } from 'lucide-react'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { Success } from '@/components/ui/success'
 import Image from 'next/image'
+import { supabase } from '@/lib/supabase'
 
 interface EditProfileFormProps {
   profile: any
@@ -27,6 +28,7 @@ type FormState = {
   name: string
   about: string
   location: string
+  location_name: string
   place_of_service: string
   phone_number: string
   height: string
@@ -55,16 +57,35 @@ const formReducer = (state: FormState, action: Action): FormState => {
 }
 
 export function EditProfileForm({ profile }: EditProfileFormProps) {
+  const [locationId, setLocationId] = useState('')
+  const [locations, setLocations] = useState<Location[]>([])
   const router = useRouter()
   const coverImageRef = useRef<HTMLInputElement | null>(null)
   const profilePictureRef = useRef<HTMLInputElement | null>(null)
+
+  useEffect(() => {
+    const fetchLocations = async () => {
+      const { data: locationsData, error } = await supabase
+        .from('locations')
+        .select('*')
+      if (locationsData) {
+        setLocations(locationsData)
+      }
+      if (error) {
+        console.error('Error fetching locations:', error)
+      }
+    }
+    fetchLocations()
+  }, [])
+
 
 
   const initialState: FormState = {
     name: profile?.name || '',
     about: profile?.about || '',
+    location_name: profile?.location_name || '',
     location: profile?.location || '',
-    place_of_service: profile?.place_of_service || '',
+    place_of_services: profile?.place_of_service || '',
     phone_number: profile?.phone_number || '',
     height: profile?.height || '',
     dress_size: profile?.dress_size || '',
@@ -212,7 +233,7 @@ export function EditProfileForm({ profile }: EditProfileFormProps) {
         <form onSubmit={handleSubmit} className="space-y-6">
           <div className="space-y-2">
             <Label>Cover Image</Label>
-            <div className="flex items-center gap-4 relative h-24">
+            <div className="flex items-center gap-4 relative h-24 bg-gray-400 outline outline-1 outline-white rounded-sm">
               <div className="h-full w-full relative rounded-sm overflow-hidden ">
                 <Image
                   src={state.cover_image || "/placeholder.svg?height=200&width=200"}
@@ -234,7 +255,7 @@ export function EditProfileForm({ profile }: EditProfileFormProps) {
               </button>
               <div className="space-y-2 w-20 absolute top-2 left-2 h-full ">
                 <div className="flex items-center relative gap-4">
-                  <div className="h-20 w-20 relative rounded-full overflow-hidden border-white border-2">
+                  <div className="h-20 w-20 relative rounded-full overflow-hidden border-2 bg-gray-700">
                     <Image
                       src={state.profile_picture || "/placeholder.svg?height=200&width=200"}
                       alt={profile?.name}
@@ -270,143 +291,149 @@ export function EditProfileForm({ profile }: EditProfileFormProps) {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="location">Location</Label>
-              <Input
-                id="location"
-                value={state.location}
-                onChange={(e) => handleFieldChange('location', e.target.value)}
-                disabled={loading}
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="phone">Phone Number</Label>
-              <Input
-                id="phone"
-                value={state.phone_number}
-                onChange={(e) => handleFieldChange('phone_number', e.target.value)}
-                disabled={loading}
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="place_of_service">Place of Service</Label>
-              <Input
-                id="place_of_service"
-                value={state.place_of_service}
-                onChange={(e) => handleFieldChange('place_of_service', e.target.value)}
-                disabled={loading}
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="height">Height (cm)</Label>
-              <Input
-                id="height"
-                type="number"
-                value={state.height}
-                onChange={(e) => handleFieldChange('height', e.target.value)}
-                disabled={loading}
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="dress_size">Dress Size</Label>
-              <Input
-                id="dress_size"
-                type="number"
-                value={state.dress_size}
-                onChange={(e) => handleFieldChange('dress_size', e.target.value)}
-                disabled={loading}
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="hair_color">Hair Color</Label>
-              <Select
-                value={state.hair_color}
-                onValueChange={(value) => handleFieldChange('hair_color', value)}
-                disabled={loading}
-              >
+              <Label htmlFor="location_name">Location</Label>
+              <Select value={locationId} onValueChange={setLocationId} required>
                 <SelectTrigger>
-                  <SelectValue placeholder="Select hair color" />
+                  <SelectValue placeholder="Select your location" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="black">Black</SelectItem>
-                  <SelectItem value="brown">Brown</SelectItem>
-                  <SelectItem value="blonde">Blonde</SelectItem>
-                  <SelectItem value="red">Red</SelectItem>
-                  <SelectItem value="other">Other</SelectItem>
+                  {locations.map((location) => (
+                    <SelectItem key={location.id} value={location.id}>
+                      {location.name}
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="eye_color">Eye Color</Label>
-              <Select
-                value={state.eye_color}
-                onValueChange={(value) => handleFieldChange('eye_color', value)}
-                disabled={loading}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Select eye color" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="brown">Brown</SelectItem>
-                  <SelectItem value="blue">Blue</SelectItem>
-                  <SelectItem value="green">Green</SelectItem>
-                  <SelectItem value="hazel">Hazel</SelectItem>
-                  <SelectItem value="other">Other</SelectItem>
-                </SelectContent>
-              </Select>
+              <div className="space-y-2">
+                <Label htmlFor="phone">Phone Number</Label>
+                <Input
+                  id="phone"
+                  value={state.phone_number}
+                  onChange={(e) => handleFieldChange('phone_number', e.target.value)}
+                  disabled={loading}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="place_of_service">Place of Service</Label>
+                <Input
+                  id="place_of_service"
+                  value={state.place_of_service}
+                  onChange={(e) => handleFieldChange('place_of_service', e.target.value)}
+                  disabled={loading}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="height">Height (cm)</Label>
+                <Input
+                  id="height"
+                  type="number"
+                  value={state.height}
+                  onChange={(e) => handleFieldChange('height', e.target.value)}
+                  disabled={loading}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="dress_size">Dress Size</Label>
+                <Input
+                  id="dress_size"
+                  type="number"
+                  value={state.dress_size}
+                  onChange={(e) => handleFieldChange('dress_size', e.target.value)}
+                  disabled={loading}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="hair_color">Hair Color</Label>
+                <Select
+                  value={state.hair_color}
+                  onValueChange={(value) => handleFieldChange('hair_color', value)}
+                  disabled={loading}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select hair color" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="black">Black</SelectItem>
+                    <SelectItem value="brown">Brown</SelectItem>
+                    <SelectItem value="blonde">Blonde</SelectItem>
+                    <SelectItem value="red">Red</SelectItem>
+                    <SelectItem value="other">Other</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="eye_color">Eye Color</Label>
+                <Select
+                  value={state.eye_color}
+                  onValueChange={(value) => handleFieldChange('eye_color', value)}
+                  disabled={loading}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select eye color" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="brown">Brown</SelectItem>
+                    <SelectItem value="blue">Blue</SelectItem>
+                    <SelectItem value="green">Green</SelectItem>
+                    <SelectItem value="hazel">Hazel</SelectItem>
+                    <SelectItem value="other">Other</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="body_type">Body Type</Label>
+                <Select
+                  value={state.body_type}
+                  onValueChange={(value) => handleFieldChange('body_type', value)}
+                  disabled={loading}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select body type" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="slim">Slim</SelectItem>
+                    <SelectItem value="athletic">Athletic</SelectItem>
+                    <SelectItem value="curvy">Curvy</SelectItem>
+                    <SelectItem value="other">Other</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="body_type">Body Type</Label>
-              <Select
-                value={state.body_type}
-                onValueChange={(value) => handleFieldChange('body_type', value)}
+              <Label htmlFor="about">About</Label>
+              <Textarea
+                id="about"
+                value={state.about}
+                onChange={(e) => handleFieldChange('about', e.target.value)}
                 disabled={loading}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Select body type" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="slim">Slim</SelectItem>
-                  <SelectItem value="athletic">Athletic</SelectItem>
-                  <SelectItem value="curvy">Curvy</SelectItem>
-                  <SelectItem value="other">Other</SelectItem>
-                </SelectContent>
-              </Select>
+                className="min-h-[100px]"
+              />
             </div>
-          </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="about">About</Label>
-            <Textarea
-              id="about"
-              value={state.about}
-              onChange={(e) => handleFieldChange('about', e.target.value)}
-              disabled={loading}
-              className="min-h-[100px]"
-            />
-          </div>
+            <div className="space-y-2">
+              <Label htmlFor="interest">Interests</Label>
+              <Textarea
+                id="interest"
+                value={state.interest}
+                onChange={(e) => handleFieldChange('interest', e.target.value)}
+                disabled={loading}
+                className="min-h-[100px]"
+              />
+            </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="interest">Interests</Label>
-            <Textarea
-              id="interest"
-              value={state.interest}
-              onChange={(e) => handleFieldChange('interest', e.target.value)}
-              disabled={loading}
-              className="min-h-[100px]"
-            />
-          </div>
-
-          <Button type="submit" disabled={loading}>
-            {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-            Save Changes
-          </Button>
+            <Button type="submit" disabled={loading}>
+              {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              Save Changes
+            </Button>
         </form>
       </CardContent>
     </Card>

@@ -3,7 +3,7 @@
 import { cn } from '@/lib/utils'
 
 const categories = [
-  'Featured', 'New', 'VIP', 'Verified', 'Available Now', 'Duo', 'BDSM', 'GFE'
+  'Featured', 'VIP', 'Verified', 'Available Now', 'Duo', 'BDSM'
 ]
 
 export function CategoryTabs() {

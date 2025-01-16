@@ -11,42 +11,47 @@ export async function POST(request: NextRequest) {
   }
 
   const formData = await request.formData()
-  const file = formData.get('file') as File
+  const pictureUrl = formData.get('picture') as string
   const title = formData.get('title') as string
   const isMain = formData.get('isMain') === 'true'
 
-  if (!file) {
-    return NextResponse.json({ error: 'No file provided' }, { status: 400 })
+  if (!pictureUrl || !title) {
+    return NextResponse.json({ error: 'url and title are required' }, { status: 400 })
   }
 
-  const fileExt = file.name.split('.').pop()
-  const fileName = `${session.user.id}/${Date.now()}.${fileExt}`
-
-  const { error: uploadError, data } = await supabase.storage
-    .from('pictures')
-    .upload(fileName, file)
-
-  if (uploadError) {
-    return NextResponse.json({ error: uploadError.message }, { status: 400 })
-  }
-
-  const { data: { publicUrl } } = supabase.storage
-    .from('pictures')
-    .getPublicUrl(fileName)
-
-  const { error: dbError } = await supabase
+  const { data:{id},error: dbError } = await supabase
     .from('pictures')
     .insert({
       owner: session.user.id,
-      picture: publicUrl,
+      picture:pictureUrl,
       title,
       "is main": isMain
-    })
+    }).select().single()
 
   if (dbError) {
-    return NextResponse.json({ error: dbError.message }, { status: 400 })
+    return NextResponse.json({ error: dbError.message ,id}, { status: 400 })
   }
 
-  return NextResponse.json({ success: true, message: 'Image added successfully', url: publicUrl })
+  return NextResponse.json({ success: true, message: 'Image added successfully', url: pictureUrl, id: id})
 }
 
+export async function DELETE(request: NextRequest) {
+  const supabase = createRouteHandlerClient({ cookies })
+  const { data: { session } } = await supabase.auth.getSession()
+  if (!session) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  }
+  const { id } = await request.json()
+  if(!id) return NextResponse.json({ error: 'Id is required' }, { status: 400 })
+
+  const { error } = await supabase
+    .from('pictures')
+    .delete()
+    .eq('id', id)
+    .eq('owner', session.user.id)
+  if (error) {
+    return NextResponse.json({ error: error.message }, { status: 400 })
+  }
+
+  return NextResponse.json({ success: true })
+}

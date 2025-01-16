@@ -28,14 +28,16 @@ export function ProfileTabs({
   rates,
   testimonials,
   userId,
-  ownerId 
+  ownerId
 }: ProfileTabsProps) {
   const [comment, setComment] = useState<string>('')
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [error, setError] = useState<string>('')
   const { toast } = useToast()
 
   const handleSubmitTestimonial = async (to: string) => {
-    if(comment.trim().length === 0) {
+    if (ownerId === '') { console.error("You have to login to give testimonies to other"); return; }
+    if (comment.trim().length === 0) {
       toast({
         title: "Error",
         description: "Please enter a comment",
@@ -79,7 +81,7 @@ export function ProfileTabs({
     }
   }
 
-        
+
 
   return (
     <>
