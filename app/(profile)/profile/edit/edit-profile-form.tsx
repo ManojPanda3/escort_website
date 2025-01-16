@@ -126,7 +126,6 @@ export function EditProfileForm({ profile }: EditProfileFormProps) {
       }
       return acc
     }, {} as Record<string, any>)
-    console.log(body)
 
     if (Object.keys(body).length === 0) {
       setError('No data was updated')

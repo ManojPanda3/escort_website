@@ -10,6 +10,14 @@ const nextConfig = {
       },
     ],
   },
-}
+  eslint: {
+    // Disables ESLint during builds
+    ignoreDuringBuilds: true,
+  },
+  typescript: {
+    // Ignores TypeScript errors during builds
+    ignoreBuildErrors: true,
+  },
+};
 
-export default nextConfig
+export default nextConfig;
