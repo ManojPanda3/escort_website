@@ -79,4 +79,17 @@
     opacity: 1;
   }
 }
-
+#mouse::before{
+  content:'';
+  opacity: 0.3;
+  position:absolute;
+  height:100%;
+  width:100%;
+  top:0;
+  left:0;
+  background: radial-gradient(200px circle at var(--mouse-x) var(--mouse-y), rgba(255,255,255,0.3), transparent 100%);
+  transition: 0.5s all;
+}
+/*#mouse:hover::before{*/
+/*  opacity:1;*/
+/*}*/

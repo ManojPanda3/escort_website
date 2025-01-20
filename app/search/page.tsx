@@ -6,11 +6,12 @@ import { Footer } from '@/components/footer'
 import { redirect } from 'next/navigation'
 
 
-export default async function SearchPage({
-  searchParams,
-}: {
-  searchParams: { q: string, type: string }
-}) {
+export default async function SearchPage(
+  props: {
+    searchParams: Promise<{ q: string, type: string }>
+  }
+) {
+  const searchParams = await props.searchParams;
   const searchQuery = searchParams.q?.trim() || ''
   const searchType = searchParams.type?.trim().toLowerCase() || ''
   const supabase = createServerComponentClient({ cookies })

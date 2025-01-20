@@ -56,11 +56,12 @@ const getProfileData = (async (supabase: any, id: string) => {
   }
 })
 
-export default async function UserProfilePage({
-  params
-}: {
-  params: { id: string }
-}) {
+export default async function UserProfilePage(
+  props: {
+    params: Promise<{ id: string }>
+  }
+) {
+  const params = await props.params;
   const id = params.id
   const supabase = createServerComponentClient({ cookies })
   const { data: { user }, error } = await supabase.auth.getUser();

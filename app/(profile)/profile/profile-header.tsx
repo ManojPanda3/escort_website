@@ -45,7 +45,7 @@ export function ProfileHeader({ profile }: ProfileHeaderProps) {
               <div>
                 <h1 className="text-3xl font-bold flex items-center gap-2">
                   {profile?.name}
-                  {profile?.current_plan==null&& (
+                  {profile?.current_plan == null && (
                     <Badge variant="secondary">
                       <Crown className="h-4 w-4 mr-1" />
                       VIP
@@ -73,15 +73,15 @@ export function ProfileHeader({ profile }: ProfileHeaderProps) {
                 </div>
                 <p className="font-medium">{profile?.location_name || ''}</p>
               </div>
-              <div className="space-y-1">
-                <div className="flex items-center text-muted-foreground">
+              <div className="flex items-center text-muted-foreground">
+                <div className="space-y-1">
                   <Phone className="h-4 w-4 mr-1" />
                   Contact
                 </div>
                 <p className="font-medium">{profile?.phone_number || ''}</p>
               </div>
               <div className="space-y-1">
-                <div className="flex items-center text-muted-foreground">
+                <div className="flex items-center text-muted-foreground overflow-hidden">
                   <Mail className="h-4 w-4 mr-1" />
                   Email
                 </div>

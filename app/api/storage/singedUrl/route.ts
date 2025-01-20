@@ -26,43 +26,43 @@ export async function POST(request: NextRequest) {
     if (!userData?.id) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     if (!fileName || !fileType) throw new Error("FileName and FileType are required");
 
-    const { data: ageProofArray, error: ageProofError } = await supabaseAdmin
-      .from('age_proof')
-      .select('*')
-      .eq('owner', userId);
+    // const { data: ageProofArray, error: ageProofError } = await supabaseAdmin
+    //   .from('age_proof')
+    //   .select('*')
+    //   .eq('owner', userId);
 
-    if (ageProofArray && ageProofArray.length > 0) {
-      // For users with age proof, check current offer
-      if (!userData.current_offer) {
-        return NextResponse.json({
-          error: "Limit exceeded for current plan"
-        }, { status: 400 });
-      }
-
-      const { data: offer, error: offerError } = await supabaseAdmin
-        .from("offers")
-        .select("*")
-        .eq("id", userData.current_offer)
-        .single();
-
-      if (offerError) {
-        return NextResponse.json({
-          error: "Error fetching offer details"
-        }, { status: 400 });
-      }
-
-      if (!offer) {
-        return NextResponse.json({
-          error: "Offer not found"
-        }, { status: 404 });
-      }
-
-      if (offer.max_media <= userData.total_media) {
-        return NextResponse.json({
-          error: "Limit exceeded for current plan"
-        }, { status: 400 });
-      }
-    }
+    // if (ageProofArray && ageProofArray.length > 0) {
+    //   // For users with age proof, check current offer
+    //   if (!userData.current_offer) {
+    //     return NextResponse.json({
+    //       error: "Limit exceeded for current plan"
+    //     }, { status: 400 });
+    //   }
+    //
+    //   const { data: offer, error: offerError } = await supabaseAdmin
+    //     .from("offers")
+    //     .select("*")
+    //     .eq("id", userData.current_offer)
+    //     .single();
+    //
+    //   if (offerError) {
+    //     return NextResponse.json({
+    //       error: "Error fetching offer details"
+    //     }, { status: 400 });
+    //   }
+    //
+    //   if (!offer) {
+    //     return NextResponse.json({
+    //       error: "Offer not found"
+    //     }, { status: 404 });
+    //   }
+    //
+    //   if (offer.max_media <= userData.total_media) {
+    //     return NextResponse.json({
+    //       error: "Limit exceeded for current plan"
+    //     }, { status: 400 });
+    //   }
+    // }
 
     const command = new PutObjectCommand({
       Bucket: process.env.R2_BUCKET_NAME!,

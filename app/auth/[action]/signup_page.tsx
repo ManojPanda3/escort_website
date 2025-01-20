@@ -30,7 +30,7 @@ interface FileUploadHandlerProps {
   preview: string | null;
   handleFileChange: (e: React.ChangeEvent<HTMLInputElement>, fileNumber: 1 | 2) => void;
   handleDeleteFile: (fileNumber: 1 | 2) => void;
-  uploaderRef: React.RefObject<HTMLInputElement>;
+  uploaderRef: React.RefObject<HTMLInputElement | null>;
 }
 
 function FileUploadHandler({ fileNumber, preview, handleFileChange, handleDeleteFile, uploaderRef }: FileUploadHandlerProps) {

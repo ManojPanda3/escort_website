@@ -25,4 +25,3 @@ export function MouseGlow() {
 
   return <div id="mouse" className="h-full w-full fixed top-0 left-0 pointer-events-none glow:amber-400" />
 }
-

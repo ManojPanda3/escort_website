@@ -3,7 +3,8 @@ import LoginPage from "./login_page"
 import SignupPage from "./signup_page"
 import { createServerComponentClient } from "@supabase/auth-helpers-nextjs"
 import { cookies } from "next/headers"
-export default async function AuthPage({params}: { params: { action: 'login' | 'signup' } }) {
+export default async function AuthPage(props: { params: Promise<{ action: 'login' | 'signup' }> }) {
+  const params = await props.params;
   const action = params.action
   if(action!=="login" && action!=="signup"){
     return notFound()

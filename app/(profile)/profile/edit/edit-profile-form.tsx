@@ -21,6 +21,7 @@ import { Success } from '@/components/ui/success'
 import Image from 'next/image'
 import { supabase } from '@/lib/supabase'
 import { Badge } from '@/components/ui/badge'
+import { deleteFromStorage, uploadToStorage } from '@/lib/storage'
 
 interface EditProfileFormProps {
   profile: any
@@ -109,6 +110,10 @@ export function EditProfileForm({ profile }: EditProfileFormProps) {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [success, setSuccess] = useState('')
+  const [profilePictureUrl, setProfilePictureUrl] = useState<string>(profile?.profile_picture || '');
+  const [coverImageUrl, setCoverImageUrl] = useState<string>(profile?.cover_image || '');
+  const [profilePicture, setProfilePicture] = useState<File | null>();
+  const [coverImage, setCoverImage] = useState<File | null>();
 
   const handleFieldChange = (field: keyof FormState, value: string | string[]) => {
     dispatch({ type: 'SET_FIELD', field, value })
@@ -119,6 +124,24 @@ export function EditProfileForm({ profile }: EditProfileFormProps) {
     setLoading(true)
     setError('')
     setSuccess('')
+    const uploadTasks = [];
+    const deleteTasks = [];
+    if (profilePicture != null) {
+      uploadTasks.push(uploadToStorage(profilePicture, profile?.id))
+      deleteTasks.push(deleteFromStorage(state.profile_picture, profile?.id))
+    } else {
+      uploadTasks.push(async () => { return true })
+    }
+    if (coverImage != null) {
+      uploadTasks.push(uploadToStorage(coverImage, profile?.id))
+      deleteTasks.push(deleteFromStorage(state.cover_image, profile?.id))
+    }
+    else {
+      uploadTasks.push(async () => { return true })
+    }
+    const uploadedDatas = await Promise.all(uploadTasks);
+    const deleteDatas = await Promise.all(deleteTasks);
+    console.log(deleteDatas)
 
     const body = Object.entries(state).reduce((acc, [key, value]) => {
       if (value !== profile[key] && value !== '') {
@@ -126,6 +149,13 @@ export function EditProfileForm({ profile }: EditProfileFormProps) {
       }
       return acc
     }, {} as Record<string, any>)
+
+    if (uploadedDatas[0] && uploadedDatas[0].success) {
+      body.profile_picture = uploadedDatas[0].fileUrl
+    }
+    if (uploadedDatas[1] && uploadedDatas[1].success) {
+      body.cover_image = uploadedDatas[1].fileUrl
+    }
 
     if (Object.keys(body).length === 0) {
       setError('No data was updated')
@@ -162,6 +192,8 @@ export function EditProfileForm({ profile }: EditProfileFormProps) {
 
     setLoading(true)
     setError('')
+    if (field == "profile_picture") setProfilePicture(file)
+    else setCoverImage(file)
 
     try {
       const reader = new FileReader()
@@ -199,7 +231,8 @@ export function EditProfileForm({ profile }: EditProfileFormProps) {
           ctx.drawImage(tempImage, 0, 0, canvas.width, canvas.height)
 
           const webpDataUrl = canvas.toDataURL('image/webp', 0.9)
-          dispatch({ type: 'SET_FIELD', field, value: webpDataUrl })
+          if (field == "profile_picture") setProfilePictureUrl(webpDataUrl)
+          else setCoverImageUrl(webpDataUrl)
         }
 
         tempImage.onerror = () => {
@@ -251,7 +284,7 @@ export function EditProfileForm({ profile }: EditProfileFormProps) {
             <div className="flex items-center gap-4 relative h-24 bg-gray-400 outline outline-1 outline-white rounded-sm">
               <div className="h-full w-full relative rounded-sm overflow-hidden">
                 <Image
-                  src={state.cover_image || "/placeholder.svg?height=200&width=200"}
+                  src={coverImageUrl}
                   alt={state.name}
                   fill
                   className="object-cover"
@@ -276,7 +309,7 @@ export function EditProfileForm({ profile }: EditProfileFormProps) {
                 <div className="flex items-center relative gap-4">
                   <div className="h-20 w-20 relative rounded-full overflow-hidden border-2 bg-gray-700">
                     <Image
-                      src={state.profile_picture || "/placeholder.svg?height=200&width=200"}
+                      src={profilePictureUrl}
                       alt={state.name}
                       fill
                       className="object-cover"
