@@ -16,7 +16,7 @@ export default async function Page() {
     .from('users')
     .select('*')
     .neq('user_type', 'general')
-    .limit(4))
+    .order('ratings', { ascending: false }))
   if (userError) {
     console.error('Error fetching stories:', userError);
     return;

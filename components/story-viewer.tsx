@@ -112,10 +112,19 @@ export function StoryViewer({ id, url, title, isVideo, isMain, onClose }: StoryV
   };
   return (
     <Dialog open={true} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[425px] p-0 overflow-hidden" isMain={isMain}>
+      <DialogContent className="sm:max-w-[425px] p-0 overflow-hidden">
         <div className="relative w-full h-[80vh]">
           {isVideo ? (
-            <video src={url} className="w-full h-full object-cover" controls autoPlay loop />
+            <div className="w-full h-full">
+              <video 
+                src={url} 
+                className="absolute w-full h-full object-cover" 
+                controls 
+                autoPlay 
+                loop 
+                style={{objectFit: 'cover'}}
+              />
+            </div>
           ) : (
             <Image src={url || "/placeholder.svg"} alt={title} layout="fill" objectFit="cover" />
           )}

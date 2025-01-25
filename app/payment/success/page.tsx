@@ -1,41 +1,40 @@
-'use client';
+import { redirect } from 'next/navigation'
+import { createServerComponentClient } from '@supabase/auth-helpers-nextjs'
+import { cookies } from 'next/headers'
+import { Card } from '@/components/ui/card'
+import { Button } from '@/components/ui/button'
+import { CheckCircle } from 'lucide-react'
+import Link from 'next/link'
 
-import { useSearchParams } from 'next/navigation';
-import { useEffect, useState } from 'react';
+export default async function PaymentSuccessPage({
+  searchParams,
+}: {
+  searchParams: { session_id: string }
+}) {
+  const supabase = createServerComponentClient({ cookies })
+  const { data: { session } } = await supabase.auth.getSession()
 
-const PaymentSuccessPage = () => {
-  const searchParams = useSearchParams();
-  const sessionId = searchParams.get('session_id');
-  const [sessionDetails, setSessionDetails] = useState<any>(null);
-
-  useEffect(() => {
-    const fetchSessionDetails = async () => {
-      if (sessionId) {
-        const response = await fetch(`/api/getCheckoutSession?sessionId=${sessionId}`);
-        if (response.ok) {
-          const sessionData = await response.json();
-          setSessionDetails(sessionData);
-        }
-      }
-    };
-
-    fetchSessionDetails();
-  }, [sessionId]);
+  if (!session) {
+    redirect('/auth/login')
+  }
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen">
-      <h1 className="text-3xl font-bold">Payment Successful!</h1>
-      <p className="mt-4 text-lg">Thank you for your purchase.</p>
-
-      {sessionDetails && (
-        <div className="mt-8 p-4 bg-gray-100 rounded-md">
-          <h2 className="font-semibold text-xl">Order Details:</h2>
-          <p>Subscription ID: {sessionDetails.subscription}</p>
-          <p>Email: {sessionDetails.customer_email}</p>
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-r from-black via-gray-900 to-black p-4">
+      <Card className="max-w-md w-full p-8 text-center space-y-6">
+        <div className="flex justify-center">
+          <CheckCircle className="h-16 w-16 text-green-500" />
         </div>
-      )}
+        <h1 className="text-2xl font-bold">Payment Successful!</h1>
+        <p className="text-muted-foreground">
+          Thank you for your purchase. Your subscription has been activated.
+        </p>
+        <div className="pt-4">
+          <Link href="/profile">
+            <Button className="w-full">Go to Profile</Button>
+          </Link>
+        </div>
+      </Card>
     </div>
-  );
-};
+  )
+}
 
-export default PaymentSuccessPage;

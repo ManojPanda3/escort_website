@@ -46,6 +46,7 @@ export function AddPictureModal({
           ctx.drawImage(img, 0, 0)
           canvas.toBlob((blob) => {
             if (blob) {
+              console.log('Converted WebP blob:', blob)
               resolve(blob)
             } else {
               reject(new Error('Failed to convert to WebP'))
@@ -86,7 +87,6 @@ export function AddPictureModal({
       const webpFile = new File([webpBlob], file.name.replace(/\.[^/.]+$/, '.webp'), {
         type: 'image/webp'
       })
-
       
       const picture = await uploadToStorage(webpFile, userId)
       if (!picture.fileUrl) throw new Error('Failed to upload to storage')

@@ -18,6 +18,7 @@ import { LoadingSpinner } from '@/components/ui/loading'
 import { Dialog, DialogContent, DialogTitle } from '@radix-ui/react-dialog'
 import { DialogHeader } from '@/components/ui/dialog'
 import { Label } from 'recharts'
+import { deleteFromStorage } from '@/lib/storage'
 
 interface ProfileTabsProps {
   pictures: any[]
@@ -43,12 +44,20 @@ export function ProfileTabs({
   const [services, setServices] = useState(initialServices)
   const [rates, setRates] = useState(initialRates)
 
-  async function handlePictureDelete(id: string){
+  async function handlePictureDelete(id: string, fileUrl: string){
     try {
       setIsLoading(true)
+
+      // Delete from S3 first
+      const storageResult = await deleteFromStorage(fileUrl, userId)
+      if (!storageResult.success) {
+        throw new Error('Failed to delete from storage')
+      }
+
+      // Then delete from database
       const response = await fetch(`/api/profile/addImage`, {
         method: 'DELETE',
-        body:JSON.stringify({id})
+        body: JSON.stringify({id})
       })
 
       if (!response.ok) throw new Error(`Failed to delete picture`)
@@ -156,7 +165,7 @@ export function ProfileTabs({
                   <Button
                     variant="ghost"
                     size="sm"
-                    onClick={() => handlePictureDelete(picture.id)}
+                    onClick={() => handlePictureDelete(picture.id, picture.picture)}
                   >
                     <Trash2 className="h-4 w-4 text-red-500" />
                   </Button>

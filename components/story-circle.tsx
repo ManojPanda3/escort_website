@@ -1,78 +1,69 @@
 'use client'
 
-import Image from 'next/image'
-import { cn } from '@/lib/utils'
 import { useEffect, useState } from 'react'
-import { StoryViewer } from './story-viewer'
+import { Zuck } from 'zuck.js';
+import 'zuck.js/css';
+import 'zuck.js/skins/snapgram';
 
 interface StoryCircleProps {
   id: string
   url: string
   title: string
+  avatar_image: string
   isVideo?: boolean
 }
 
-export function StoryCircle({ id, url, title, isVideo }: StoryCircleProps) {
-  const [thumbnailUrl, setThumbnailUrl] = useState(url)
-  const [isOpen, setIsOpen] = useState(false)
-
+export function StoryCircle({ id, url, title, isVideo, avatar_image }: StoryCircleProps) {
+  console.info(avatar_image)
   useEffect(() => {
-    if (isVideo) {
-      const video = document.createElement('video')
-      video.crossOrigin = 'anonymous'
-      video.src = url
+    // Initialize Zuck stories
+    const storiesEl = document.getElementById('stories')
+    if (!storiesEl) return
 
-      video.addEventListener('loadeddata', () => {
-        video.currentTime = 0
+    const timestamp = Date.now()
 
-        const canvas = document.createElement('canvas')
-        canvas.width = video.videoWidth
-        canvas.height = video.videoHeight
-
-        const ctx = canvas.getContext('2d')
-        if (ctx) {
-          ctx.drawImage(video, 0, 0, canvas.width, canvas.height)
-          const thumbnailDataUrl = canvas.toDataURL('image/jpeg')
-          setThumbnailUrl(thumbnailDataUrl)
+    const stories = new Zuck(storiesEl, {
+      backNative: true,
+      previousTap: true,
+      skin: 'snapgram',
+      autoFullScreen: false,
+      avatars: true,
+      list: false,
+      cubeEffect: true,
+      localStorage: true,
+      stories: [
+        {
+          id,
+          photo: avatar_image || '/placeholder.svg', 
+          name: title,
+          link: '',
+          lastUpdated: timestamp,
+          items: [
+            {
+              id: `${id}-1`,
+              type: isVideo ? 'video' : 'photo',
+              length: 0,
+              src: url,
+              preview: url,
+              link: '',
+              linkText: '',
+              time: timestamp,
+              seen: false
+            }
+          ]
         }
-      })
+      ]
+    })
+
+    return () => {
+      // Cleanup - remove element instead of destroy
+      if (storiesEl) {
+        storiesEl.remove()
+      }
     }
-  }, [url, isVideo])
+  }, [id, url, title, isVideo])
 
   return (
-    <>
-      <button
-        className="group flex flex-col items-center gap-1"
-        onClick={() => setIsOpen(true)}
-      >
-        <div className="p-0.5 rounded-full bg-gray-700">
-          <div className="p-0.5 rounded-full bg-black">
-            <div className="relative h-16 w-16 overflow-hidden rounded-full ring-2 ring-black">
-              <Image
-                src={thumbnailUrl || "/placeholder.svg"}
-                alt={title}
-                fill
-                className={cn(
-                  "object-cover transition-opacity duration-300",
-                  isVideo ? "opacity-100" : "group-hover:opacity-100 opacity-75"
-                )}
-              />
-            </div>
-          </div>
-        </div>
-        <span className="text-xs text-gray-300 group-hover:text-white transition-colors">
-          {title}
-        </span>
-      </button>
-      {isOpen && (
-        <StoryViewer
-          id={id}
-          url={url}
-          title={title}
-          isVideo={isVideo}
-          onClose={() => setIsOpen(false)}
-        />
-      )}
-    </>
+    <div id="stories" className="storiesWrapper" />
   )
 }
