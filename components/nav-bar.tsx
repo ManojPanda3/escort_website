@@ -33,7 +33,7 @@ interface User {
 }
 
 export function NavBar() {
-  const [user, setUser] = useState(null)
+  const [user, setUser] = useState<User | null>(null)
   const router = useRouter()
   const supabase = createClientComponentClient()
   const [isSearchOpen, setIsSearchOpen] = useState(false)
@@ -41,14 +41,18 @@ export function NavBar() {
   const [searchType, setSearchType] = useState('all')
   const [suggestions, setSuggestions] = useState<User[]>([])
 
+  // Pre-fetch suggestions on mount
   useEffect(() => {
-    // Simulating fetching top users
-    const topUsers: User[] = [
-      { id: '1', username: 'user1', avatar: '/placeholder.svg' },
-      { id: '2', username: 'user2', avatar: '/placeholder.svg' },
-      { id: '3', username: 'user3', avatar: '/placeholder.svg' },
-    ]
-    setSuggestions(topUsers)
+    const fetchSuggestions = async () => {
+      // Replace with actual API call
+      const topUsers: User[] = [
+        { id: '1', username: 'user1', avatar: '/placeholder.svg' },
+        { id: '2', username: 'user2', avatar: '/placeholder.svg' },
+        { id: '3', username: 'user3', avatar: '/placeholder.svg' },
+      ]
+      setSuggestions(topUsers)
+    }
+    fetchSuggestions()
   }, [])
 
   const handleSearch = () => {
@@ -57,7 +61,6 @@ export function NavBar() {
       setIsSearchOpen(false)
     }
   }
-
 
   useEffect(() => {
     const fetchUser = async () => {
@@ -78,7 +81,6 @@ export function NavBar() {
     }
   }, [supabase.auth])
 
-
   const handleLogout = async () => {
     await supabase.auth.signOut()
     router.push('/')
@@ -86,7 +88,7 @@ export function NavBar() {
 
   const cities = [
     'INTERNATIONAL',
-    'AUSTRALIA',
+    'AUSTRALIA', 
     'SYDNEY',
     'MELBOURNE',
     'BRISBANE',
@@ -103,19 +105,20 @@ export function NavBar() {
     'LOCATIONS',
     'ESCORTS',
     'BDSM',
-    'COUPLES',
+    'COUPLES', 
     'CATEGORIES'
   ]
 
   return (
-    <nav className="bg-background/80 backdrop-blur-sm sticky top-0 z-50 border-b border-border">
+    <nav className="bg-background/80 backdrop-blur-sm sticky top-0 z-50 border-b border-border" role="navigation" aria-label="Main navigation">
       {/* Top Cities Bar */}
-      <div className="hidden lg:flex items-center justify-center gap-4 p-2 text-xs border-b border-border">
+      <div className="hidden lg:flex items-center justify-center gap-4 p-2 text-xs border-b border-border" role="navigation" aria-label="City navigation">
         {cities.map((city) => (
           <Link
             key={city}
-            href="#"
+            href={`/location/${city.toLowerCase()}`}
             className="hover:text-primary transition-colors"
+            aria-label={`View escorts in ${city}`}
           >
             {city}
           </Link>
@@ -126,20 +129,21 @@ export function NavBar() {
       <div className="container mx-auto px-4">
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
-          <Link href="/" className="flex items-center gap-2">
-            <span className="text-2xl font-bold bg-gradient-to-r from-amber-200 to-yellow-400 bg-clip-text text-transparent">
+          <Link href="/" className="flex items-center gap-2" aria-label="Go to homepage">
+            <h1 className="text-2xl font-bold bg-gradient-to-r from-amber-200 to-yellow-400 bg-clip-text text-transparent">
               <span className="hidden sm:inline">ALL-NIGHTER</span>
               <span className="sm:hidden">A-N</span>
-            </span>
+            </h1>
           </Link>
 
           {/* Desktop Navigation */}
-          <div className="hidden lg:flex items-center gap-6">
+          <div className="hidden lg:flex items-center gap-6" role="navigation" aria-label="Primary navigation">
             {mainNav.map((item) => (
               <Link
                 key={item}
-                href="#"
+                href={`/${item.toLowerCase()}`}
                 className="text-sm hover:text-primary transition-colors"
+                aria-label={`View ${item.toLowerCase()}`}
               >
                 {item}
               </Link>
@@ -152,23 +156,36 @@ export function NavBar() {
             <Link
               href="/premium"
               className="hidden sm:block text-sm font-semibold bg-gradient-to-r from-amber-400 to-amber-600 text-black px-4 py-2 rounded-full animate-pulse hover:animate-none transition-all duration-300 hover:from-amber-500 hover:to-amber-700"
+              aria-label="Upgrade to premium"
             >
               PREMIUM
             </Link>
 
             <ThemeToggle />
+            
             {/* Search */}
-            <Button variant="ghost" size="icon" className="hidden sm:inline-flex" onClick={() => setIsSearchOpen(true)}>
+            <Button 
+              variant="ghost" 
+              size="icon" 
+              className="hidden sm:inline-flex" 
+              onClick={() => setIsSearchOpen(true)}
+              aria-label="Open search"
+            >
               <Search className="h-5 w-5" />
             </Button>
 
             {/* User */}
             {user ? (
-              <Button variant="ghost" size="icon" onClick={() => router.push('/profile')}>
-                {user.user_metadata.avatar_url ? (
+              <Button 
+                variant="ghost" 
+                size="icon" 
+                onClick={() => router.push('/profile')}
+                aria-label="View profile"
+              >
+                {user.user_metadata?.avatar_url ? (
                   <Image
                     src={user.user_metadata.avatar_url}
-                    alt="Profile"
+                    alt="Profile picture"
                     width={32}
                     height={32}
                     className="rounded-full"
@@ -184,7 +201,7 @@ export function NavBar() {
             {/* Mobile Menu */}
             <Sheet>
               <SheetTrigger asChild>
-                <Button variant="ghost" size="icon" className="lg:hidden">
+                <Button variant="ghost" size="icon" className="lg:hidden" aria-label="Open menu">
                   <Menu className="h-5 w-5" />
                 </Button>
               </SheetTrigger>
@@ -192,12 +209,13 @@ export function NavBar() {
                 <SheetHeader>
                   <SheetTitle className="text-left">Menu</SheetTitle>
                 </SheetHeader>
-                <div className="mt-4 space-y-4">
+                <nav className="mt-4 space-y-4">
                   {mainNav.map((item) => (
                     <Link
                       key={item}
-                      href="#"
+                      href={`/${item.toLowerCase()}`}
                       className="block py-2 hover:text-primary transition-colors"
+                      aria-label={`View ${item.toLowerCase()}`}
                     >
                       {item}
                     </Link>
@@ -205,37 +223,43 @@ export function NavBar() {
                   <Link
                     href="/premium"
                     className="block py-2 text-sm font-semibold text-amber-400 hover:text-amber-300 transition-colors"
+                    aria-label="Upgrade to premium"
                   >
                     PREMIUM
                   </Link>
-                  {user ?
+                  {user ? (
                     <button
                       className="block py-2 text-sm font-semibold text-red-600 hover:text-red-300 transition-colors"
                       onClick={handleLogout}
+                      aria-label="Log out"
                     >
                       <LogOut />
-                    </button> : <LoginBtn className="rounded-sm" />
-                  }
+                    </button>
+                  ) : (
+                    <LoginBtn className="rounded-sm" />
+                  )}
                   <div className="pt-4 border-t">
                     <p className="text-sm font-medium mb-2">Popular Cities</p>
                     <div className="grid grid-cols-2 gap-2">
                       {cities.slice(0, 6).map((city) => (
                         <Link
                           key={city}
-                          href="#"
+                          href={`/location/${city.toLowerCase()}`}
                           className="text-sm hover:text-primary transition-colors"
+                          aria-label={`View escorts in ${city}`}
                         >
                           {city}
                         </Link>
                       ))}
                     </div>
                   </div>
-                </div>
+                </nav>
               </SheetContent>
             </Sheet>
           </div>
         </div>
       </div>
+
       {/* Search Popup */}
       <AnimatePresence>
         {isSearchOpen && (
@@ -251,9 +275,10 @@ export function NavBar() {
                     placeholder="Search..."
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
+                    aria-label="Search query"
                   />
                   <Select value={searchType} onValueChange={setSearchType}>
-                    <SelectTrigger className="w-[180px]">
+                    <SelectTrigger className="w-[180px]" aria-label="Search type">
                       <SelectValue placeholder="Search type" />
                     </SelectTrigger>
                     <SelectContent>
@@ -278,8 +303,10 @@ export function NavBar() {
                         setSearchQuery(user.username)
                         handleSearch()
                       }}
+                      role="button"
+                      aria-label={`Search for ${user.username}`}
                     >
-                      <img src={user.avatar} alt={user.username} className="w-8 h-8 rounded-full" />
+                      <Image src={user.avatar} alt={`${user.username}'s avatar`} width={32} height={32} className="rounded-full" />
                       <span>{user.username}</span>
                     </motion.div>
                   ))}
@@ -296,10 +323,13 @@ export function NavBar() {
 const LoginBtn = ({ className }: { className?: string }) => {
   const router = useRouter()
   return (
-    <Button className={"bg-primary hover:bg-primary/80 font-bold py-2 px-4 rounded-full transition duration-300 text-black " + className} onClick={() => router?.push('/auth/login')}>
+    <Button 
+      className={"bg-primary hover:bg-primary/80 font-bold py-2 px-4 rounded-full transition duration-300 text-black " + className} 
+      onClick={() => router?.push('/auth/login')}
+      aria-label="Log in"
+    >
       <User className="h-5 w-5 mr-2" />
       Login
     </Button>
   );
 }
-
