@@ -1,18 +1,18 @@
-"use client"
+"use client";
 
-import { useState } from "react"
-import { motion, AnimatePresence } from "framer-motion"
-import { ChevronDown, Mail } from "lucide-react"
-import { cn } from "@/lib/utils"
+import { useState } from "react";
+import { AnimatePresence, motion } from "framer-motion";
+import { ChevronDown, Mail } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 interface FAQItemProps {
-  question: string
-  answer: string
-  index: number
+  question: string;
+  answer: string;
+  index: number;
 }
 
 function FAQItem({ question, answer, index }: FAQItemProps) {
-  const [isOpen, setIsOpen] = useState(false)
+  const [isOpen, setIsOpen] = useState(false);
 
   return (
     <motion.div
@@ -22,7 +22,9 @@ function FAQItem({ question, answer, index }: FAQItemProps) {
       className={cn(
         "group rounded-lg border border-gray-200 dark:border-gray-800",
         "transition-all duration-200 ease-in-out",
-        isOpen ? "bg-gray-50 dark:bg-gray-900" : "hover:bg-gray-100 dark:hover:bg-gray-800"
+        isOpen
+          ? "bg-gray-50 dark:bg-gray-900"
+          : "hover:bg-gray-100 dark:hover:bg-gray-800",
       )}
     >
       <button
@@ -30,7 +32,14 @@ function FAQItem({ question, answer, index }: FAQItemProps) {
         onClick={() => setIsOpen(!isOpen)}
         className="w-full px-6 py-4 flex items-center justify-between"
       >
-        <h3 className={cn("text-base font-medium", isOpen ? "text-gray-900 dark:text-white" : "text-gray-700 dark:text-gray-300")}>
+        <h3
+          className={cn(
+            "text-base font-medium",
+            isOpen
+              ? "text-gray-900 dark:text-white"
+              : "text-gray-700 dark:text-gray-300",
+          )}
+        >
           {question}
         </h3>
         <motion.div
@@ -64,28 +73,32 @@ function FAQItem({ question, answer, index }: FAQItemProps) {
         )}
       </AnimatePresence>
     </motion.div>
-  )
+  );
 }
 
 function FaqAllNighters() {
   const faqs: Omit<FAQItemProps, "index">[] = [
     {
       question: "What is All Nighters?",
-      answer: "All Nighters is a premium platform where you can discover elite companionship services, curated to ensure discretion, authenticity, and high-class experiences.",
+      answer:
+        "All Nighters is a premium platform where you can discover elite companionship services, curated to ensure discretion, authenticity, and high-class experiences.",
     },
     {
       question: "How do I book a service?",
-      answer: "Simply browse through profiles, select your desired companion, and use the provided contact details to arrange your appointment directly.",
+      answer:
+        "Simply browse through profiles, select your desired companion, and use the provided contact details to arrange your appointment directly.",
     },
     {
       question: "Is my privacy protected?",
-      answer: "Absolutely. We prioritize privacy and security, ensuring all interactions remain confidential and secure.",
+      answer:
+        "Absolutely. We prioritize privacy and security, ensuring all interactions remain confidential and secure.",
     },
     {
       question: "How do I become a listed escort on All Nighters?",
-      answer: "If you’re interested in joining our platform, you can apply through our sign-up portal, providing necessary details for verification.",
+      answer:
+        "If you’re interested in joining our platform, you can apply through our sign-up portal, providing necessary details for verification.",
     },
-  ]
+  ];
 
   return (
     <section className="py-16 w-full bg-gray-50 dark:bg-gray-900">
@@ -134,7 +147,7 @@ function FaqAllNighters() {
         </motion.div>
       </div>
     </section>
-  )
+  );
 }
 
-export default FaqAllNighters
+export default FaqAllNighters;

@@ -1,24 +1,23 @@
-'use client'
+"use client";
 
-import { Badge } from '@/components/ui/badge'
-import { Card } from '@/components/ui/card'
-import { MapPin, Shield, Star, Phone, Calendar } from 'lucide-react'
-import { motion } from 'framer-motion'
-import { memo, useState } from 'react'
+import { Badge } from "@/components/ui/badge";
+import { Card } from "@/components/ui/card";
+import { Calendar, MapPin, Phone, Shield, Star } from "lucide-react";
+import { motion } from "framer-motion";
+import { memo, useState } from "react";
 
 interface EscortCardProps {
-  name: string
-  age: number
-  location: string
-  measurements: string
-  price: string
-  image: string
-  hoverImage?: string
-  phone: string
-  availability: string
-  isVerified?: boolean
-  isVip?: boolean
-  isOnline?: boolean
+  name: string;
+  age: number;
+  location: string;
+  measurements: string;
+  price: string;
+  image: string;
+  phone: string;
+  availability: string;
+  isVerified?: boolean;
+  isVip?: boolean;
+  isOnline?: boolean;
 }
 
 export const EscortCard = memo(function EscortCard({
@@ -28,22 +27,19 @@ export const EscortCard = memo(function EscortCard({
   measurements,
   price,
   image,
-  hoverImage = `https://picsum.photos/400/600?random=${Math.random()}`,
   phone,
   availability,
   isVerified = true,
   isVip = true,
-  isOnline = true
+  isOnline = true,
 }: EscortCardProps) {
-  const [imgSrc, setImgSrc] = useState(image)
-
   return (
     <motion.div
       whileHover={{ scale: 1.05 }}
-      transition={{ type: 'spring', stiffness: 300 }}
+      transition={{ type: "spring", stiffness: 300 }}
       className="w-full max-w-xs sm:max-w-sm md:max-w-md lg:max-w-lg xl:max-w-xl mx-auto"
     >
-      <Card 
+      <Card
         className="group relative overflow-hidden rounded-xl bg-black/40 backdrop-blur-sm shadow-lg transition-transform duration-300"
         role="article"
         aria-label={`Profile card for ${name}`}
@@ -61,13 +57,11 @@ export const EscortCard = memo(function EscortCard({
         {/* Image and Hover Effect */}
         <div className="relative aspect-[3/4] w-full">
           <img
-            src={imgSrc}
+            src={image}
             alt={`Profile photo of ${name}`}
             className="object-cover w-full h-full transition-all duration-500 group-hover:scale-105"
-            onMouseEnter={() => setImgSrc(hoverImage)}
-            onMouseLeave={() => setImgSrc(image)}
           />
-          
+
           {/* Availability Overlay - Top */}
           <div className="absolute inset-x-0 top-0 translate-y-[-100%] bg-gradient-to-b from-black/90 to-transparent p-4 text-white transition-transform duration-300 group-hover:translate-y-0">
             <div className="flex items-center gap-2">
@@ -116,7 +110,7 @@ export const EscortCard = memo(function EscortCard({
         </div>
       </Card>
     </motion.div>
-  )
-})
+  );
+});
 
-EscortCard.displayName = 'EscortCard'
+EscortCard.displayName = "EscortCard";
