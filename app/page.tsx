@@ -6,6 +6,7 @@ import { EscortCard } from '@/components/escort-card'
 import { StoryCircle } from '@/components/story-circle'
 import { Footer } from '@/components/footer'
 import { MouseGlow } from '@/components/mouse-glow'
+import { FaqAllNighters } from '@/components/Faq02'
 import { AboutSection } from '@/components/about-section'  // <-- new AboutSection
 import { createServerComponentClient } from '@supabase/auth-helpers-nextjs'
 import { cookies } from 'next/headers'
@@ -170,6 +171,8 @@ export default async function Page() {
         {/* About Section */}
         <AboutSection />
       </main>
+      <FaqAllNighters />
+
       <Footer />
     </div>
   )
