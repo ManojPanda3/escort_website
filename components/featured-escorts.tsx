@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Image from "next/image";
-import { AnimatePresence, motion } from "framer-motion";
+import { AnimatePresence, easeIn, motion } from "framer-motion";
 import { Card } from "@/components/ui/card";
 import { MapPin, Star } from "lucide-react";
 
@@ -38,8 +38,8 @@ function FeaturedEscort(
       className="relative w-full h-[500px] rounded-xl overflow-hidden cursor-pointer transform transition-transform duration-200 hover:scale-[1.02]"
       onHoverStart={() => setIsHovered(true)}
       onHoverEnd={() => setIsHovered(false)}
-      whileHover={{ scale: 1.02 }}
-      transition={{ duration: 0.3 }}
+      whileHover={{ scale: 1.09 }}
+      transition={{ duration: 0.25, type: easeIn }}
     >
       <Card className="w-full h-full bg-black/40 backdrop-blur-sm overflow-hidden">
         <div className="relative w-full h-full">
@@ -64,25 +64,42 @@ function FeaturedEscort(
             {isHovered
               ? (
                 <motion.div
-                  className="absolute inset-0 flex flex-col justify-center items-center bg-black/80 p-6"
+                  className="absolute inset-0 flex flex-col justify-between bg-black/80 p-6"
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
                   exit={{ opacity: 0 }}
                   transition={{ duration: 0.3 }}
                 >
-                  <h3 className="text-3xl font-bold mb-4 text-white">
-                    {username}
-                  </h3>
-                  <p className="text-lg text-center mb-4 text-gray-300">
-                    {age} years | {location_name}
-                  </p>
-                  <p className="text-2xl font-bold mb-6 text-amber-400">
-                    {price}
-                  </p>
+                  <div>
+                    <h3 className="text-3xl font-bold mb-2 text-white">
+                      {username}
+                    </h3>
+                    <p className="text-lg text-amber-300">{location_name}</p>
+                  </div>
+                  <div className="space-y-2 text-sm text-gray-300">
+                    <p>
+                      <span className="font-semibold">Age:</span> {age}
+                    </p>
+                    <p>
+                      <span className="font-semibold">Dress Size:</span>{" "}
+                      {/* {dress_size || ""} */}
+                    </p>
+                    <p>
+                      <span className="font-semibold">Hair Color:</span>{" "}
+                      {/* {hair_color || ""} */}
+                    </p>
+                    <p>
+                      <span className="font-semibold">Price:</span> {price}
+                    </p>
+                    <p>
+                      <span className="font-semibold">Service:</span>{" "}
+                      {/* {service_type || ""} */}
+                    </p>
+                  </div>
                   <div
                     className={`px-4 py-2 rounded-full bg-gradient-to-r ${
                       rankColors[rank]
-                    } text-white font-bold flex items-center`}
+                    } text-white font-bold flex items-center justify-center`}
                   >
                     <Star className="w-5 h-5 mr-2" />
                     <span>
@@ -90,18 +107,6 @@ function FeaturedEscort(
                       {rank.charAt(0).toUpperCase() + rank.slice(1)}
                     </span>
                   </div>
-                  <motion.div
-                    className="absolute top-4 right-4"
-                    initial={{ rotate: 0 }}
-                    animate={{ rotate: 360 }}
-                    transition={{
-                      duration: 20,
-                      repeat: Number.POSITIVE_INFINITY,
-                      ease: "linear",
-                    }}
-                  >
-                    <div className="text-4xl">{rankEmojis[rank]}</div>
-                  </motion.div>
                 </motion.div>
               )
               : (

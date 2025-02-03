@@ -20,7 +20,7 @@ function FAQItem({ question, answer, index }: FAQItemProps) {
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3, delay: index * 0.15, ease: "easeOut" }}
       className={cn(
-        "group rounded-lg border border-gray-200 dark:border-gray-800",
+        "group rounded-lg border border-gray-200 dark:border-gray-800 ",
         "transition-all duration-200 ease-in-out",
         isOpen
           ? "bg-gray-50 dark:bg-gray-900"
@@ -107,7 +107,7 @@ function FaqAllNighters() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
-          className="max-w-2xl mx-auto text-center mb-12"
+          className="max-w-2xl mx-auto text-center mb-12 "
         >
           <h2 className="text-3xl font-semibold text-gray-900 dark:text-white">
             Frequently Asked Questions
