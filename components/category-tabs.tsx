@@ -2,9 +2,10 @@
 
 import { memo } from 'react'
 import { cn } from '@/lib/utils'
+import { motion } from 'framer-motion'
 
 const categories = [
-  'Featured', 'VIP', 'Verified', 'Available Now', 'Duo', 'BDSM'
+  'Featured', 'New', 'VIP', 'Verified', 'Available Now', 'Duo', 'BDSM', 'GFE'
 ] as const
 
 export const CategoryTabs = memo(function CategoryTabs() {
@@ -14,7 +15,7 @@ export const CategoryTabs = memo(function CategoryTabs() {
       aria-label="Category filters"
     >
       {categories.map((category, index) => (
-        <button
+        <motion.button
           key={category}
           className={cn(
             "whitespace-nowrap rounded-full px-4 py-1.5 text-sm font-medium transition-all",
@@ -25,9 +26,11 @@ export const CategoryTabs = memo(function CategoryTabs() {
           role="tab"
           aria-selected={index === 0}
           aria-controls={`${category.toLowerCase()}-tab`}
+          whileHover={{ scale: 1.05 }}
+          whileTap={{ scale: 0.95 }}
         >
           {category}
-        </button>
+        </motion.button>
       ))}
     </nav>
   )

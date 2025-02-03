@@ -19,6 +19,7 @@ export function MouseBubbles() {
       speedX: number
       speedY: number
       alpha: number
+      color: string
     }> = []
 
     const resize = () => {
@@ -29,14 +30,18 @@ export function MouseBubbles() {
     window.addEventListener('resize', resize)
     resize()
 
+    const colors = ['#FFD700', '#FFA500', '#FFB900']
+
     const addBubble = (x: number, y: number) => {
+      const color = colors[Math.floor(Math.random() * colors.length)]
       bubbles.push({
         x,
         y,
-        size: Math.random() * 20 + 10,
+        size: Math.random() * 15 + 5,
         speedX: (Math.random() - 0.5) * 2,
         speedY: -Math.random() * 2 - 1,
-        alpha: 1
+        alpha: 1,
+        color
       })
     }
 
@@ -48,19 +53,19 @@ export function MouseBubbles() {
       bubbles.forEach(bubble => {
         bubble.x += bubble.speedX
         bubble.y += bubble.speedY
-        bubble.alpha -= 0.01
+        bubble.alpha -= 0.02
 
         ctx.beginPath()
         ctx.arc(bubble.x, bubble.y, bubble.size, 0, Math.PI * 2)
-        ctx.strokeStyle = `rgba(218, 165, 32, ${bubble.alpha})`
-        ctx.stroke()
+        ctx.fillStyle = `${bubble.color}${Math.floor(bubble.alpha * 255).toString(16).padStart(2, '0')}`
+        ctx.fill()
       })
 
       requestAnimationFrame(animate)
     }
 
     const handleMouseMove = (e: MouseEvent) => {
-      if (Math.random() > 0.8) {
+      if (Math.random() > 0.5) {
         addBubble(e.clientX, e.clientY)
       }
     }

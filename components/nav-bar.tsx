@@ -87,7 +87,6 @@ export function NavBar() {
   }
 
   const cities = [
-    'INTERNATIONAL',
     'AUSTRALIA', 
     'SYDNEY',
     'MELBOURNE',

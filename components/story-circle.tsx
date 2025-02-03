@@ -1,9 +1,9 @@
 'use client'
 
-import { useEffect, useState } from 'react'
-import { Zuck } from 'zuck.js';
-import 'zuck.js/css';
-import 'zuck.js/skins/snapgram';
+import Image from 'next/image'
+import { cn } from '@/lib/utils'
+import { useState } from 'react'
+import { StoryViewer } from './story-viewer'
 
 interface StoryCircleProps {
   id: string
@@ -11,59 +11,54 @@ interface StoryCircleProps {
   title: string
   avatar_image: string
   isVideo?: boolean
+  isActive?: boolean
 }
 
-export function StoryCircle({ id, url, title, isVideo, avatar_image }: StoryCircleProps) {
-  console.info(avatar_image)
-  // useEffect(() => {
-  //   // Initialize Zuck stories
-  //   const storiesEl = document.getElementById('stories')
-  //   if (!storiesEl) return
-  //
-  //   const timestamp = Date.now()
-  //
-  //   const stories = Zuck(storiesEl, {
-  //     backNative: true,
-  //     previousTap: true,
-  //     skin: 'snapgram',
-  //     autoFullScreen: false,
-  //     avatars: true,
-  //     list: false,
-  //     cubeEffect: true,
-  //     localStorage: true,
-  //     stories: [
-  //       {
-  //         id,
-  //         photo: avatar_image || '/placeholder.svg', 
-  //         name: title,
-  //         link: '',
-  //         lastUpdated: timestamp,
-  //         items: [
-  //           {
-  //             id: `${id}-1`,
-  //             type: isVideo ? 'video' : 'photo',
-  //             length: 0,
-  //             src: url,
-  //             preview: url,
-  //             link: '',
-  //             linkText: '',
-  //             time: timestamp,
-  //             seen: false
-  //           }
-  //         ]
-  //       }
-  //     ]
-  //   })
-  //
-  //   return () => {
-  //     // Cleanup - remove element instead of destroy
-  //     if (storiesEl) {
-  //       storiesEl.remove()
-  //     }
-  //   }
-  // }, [id, url, title, isVideo])
+export function StoryCircle({ id, url, title, isVideo, avatar_image, isActive }: StoryCircleProps) {
+  const [showStoryViewer, setShowStoryViewer] = useState(false)
+
+  const handleClick = () => {
+    setShowStoryViewer(true)
+  }
 
   return (
-    <div id="stories" className="storiesWrapper" />
+    <>
+      <button
+        onClick={handleClick}
+        className="group flex flex-col items-center gap-1"
+      >
+        <div className={cn(
+          "p-0.5 rounded-full",
+          isActive ? "bg-gradient-to-tr from-amber-400 via-amber-500 to-amber-600" : "bg-gray-700"
+        )}>
+          <div className="p-0.5 rounded-full bg-black">
+            <div className="relative h-16 w-16 overflow-hidden rounded-full ring-2 ring-black">
+              <Image
+                src={avatar_image}
+                alt={title}
+                fill
+                className={cn(
+                  "object-cover transition-opacity duration-300",
+                  isActive ? "opacity-100" : "group-hover:opacity-100 opacity-75"
+                )}
+              />
+            </div>
+          </div>
+        </div>
+        <span className="text-xs text-gray-300 group-hover:text-white transition-colors">
+          {title}
+        </span>
+      </button>
+
+      {showStoryViewer && (
+        <StoryViewer
+          id={id}
+          url={url}
+          title={title}
+          isVideo={isVideo}
+          onClose={() => setShowStoryViewer(false)}
+        />
+      )}
+    </>
   )
 }
