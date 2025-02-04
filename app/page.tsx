@@ -86,9 +86,8 @@ export default async function Page() {
   try {
     users = await fetchUsers();
     if (!users.length) {
-      return <div role="alert" className="p-4">No users found.</div>;
+      console.log("No users found");
     }
-
     stories = await fetchStories(users.map((user) => user.id));
   } catch (error) {
     console.error("Error fetching data:", error);
