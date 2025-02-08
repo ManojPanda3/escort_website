@@ -1,36 +1,33 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useEffect, useRef } from "react";
+import { motion, useAnimation } from "framer-motion";
 
-export function MouseGlow() {
-  const [hasCursor, setHasCursor] = useState(false);
+export const MouseGlow = () => {
+  const glowRef = useRef<HTMLDivElement>(null);
+  const controls = useAnimation();
 
   useEffect(() => {
-    // Check if device has cursor
-    const hasPointer = window.matchMedia("(pointer: fine)").matches;
-    setHasCursor(hasPointer);
-  }, []);
+    const handleMouseMove = (e: MouseEvent) => {
+      if (!glowRef.current) return;
 
-  if (!hasCursor) return null;
+      const { clientX: x, clientY: y } = e;
 
-  const handleMouseMove = (e: MouseEvent) => {
-    // Calculate mouse position relative to the viewport
-    const x = e.clientX;
-    const y = e.clientY;
+      controls.start({
+        x: x - 60, // Offset to center
+        y: y - 60,
+        transition: { type: "spring", stiffness: 100, damping: 15 },
+      });
+    };
 
-    const mouseElement = document.getElementById("mouse");
-    if (mouseElement) {
-      // Update the custom properties for CSS animations
-      mouseElement.style.setProperty("--mouse-x", `${x}px`);
-      mouseElement.style.setProperty("--mouse-y", `${y}px`);
-    }
-  };
+    document.addEventListener("mousemove", handleMouseMove);
+    return () => document.removeEventListener("mousemove", handleMouseMove);
+  }, [controls]);
 
   return (
-    <div
-      id="mouse"
-      className="h-full w-full fixed top-0 left-0 pointer-events-auto" // Ensure pointer-events is allowed
-      onMouseMove={handleMouseMove}
+    <motion.div
+      ref={glowRef}
+      animate={controls}
+      className="fixed top-0 left-0 w-[120px] h-[120px] bg-gradient-to-r from-pink-500 via-purple-500 to-indigo-500 opacity-40 blur-2xl rounded-full pointer-events-none mix-blend-lighten"
     />
   );
-}
-
+};

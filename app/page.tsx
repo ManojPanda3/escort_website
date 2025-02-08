@@ -16,7 +16,7 @@ import { Suspense } from "react";
 import { ScrollToTop } from "@/components/scroll_to_top";
 import { RoyalBackground } from "@/components/royal-background";
 
-// Add metadata for SEO
+// Metadata for SEO
 export const metadata: Metadata = {
   title: "Find Your Perfect Companion | Premium Escort Directory",
   description:
@@ -34,9 +34,7 @@ async function fetchUsers() {
   const supabase = createServerComponentClient({ cookies });
   const { data, error } = await supabase
     .from("users")
-    .select(
-      "id, username, age, location_name, dress_size, profile_picture, is_verified",
-    )
+    .select("id, username, age, location_name, dress_size, profile_picture, is_verified")
     .neq("user_type", "general")
     .order("ratings", { ascending: false });
 
@@ -45,18 +43,12 @@ async function fetchUsers() {
     throw error;
   }
 
-  console.log("Fetched Users:", data);
   return data;
 }
 
 // Function to fetch stories
 async function fetchStories(userIds: string[]) {
-  if (!userIds.length) {
-    console.warn("No user IDs provided for fetching stories.");
-    return [];
-  }
-
-  console.log("Fetching stories for user IDs:", userIds);
+  if (!userIds.length) return [];
 
   const supabase = createServerComponentClient({ cookies });
   const { data, error } = await supabase
@@ -69,13 +61,12 @@ async function fetchStories(userIds: string[]) {
     throw error;
   }
 
-  console.log("Fetched Stories:", data);
   return data;
 }
 
-// Random image generator (0 to 17)
+// Random image generator
 function getRandomImage() {
-  const imageIndex = Math.floor(Math.random() * 18); // Random number between 0 and 17
+  const imageIndex = Math.floor(Math.random() * 18);
   return `http://raw.githubusercontent.com/riivana/All-nighter-random-images/refs/heads/main/image%20${imageIndex}.webp`;
 }
 
@@ -85,9 +76,6 @@ export default async function Page() {
 
   try {
     users = await fetchUsers();
-    if (!users.length) {
-      console.log("No users found");
-    }
     stories = await fetchStories(users.map((user) => user.id));
   } catch (error) {
     console.error("Error fetching data:", error);
@@ -100,8 +88,10 @@ export default async function Page() {
 
   return (
     <div className="relative min-h-screen bg-gradient-to-b from-background via-background/80 to-background dark:from-black dark:via-gray-900 dark:to-black">
-      {/* <MouseGlow /> */}
+      {/* Mouse Glow Effect */}
+      <MouseGlow />
       <RoyalBackground />
+
       <div className="relative z-10">
         <Suspense fallback={<div className="animate-pulse h-16 bg-gray-200" />}>
           <NavBar />
@@ -109,35 +99,22 @@ export default async function Page() {
 
         <main>
           <h1 className="sr-only">Premium Escort Directory</h1>
-          <Suspense
-            fallback={<div className="animate-pulse h-96 bg-gray-200" />}
-          >
+
+          <Suspense fallback={<div className="animate-pulse h-96 bg-gray-200" />}>
             <Hero />
           </Suspense>
 
-          <Suspense
-            fallback={<div className="animate-pulse h-64 bg-gray-200" />}
-          >
+          <Suspense fallback={<div className="animate-pulse h-64 bg-gray-200" />}>
             <FeaturedEscorts users={users.slice(0, 3)} />
           </Suspense>
 
           <div className="container mx-auto px-4 py-6 text-foreground">
             {/* Stories Section */}
-            <Suspense
-              fallback={<div className="animate-pulse h-24 bg-gray-200 mb-8" />}
-            >
-              <section
-                aria-label="User Stories"
-                className="mb-8 overflow-x-auto"
-              >
+            <Suspense fallback={<div className="animate-pulse h-24 bg-gray-200 mb-8" />}>
+              <section aria-label="User Stories" className="mb-8 overflow-x-auto">
                 <div className="flex gap-4 pb-2">
-                  {console.log(
-                    "Rendering Stories Section. Stories Length:",
-                    stories.length,
-                  )}
                   {stories.length > 0
-                    ? (
-                      stories.map((story, index) => (
+                    ? stories.map((story, index) => (
                         <StoryCircle
                           key={story.id || index}
                           {...story}
@@ -145,7 +122,6 @@ export default async function Page() {
                           isActive={index === 0}
                         />
                       ))
-                    )
                     : (
                       <div className="relative w-full h-56">
                         <img
@@ -163,9 +139,7 @@ export default async function Page() {
               </section>
             </Suspense>
 
-            <Suspense
-              fallback={<div className="animate-pulse h-16 bg-gray-200 mb-8" />}
-            >
+            <Suspense fallback={<div className="animate-pulse h-16 bg-gray-200 mb-8" />}>
               <section aria-label="Categories" className="mb-8">
                 <CategoryTabs />
               </section>
@@ -174,13 +148,7 @@ export default async function Page() {
             <section aria-label="Escort Listings">
               <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
                 {users.map((user) => (
-                  <Link
-                    key={user.id}
-                    href={`/profile/${user.id}`}
-                    className="focus:outline-none focus:ring-2 focus:ring-primary rounded-lg"
-                    aria-label={`View ${user.username}'s profile`}
-                    prefetch={false}
-                  >
+                  <Link key={user.id} href={`/profile/${user.id}`} prefetch={false}>
                     <EscortCard
                       name={user.username}
                       age={user.age}
@@ -188,7 +156,6 @@ export default async function Page() {
                       measurements={user.dress_size}
                       image={user.profile_picture || "/placeholder.svg"}
                       isVerified={user.is_verified}
-                      isVip={user.current_offer != null}
                     />
                   </Link>
                 ))}
@@ -196,7 +163,6 @@ export default async function Page() {
             </section>
           </div>
 
-          {/* About Section */}
           <AboutSection />
           <FaqAllNighters />
         </main>
