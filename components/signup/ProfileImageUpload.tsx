@@ -18,7 +18,7 @@ interface ProfileImageUploadProps {
 }
 
 export default function ProfileImageUpload(
-  { formData, updateFormData, onNext, onPrevious, setError }:
+  { formData, updateFormData, onNext, onPrevious, setError, setIsLoading }:
     ProfileImageUploadProps,
 ) {
   const profilePictureRef = useRef<HTMLInputElement>(null);
@@ -28,6 +28,7 @@ export default function ProfileImageUpload(
     e: React.ChangeEvent<HTMLInputElement>,
     field: "profilePicture" | "coverImage",
   ) => {
+    setIsLoading(true);
     const file = e.target.files?.[0];
     if (!file) return;
 
@@ -36,6 +37,7 @@ export default function ProfileImageUpload(
       updateFormData({ [field]: file });
     };
     reader.readAsDataURL(file);
+    setIsLoading(false);
   };
 
   return (

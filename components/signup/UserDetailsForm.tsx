@@ -30,11 +30,14 @@ interface UserDetailsFormProps {
 }
 
 export default function UserDetailsForm(
-  { formData, updateFormData, onNext, setError }: UserDetailsFormProps,
+  { formData, updateFormData, onNext, setError, setIsLoading, setIsVerified }:
+    UserDetailsFormProps,
 ) {
   const [showPassword, setShowPassword] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
+    setIsLoading(true);
+
     e.preventDefault();
     const { data: authData, error: signUpError } = await supabase.auth.signUp({
       email: formData.email,
@@ -46,11 +49,12 @@ export default function UserDetailsForm(
 
     if (signUpError) {
       console.error("Signup Error:", signUpError);
-      setError(singUpError);
+      setError(signUpError);
       return { error: signUpError };
     }
     console.log("Signup successful, verification email sent. ", authData);
     updateFormData({ userId: authData.id });
+    setIsLoading(false);
     onNext();
   };
 

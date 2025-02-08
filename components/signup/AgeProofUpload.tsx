@@ -1,4 +1,4 @@
-import { useRef } from "react";
+import { useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -18,7 +18,7 @@ interface AgeProofUploadProps {
 }
 
 export default function AgeProofUpload(
-  { formData, updateFormData, onSubmit, onPrevious, setError }:
+  { formData, updateFormData, onSubmit, onPrevious, setError, setIsLoading }:
     AgeProofUploadProps,
 ) {
   const ageProof1Ref = useRef<HTMLInputElement>(null);
@@ -28,14 +28,17 @@ export default function AgeProofUpload(
     e: React.ChangeEvent<HTMLInputElement>,
     field: "ageProof1" | "ageProof2",
   ) => {
+    setIsLoading(true);
     const file = e.target.files?.[0];
     if (!file) return;
-
     updateFormData({ [field]: file });
+    setIsLoading(false);
   };
 
   const removeFile = (field: "ageProof1" | "ageProof2") => {
+    setIsLoading(true);
     updateFormData({ [field]: null });
+    setIsLoading(false);
   };
 
   return (

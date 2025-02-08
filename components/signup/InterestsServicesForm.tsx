@@ -31,6 +31,7 @@ export default function InterestsServicesForm({
   onNext,
   onPrevious,
   setError,
+  setIsLoading,
 }: InterestsServicesFormProps) {
   const [categoryChoise, setCategoriesChoise] = useState<string>("");
   const [serviceChoise, setServiceChoise] = useState<string>("");
@@ -38,12 +39,16 @@ export default function InterestsServicesForm({
   const [categories, setCategories] = useState<string[]>([]);
 
   useEffect(() => {
+
+    setIsLoading(true);
     (async () => {
       const [fetchedService, fetchedCategories] = await Promise.all([
         fetch("/services.json"),
         fetch("/categories.json"),
       ]);
       console.log(fetchedService, fetchedCategories);
+
+      setIsLoading(false);
     })();
   });
 

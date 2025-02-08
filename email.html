@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Confirm Your Signup</title>
+    <style>
+        body {
+            font-family: sans-serif;
+            background-color: #f0f0f0;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+        .email-container {
+            background-color: #1a1a1a; /* Dark background */
+            color: #fff; /* Light text */
+            border-radius: 8px;
+            padding: 30px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            width: 90%;
+            max-width: 600px;
+            text-align: center;
+        }
+        h2 {
+            color: #ffd700; /* Golden Heading */
+            margin-bottom: 20px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+        p {
+            margin-bottom: 15px;
+            line-height: 1.6;
+        }
+
+        .otp-container {
+            background-color: #333;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 20px auto;
+            max-width: 200px;
+        }
+
+       .otp-container span{
+             font-size: 1.2rem;
+            font-weight: bold;
+            color: #ffd700; /* Golden OTP */
+       }
+
+
+        @media (max-width: 480px) {
+            .email-container {
+                padding: 20px;
+            }
+             h2 {
+                font-size: 1.5rem;
+            }
+             p {
+                 font-size: 0.9rem;
+             }
+        }
+    </style>
+</head>
+<body>
+    <div class="email-container">
+        <h2>Confirm your signup</h2>
+        <p>Confirm your email: <span style="color:#ffd700">{{.Email}}</span></p>
+        <div class="otp-container">
+          OTP: <span >{{.Token}}</span>
+        </div>
+
+    </div>
+</body>
+</html>

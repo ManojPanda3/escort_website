@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
+import ResendVerificationEmailButton from "./ResendVerificationEmail_btn";
 
 interface EmailVerificationProps {
   email: string;
@@ -12,10 +13,10 @@ interface EmailVerificationProps {
 }
 
 export default function EmailVerification(
-  { email, onNext, onPrevious, setError }: EmailVerificationProps,
+  { email, onNext, onPrevious, setError, setIsVerified, isVerified }:
+    EmailVerificationProps,
 ) {
   const [verificationCode, setVerificationCode] = useState("");
-  const [isVerified, setIsVerified] = useState(false);
   const supabase = createClientComponentClient();
 
   useEffect(() => {
@@ -33,6 +34,14 @@ export default function EmailVerification(
 
     return () => clearInterval(interval);
   }, [supabase.auth]);
+
+  const handleEmailResend = async (email: string) => {
+    const emailResend = await supabase.auth.resend({
+      type: "signup",
+      email: email,
+    });
+    console.log(emailResend);
+  };
 
   const handleVerify = async () => {
     try {
@@ -70,6 +79,10 @@ export default function EmailVerification(
           onChange={(e) => setVerificationCode(e.target.value)}
           required
         />
+        <ResendVerificationEmailButton
+          onClick={handleEmailResend}
+          email={email}
+        />
       </div>
       <div className="flex justify-between">
         <Button onClick={onPrevious} variant="outline">
@@ -80,3 +93,4 @@ export default function EmailVerification(
     </div>
   );
 }
+
