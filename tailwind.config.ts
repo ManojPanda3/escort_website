@@ -1,4 +1,5 @@
-import type { Config } from "tailwindcss"
+import type { Config } from "tailwindcss";
+import plugin from "tailwindcss/plugin";
 
 const config = {
   darkMode: ["class"],
@@ -7,7 +8,7 @@ const config = {
     './components/**/*.{ts,tsx}',
     './app/**/*.{ts,tsx}',
     './src/**/*.{ts,tsx}',
-	],
+  ],
   prefix: "",
   theme: {
     container: {
@@ -52,12 +53,34 @@ const config = {
           DEFAULT: "hsl(var(--card))",
           foreground: "hsl(var(--card-foreground))",
         },
+
+        // Custom Themes 🎨
+        sepia: {
+          DEFAULT: "#704214",
+          foreground: "#ffffff",
+          button: "#a67c52",
+          text: "#000000",
+        },
+        cyberpunk: {
+          DEFAULT: "#ff00ff",
+          foreground: "#00ffff",
+          button: "#ff4500",
+          text: "#000000",
+        },
+        dracula: {
+          DEFAULT: "#282a36",
+          foreground: "#f8f8f2",
+          button: "#8be9fd",
+          text: "#000000",
+        },
       },
+
       borderRadius: {
         lg: "var(--radius)",
         md: "calc(var(--radius) - 2px)",
         sm: "calc(var(--radius) - 4px)",
       },
+
       keyframes: {
         "accordion-down": {
           from: { height: "0" },
@@ -67,15 +90,34 @@ const config = {
           from: { height: "var(--radix-accordion-content-height)" },
           to: { height: "0" },
         },
+        fadeIn: {
+          from: { opacity: "0" },
+          to: { opacity: "1" },
+        },
+        pulseGlow: {
+          "0%": { boxShadow: "0 0 5px rgba(255, 105, 180, 0.5)" },
+          "50%": { boxShadow: "0 0 20px rgba(255, 105, 180, 1)" },
+          "100%": { boxShadow: "0 0 5px rgba(255, 105, 180, 0.5)" },
+        },
       },
+
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
         "accordion-up": "accordion-up 0.2s ease-out",
+        fadeIn: "fadeIn 0.3s ease-in",
+        pulseGlow: "pulseGlow 2s infinite",
       },
     },
   },
-  plugins: [require("tailwindcss-animate")],
-} satisfies Config
 
-export default config
+  plugins: [
+    require("tailwindcss-animate"),
+    plugin(({ addVariant }) => {
+      addVariant("sepia", "&.sepia");
+      addVariant("cyberpunk", "&.cyberpunk");
+      addVariant("dracula", "&.dracula");
+    }),
+  ],
+} satisfies Config;
 
+export default config;

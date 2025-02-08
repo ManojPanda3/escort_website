@@ -85,7 +85,7 @@ export default async function Page() {
       </div>
     );
   }
-
+  
   return (
     <div className="relative min-h-screen bg-gradient-to-b from-background via-background/80 to-background dark:from-black dark:via-gray-900 dark:to-black">
       {/* Mouse Glow Effect */}
