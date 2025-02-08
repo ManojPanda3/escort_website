@@ -39,18 +39,19 @@
   .cyberpunk {
     --background: #000000;
     --foreground: #00ffff;
-    --primary: 350 100% 50%; /* Red */
-    --primary-foreground: #00ffff;
-    --button-glow: rgba(255, 0, 0, 0.7); /* Bright red glow */
+    --primary: 60 100% 50%; /* Neon Yellow */
+    --primary-foreground: #000000;
+    --button-glow: rgba(105, 187, 105, 0.8); /* Bright Yellow Glow */
   }
 
   .dracula {
     --background: #282a36;
     --foreground: #f8f8f2;
-    --primary: 280 80% 60%; /* Purple */
+    --primary: 330 70% 70%; /* Soft Pink */
     --primary-foreground: #282a36;
-    --button-glow: rgba(189, 147, 249, 0.6); /* Soft purple glow */
+    --button-glow: rgba(255, 105, 180, 0.6); /* Soft Pink Glow */
   }
+
 }
 
 /* ======== GENERAL STYLING ======== */
