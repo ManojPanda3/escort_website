@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
-import { AlertCircle, Eye, EyeOff, Plus, X } from "lucide-react";
+import { AlertCircle, Plus, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -488,21 +488,25 @@ export default function SignUpPage() {
               </SelectContent>
             </Select>
           </div>
-          <div>
-            <Label htmlFor="location">Location</Label>
-            <Select value={locationId} onValueChange={setLocationId} required>
-              <SelectTrigger>
-                <SelectValue placeholder="Select your location" />
-              </SelectTrigger>
-              <SelectContent>
-                {locations.map((location) => (
-                  <SelectItem key={location.id} value={location.id}>
-                    {location.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
+
+          {userType !== "general" && (
+            <div>
+              <Label htmlFor="location">Location</Label>
+              <Select value={locationId} onValueChange={setLocationId} required>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select your location" />
+                </SelectTrigger>
+                <SelectContent>
+                  {locations.map((location) => (
+                    <SelectItem key={location.id} value={location.id}>
+                      {location.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
+
           <div>
             <Label htmlFor="age">Age</Label>
             <Input
@@ -603,43 +607,45 @@ export default function SignUpPage() {
               </div>
             </div>
           )}
-          <div className="space-y-2">
-            <Label htmlFor="interested_services">Interested Services</Label>
-            {" "}
-            <Select
-              value={serviceInput}
-              onValueChange={handleAddService}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Select services" />
-              </SelectTrigger>
-              <SelectContent>
-                {services.map((service) => (
-                  <SelectItem key={service} value={service}>
-                    {service}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            <div className="flex flex-wrap gap-2 mt-2">
-              {selectedServices.map((service) => (
-                <Badge
-                  key={service}
-                  variant="secondary"
-                  className="px-2 py-1"
-                >
-                  {service}
-                  <button
-                    type="button"
-                    onClick={() => handleRemoveService(service)}
-                    className="ml-2 text-red-500 hover:text-red-700"
+
+          {userType !== "general" && (
+            <div className="space-y-2">
+              <Label htmlFor="interested_services">Interested Services</Label>
+              <Select
+                value={serviceInput}
+                onValueChange={handleAddService}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select services" />
+                </SelectTrigger>
+                <SelectContent>
+                  {services.map((service) => (
+                    <SelectItem key={service} value={service}>
+                      {service}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <div className="flex flex-wrap gap-2 mt-2">
+                {selectedServices.map((service) => (
+                  <Badge
+                    key={service}
+                    variant="secondary"
+                    className="px-2 py-1"
                   >
-                    <X className="h-3 w-3" />
-                  </button>
-                </Badge>
-              ))}
+                    {service}
+                    <button
+                      type="button"
+                      onClick={() => handleRemoveService(service)}
+                      className="ml-2 text-red-500 hover:text-red-700"
+                    >
+                      <X className="h-3 w-3" />
+                    </button>
+                  </Badge>
+                ))}
+              </div>
             </div>
-          </div>
+          )}
           <div className="flex items-center space-x-2">
             <Checkbox
               id="terms"
@@ -674,4 +680,3 @@ export default function SignUpPage() {
     </div>
   );
 }
-
