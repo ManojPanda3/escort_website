@@ -449,7 +449,11 @@ export default function SignUpPage() {
           </div>
           <div>
             <Label htmlFor="userType">User Type</Label>
-            <Select value={userType} onValueChange={setUserType} required>
+            <Select
+              value={userType}
+              onValueChange={setUserType}
+              required
+            >
               <SelectTrigger>
                 <SelectValue placeholder="Select user type" />
               </SelectTrigger>
