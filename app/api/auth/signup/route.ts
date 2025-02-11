@@ -6,6 +6,7 @@ export async function POST(request: NextRequest) {
     if (!supabaseAdmin) {
       throw new Error("Admin supabase not found");
     }
+    console.log("Incoming request body:", await request.clone().formData());
     const formData = await request.formData();
     const email = formData.get("email") as string;
     const username = formData.get("username") as string;
@@ -26,6 +27,20 @@ export async function POST(request: NextRequest) {
         { message: "Must be 18 or older to register." },
         { status: 400 },
       );
+    }
+    if (!userId || userId.trim() === "") {
+      console.error("Missing userId from form data");
+      return NextResponse.json({ message: "Missing user ID." }, {
+        status: 400,
+      });
+    }
+    const uuidRegex =
+      /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i; // Basic UUID regex
+    if (!uuidRegex.test(userId)) {
+      console.error("Invalid userId format:", userId);
+      return NextResponse.json({ message: "Invalid user ID format." }, {
+        status: 400,
+      });
     }
 
     // Parse categories and services from JSON strings to JavaScript arrays
@@ -70,7 +85,10 @@ export async function POST(request: NextRequest) {
       categories: categories, // Use the parsed array
       interested_services: interested_services, // Use the parsed array
     };
+    if (location.trim() == "") delete userDataToInsert.location;
+    if (locationName.trim() == "") delete userDataToInsert.location_name;
 
+    console.log("Right Before updating", userDataToInsert.id);
     const { data: insertedUser, error: userInsertError } = await supabaseAdmin
       .from("users")
       .insert([userDataToInsert])
@@ -94,4 +112,3 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ message }, { status: 500 });
   }
 }
-

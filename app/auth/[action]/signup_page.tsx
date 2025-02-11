@@ -307,6 +307,7 @@ export default function SignUpPage() {
       }
 
       const userId = authData?.user?.id;
+      console.log(userId);
       if (!userId) {
         setError("Failed to get auth ID");
         return;

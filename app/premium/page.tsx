@@ -1,35 +1,36 @@
-import { createServerComponentClient } from '@supabase/auth-helpers-nextjs'
-import { cookies } from 'next/headers'
-import { redirect } from 'next/navigation'
-import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card'
-import PaymentButton from './paymentButton'
+import { createServerComponentClient } from "@supabase/auth-helpers-nextjs";
+import { cookies } from "next/headers";
+import { redirect } from "next/navigation";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import PaymentButton from "./paymentButton";
 
 interface Offer {
-  id: string
-  type: string
-  price: number
-  billing_cycle: string
-  features: string[]
-  stripe_price_id: string
+  id: string;
+  type: string;
+  price: number;
+  billing_cycle: string;
+  features: string[];
+  stripe_price_id: string;
 }
 
 export default async function PremiumPage() {
-  const supabase = createServerComponentClient({ cookies })
-  const { data: { session } } = await supabase.auth.getSession()
-
-  if (!session) {
-    redirect('/auth/login')
-  }
+  const supabase = createServerComponentClient({ cookies });
 
   // Fetch offers with caching
   const { data: offers, error } = await supabase
-    .from('offers')
-    .select('*')
-    .order('price', { ascending: true }, { head: true, cache: 'force-cache' })
+    .from("offers")
+    .select("*")
+    .order("price", { ascending: true }, { head: true, cache: "force-cache" });
 
   if (error) {
-    console.error('Error fetching offers:', error)
-    return <div>Error loading premium plans. Please try again later.</div>
+    console.error("Error fetching offers:", error);
+    return <div>Error loading premium plans. Please try again later.</div>;
   }
 
   return (
@@ -40,7 +41,9 @@ export default async function PremiumPage() {
           <Card key={offer.id} className="flex flex-col">
             <CardHeader>
               <CardTitle>{offer.type}</CardTitle>
-              <CardDescription>${offer.price}/{offer.billing_cycle}</CardDescription>
+              <CardDescription>
+                ${offer.price}/{offer.billing_cycle}
+              </CardDescription>
             </CardHeader>
             <CardContent className="flex-grow">
               <ul className="list-disc list-inside mb-4">
@@ -57,5 +60,5 @@ export default async function PremiumPage() {
         ))}
       </div>
     </div>
-  )
+  );
 }

@@ -11,7 +11,6 @@ import { motion } from 'framer-motion'
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 
-
 interface PricingPackage {
   type: string
   id: number | null
@@ -22,69 +21,64 @@ interface PricingPackage {
   max_places: number
 }
 
-// interface PricingPackagesProps {
-//   packages: PricingPackage[]
-// }
-
 export function PricingPackages({ offers }) {
   const [packages, setPackages] = useState<PricingPackage[]>(offers)
   const [editingPackage, setEditingPackage] = useState<PricingPackage | null>(null)
   const [isDialogOpen, setIsDialogOpen] = useState(false)
   const supabase = createClientComponentClient()
 
-  useEffect(() => {
-    fetchPackages()
-  }, [])
-
-  const fetchPackages = async () => {
-    const { data, error } = await fetch("/api/offer", {
-      method: "GET",
-      headers: {
-        "Content-Type": "application/json"
-      }
-    });
-    if (error) {
-      console.error('Error fetching packages:', error)
-    }
-    if (data) {
-      setPackages(data)
-    }
-  }
-
   const handleEditPackage = (pkg: PricingPackage) => {
     setEditingPackage({ ...pkg })
     setIsDialogOpen(true)
   }
 
+  const handleDeletePackage = async (id: number) => {
+    const response = await fetch(`/api/offer`, {
+      method: "DELETE",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id })
+    });
+    
+    if (response.ok) {
+      setPackages(packages.filter(pkg => pkg.id !== id));
+    } else {
+      alert("Failed to delete package");
+    }
+  };
+
   const handleSavePackage = async () => {
     if (editingPackage) {
       if (editingPackage.id) {
-        // Update existing package
         let data = { ...editingPackage }
         delete data.id
-        console.log(data)
-        const offerUpdateResponse = await fetch("/api/offer", {
+        const response = await fetch("/api/offer", {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(data),
         });
-        if (!offerUpdateResponse.ok) alert("Failed to update offer: " + offerUpdateResponse.statusText)
-        const { error } = await offerUpdateResponse.json()
-        if (error) console.error('Error updating package:', error)
+        
+        if (response.ok) {
+          setPackages(packages.map(pkg => 
+            pkg.id === editingPackage.id ? editingPackage : pkg
+          ));
+        } else {
+          alert("Failed to update package");
+        }
       } else {
-        // Add new package
-
-        const offerInsertResponse = await fetch("/api/offer", {
+        const response = await fetch("/api/offer", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(editingPackage),
         });
-        if (!offerInsertResponse.ok) alert("Failed to update offer: " + offerInsertResponse.statusText)
-        const { error } = await offerInsertResponse.json()
-        if (error) console.error('Error adding package:', error)
+        
+        if (response.ok) {
+          const { data } = await response.json();
+          setPackages([...packages, data]);
+        } else {
+          alert("Failed to add package");
+        }
       }
-      fetchPackages()
-      setIsDialogOpen(false)
+      setIsDialogOpen(false);
     }
   }
 
@@ -175,6 +169,13 @@ export function PricingPackages({ offers }) {
                 <p className="text-sm text-muted-foreground mb-4">Max Places: {pkg.max_places}</p>
                 <Button
                   variant="outline"
+                  className="w-full mb-2 border-red-500 text-red-500 hover:bg-red-500 hover:text-white"
+                  onClick={() => handleDeletePackage(pkg.id)}
+                >
+                  <Trash2 className="mr-2 h-4 w-4" /> Delete Package
+                </Button>
+                <Button
+                  variant="outline"
                   className="w-full border-primary text-primary hover:bg-primary hover:text-primary-foreground"
                   onClick={() => handleEditPackage(pkg)}
                 >
@@ -221,7 +222,10 @@ export function PricingPackages({ offers }) {
                 <Label htmlFor="billingCycle" className="text-right">
                   Billing Cycle
                 </Label>
-                <Select value={editingPackage.billing_cycle} onValueChange={(e) => setEditingPackage({ ...editingPackage, billing_cycle: e })} >
+                <Select 
+                  value={editingPackage.billing_cycle} 
+                  onValueChange={(e) => setEditingPackage({ ...editingPackage, billing_cycle: e })}
+                >
                   <SelectTrigger className="col-span-3">
                     <SelectValue placeholder="Select Billing Cycle" />
                   </SelectTrigger>

@@ -34,7 +34,9 @@ async function fetchUsers() {
   const supabase = createServerComponentClient({ cookies });
   const { data, error } = await supabase
     .from("users")
-    .select("id, username, age, location_name, dress_size, profile_picture, is_verified")
+    .select(
+      "id, username, age, location_name, dress_size, profile_picture, is_verified",
+    )
     .neq("user_type", "general")
     .order("ratings", { ascending: false });
 
@@ -65,7 +67,7 @@ async function fetchStories(userIds: string[]) {
 }
 
 // Random image generator
-function getRandomImage() {
+export function getRandomImage() {
   const imageIndex = Math.floor(Math.random() * 18);
   return `http://raw.githubusercontent.com/riivana/All-nighter-random-images/refs/heads/main/image%20${imageIndex}.webp`;
 }
@@ -85,7 +87,7 @@ export default async function Page() {
       </div>
     );
   }
-  
+
   return (
     <div className="relative min-h-screen bg-gradient-to-b from-background via-background/80 to-background dark:from-black dark:via-gray-900 dark:to-black">
       {/* Mouse Glow Effect */}
@@ -100,28 +102,37 @@ export default async function Page() {
         <main>
           <h1 className="sr-only">Premium Escort Directory</h1>
 
-          <Suspense fallback={<div className="animate-pulse h-96 bg-gray-200" />}>
+          <Suspense
+            fallback={<div className="animate-pulse h-96 bg-gray-200" />}
+          >
             <Hero />
           </Suspense>
 
-          <Suspense fallback={<div className="animate-pulse h-64 bg-gray-200" />}>
+          <Suspense
+            fallback={<div className="animate-pulse h-64 bg-gray-200" />}
+          >
             <FeaturedEscorts users={users.slice(0, 3)} />
           </Suspense>
 
           <div className="container mx-auto px-4 py-6 text-foreground">
             {/* Stories Section */}
-            <Suspense fallback={<div className="animate-pulse h-24 bg-gray-200 mb-8" />}>
-              <section aria-label="User Stories" className="mb-8 overflow-x-auto">
+            <Suspense
+              fallback={<div className="animate-pulse h-24 bg-gray-200 mb-8" />}
+            >
+              <section
+                aria-label="User Stories"
+                className="mb-8 overflow-x-auto"
+              >
                 <div className="flex gap-4 pb-2">
                   {stories.length > 0
                     ? stories.map((story, index) => (
-                        <StoryCircle
-                          key={story.id || index}
-                          {...story}
-                          isVideo={story.isvideo}
-                          isActive={index === 0}
-                        />
-                      ))
+                      <StoryCircle
+                        key={story.id || index}
+                        {...story}
+                        isVideo={story.isvideo}
+                        isActive={index === 0}
+                      />
+                    ))
                     : (
                       <div className="relative w-full h-56">
                         <img
@@ -139,7 +150,9 @@ export default async function Page() {
               </section>
             </Suspense>
 
-            <Suspense fallback={<div className="animate-pulse h-16 bg-gray-200 mb-8" />}>
+            <Suspense
+              fallback={<div className="animate-pulse h-16 bg-gray-200 mb-8" />}
+            >
               <section aria-label="Categories" className="mb-8">
                 <CategoryTabs />
               </section>
@@ -148,7 +161,11 @@ export default async function Page() {
             <section aria-label="Escort Listings">
               <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
                 {users.map((user) => (
-                  <Link key={user.id} href={`/profile/${user.id}`} prefetch={false}>
+                  <Link
+                    key={user.id}
+                    href={`/profile/${user.id}`}
+                    prefetch={false}
+                  >
                     <EscortCard
                       name={user.username}
                       age={user.age}

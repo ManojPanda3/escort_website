@@ -1,5 +1,6 @@
 import Stripe from 'stripe';
 import { NextApiRequest, NextApiResponse } from 'next';
+import { supabase } from '../../../lib/supabase.ts';
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '', {
   apiVersion: '2022-11-15',
@@ -8,6 +9,8 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '', {
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method === 'POST') {
     try {
+      const {data:isUser }= await supabase.auth.getUser();
+      console.log(isUser);
       const { priceId } = req.body;
 
       // Create a Checkout Session

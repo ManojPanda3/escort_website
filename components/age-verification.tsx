@@ -1,42 +1,59 @@
-'use client'
+"use client";
 
-import { useEffect, useState } from 'react'
 import {
   Dialog,
   DialogContent,
   DialogDescription,
-  DialogFooter,
   DialogHeader,
   DialogTitle,
-} from '@/components/ui/dialog'
-import { Button } from '@/components/ui/button'
-import { useRouter } from 'next/navigation'
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
+import { getCookie, setCookie } from "cookies-next";
 
-export function AgeVerification() {
-  const [open, setOpen] = useState(false)
-  const router = useRouter()
-  const currentDate = new Date().toLocaleDateString('en-US', {
-    month: 'long',
-    day: 'numeric', 
-    year: 'numeric'
-  })
+const DialogFooter = ({
+  className,
+  ...props
+}: React.HTMLAttributes<HTMLDivElement>) => (
+  <div
+    className={cn(
+      "flex flex-col-reverse sm:flex-row sm:justify-end sm:space-x-2",
+      className,
+    )}
+    {...props}
+  />
+);
+DialogFooter.displayName = "DialogFooter";
+
+const AgeVerificationDialog = () => {
+  const [open, setOpen] = useState(false);
+  const router = useRouter();
+  const currentDate = new Date().toLocaleDateString("en-US", {
+    month: "long",
+    day: "numeric",
+    year: "numeric",
+  });
 
   useEffect(() => {
-    // Check if user has already verified
-    const hasVerified = localStorage.getItem('age-verified')
+    const hasVerified = getCookie("age-verified");
     if (!hasVerified) {
-      setOpen(true)
+      setOpen(true);
     }
-  }, [])
+  }, []);
 
   const handleAgree = () => {
-    localStorage.setItem('age-verified', 'true')
-    setOpen(false)
-  }
+    setCookie("age-verified", "true", { maxAge: 3600 * 24 * 30 }); // 30 days
+    setOpen(false);
+  };
 
   const handleDisagree = () => {
-    // Redirect to a safe page or show a message
-    router.push('https://www.google.com')
+    router.push("https://www.google.com"); // Or handle it differently
+  };
+
+  // Early return if not open to prevent server-side rendering
+  if (!open) {
+    return null; // Important for hydration!
   }
 
   return (
@@ -47,15 +64,28 @@ export function AgeVerification() {
             CONTENT FOR OVER 18+ ONLY
           </DialogTitle>
           <DialogDescription className="text-center">
-            This Website is for use solely by individuals who are at least 18 years old and have reached the age of majority.
+            This Website is for use solely by individuals who are at least 18
+            years old and have reached the age of majority.
           </DialogDescription>
         </DialogHeader>
         <div className="space-y-4 py-4 text-sm">
-          <p>BY CLICKING "I AGREE" BELOW, YOU STATE THAT THE FOLLOWING STATEMENTS ARE ACCURATE:</p>
+          <p>
+            BY CLICKING "I AGREE" BELOW, YOU STATE THAT THE FOLLOWING STATEMENTS
+            ARE ACCURATE:
+          </p>
           <ul className="list-disc pl-6 space-y-2">
-            <li>You are at least 18 years old and the age of majority or age of consent in your jurisdiction.</li>
-            <li>You will promptly leave this Website if you are offended by its content.</li>
-            <li>You will not hold the Website's owners or its employees responsible for any materials located on the Website.</li>
+            <li>
+              You are at least 18 years old and the age of majority or age of
+              consent in your jurisdiction.
+            </li>
+            <li>
+              You will promptly leave this Website if you are offended by its
+              content.
+            </li>
+            <li>
+              You will not hold the Website's owners or its employees
+              responsible for any materials located on the Website.
+            </li>
           </ul>
           <p className="text-muted-foreground text-xs">
             Date: {currentDate}
@@ -81,5 +111,8 @@ export function AgeVerification() {
         </DialogFooter>
       </DialogContent>
     </Dialog>
-  )
-}
+  );
+};
+
+export default AgeVerificationDialog;
+
