@@ -27,6 +27,12 @@ const rankEmojis = {
   month: "👑",
 };
 
+function getRandomImage() {
+  // Random image generator
+  const imageIndex = Math.floor(Math.random() * 18);
+  return `http://raw.githubusercontent.com/riivana/All-nighter-random-images/refs/heads/main/image%20${imageIndex}.webp`;
+}
+
 function FeaturedEscort(
   { username, profile_picture, age, location_name, price, rank }:
     FeaturedEscortProps,
@@ -44,7 +50,7 @@ function FeaturedEscort(
       <Card className="w-full h-full bg-black/40 backdrop-blur-sm overflow-hidden">
         <div className="relative w-full h-full">
           <Image
-            src={profile_picture || "/placeholder.svg"}
+            src={profile_picture || getRandomImage()}
             alt={`Profile of ${username}`}
             fill
             className="object-cover"
@@ -52,9 +58,8 @@ function FeaturedEscort(
             priority
           />
           <div
-            className={`absolute inset-0 bg-gradient-to-t ${
-              rankColors[rank]
-            } opacity-50`}
+            className={`absolute inset-0 bg-gradient-to-t ${rankColors[rank]
+              } opacity-50`}
           >
           </div>
           <div className="absolute inset-0 border-4 border-gold rounded-xl pointer-events-none">
@@ -97,9 +102,8 @@ function FeaturedEscort(
                     </p>
                   </div>
                   <div
-                    className={`px-4 py-2 rounded-full bg-gradient-to-r ${
-                      rankColors[rank]
-                    } text-white font-bold flex items-center justify-center`}
+                    className={`px-4 py-2 rounded-full bg-gradient-to-r ${rankColors[rank]
+                      } text-white font-bold flex items-center justify-center`}
                   >
                     <Star className="w-5 h-5 mr-2" />
                     <span>
@@ -180,7 +184,7 @@ export function FeaturedEscorts({ users }: { users: FeaturedEscortProps[] }) {
             transition={{ duration: 0.5 }}
           >
             <FeaturedEscort
-              profile_picture={escort.profile_picture || "/placeholder.svg"}
+              profile_picture={escort.profile_picture || getRandomImage()}
               location_name={escort.location_name}
               username={escort.username}
               age={escort.age}
@@ -193,4 +197,3 @@ export function FeaturedEscorts({ users }: { users: FeaturedEscortProps[] }) {
     </section>
   );
 }
-

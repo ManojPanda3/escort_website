@@ -5,9 +5,9 @@ import { CategoryTabs } from "@/components/category-tabs";
 import { EscortCard } from "@/components/escort-card";
 import { StoryCircle } from "@/components/story-circle";
 import { Footer } from "@/components/footer";
-import { MouseGlow } from "@/components/mouse-glow";
 import FaqAllNighters from "@/components/Faq02";
 import { AboutSection } from "@/components/about-section";
+import { MouseGlow } from "@/components/mouse-glow";
 import { createServerComponentClient } from "@supabase/auth-helpers-nextjs";
 import { cookies } from "next/headers";
 import Link from "next/link";
@@ -66,8 +66,8 @@ async function fetchStories(userIds: string[]) {
   return data;
 }
 
-// Random image generator
-export function getRandomImage() {
+function getRandomImage() {
+  // Random image generator
   const imageIndex = Math.floor(Math.random() * 18);
   return `http://raw.githubusercontent.com/riivana/All-nighter-random-images/refs/heads/main/image%20${imageIndex}.webp`;
 }
@@ -171,7 +171,7 @@ export default async function Page() {
                       age={user.age}
                       location={user.location_name}
                       measurements={user.dress_size}
-                      image={user.profile_picture || "/placeholder.svg"}
+                      image={user.profile_picture || getRandomImage()}
                       isVerified={user.is_verified}
                     />
                   </Link>
