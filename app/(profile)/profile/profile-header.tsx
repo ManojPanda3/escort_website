@@ -22,13 +22,19 @@ interface ProfileHeaderProps {
   profile: any;
 }
 
+function getRandomImage() {
+  // Random image generator
+  const imageIndex = Math.floor(Math.random() * 18);
+  return `http://raw.githubusercontent.com/riivana/All-nighter-random-images/refs/heads/main/image%20${imageIndex}.webp`;
+}
+
 export function ProfileHeader({ profile }: ProfileHeaderProps) {
   return (
     <Card className="relative overflow-hidden bg-black/40 backdrop-blur-sm mb-8">
       {/* Cover Image */}
       <div className="h-48 relative">
         <Image
-          src={profile?.cover_image || "/placeholder.svg?height=400&width=1200"}
+          src={profile?.cover_image || getRandomImage()}
           alt="Cover"
           fill
           className="object-cover"
@@ -42,8 +48,7 @@ export function ProfileHeader({ profile }: ProfileHeaderProps) {
           <div className="relative -mt-20 md:-mt-16">
             <div className="h-32 w-32 relative rounded-full overflow-hidden border-4 border-background">
               <Image
-                src={profile?.profile_picture ||
-                  "/placeholder.svg?height=200&width=200"}
+                src={profile?.profile_picture || getRandomImage()}
                 alt={profile?.name || ""}
                 fill
                 className="object-cover"

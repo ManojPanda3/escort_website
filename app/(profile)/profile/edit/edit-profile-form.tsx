@@ -22,6 +22,7 @@ import Image from 'next/image'
 import { supabase } from '@/lib/supabase'
 import { Badge } from '@/components/ui/badge'
 import { deleteFromStorage, uploadToStorage } from '@/lib/storage'
+import { useUser } from '../../../../components/catch_user.tsx';
 
 interface EditProfileFormProps {
   profile: any
@@ -72,6 +73,7 @@ export function EditProfileForm({ profile }: EditProfileFormProps) {
   const router = useRouter()
   const coverImageRef = useRef<HTMLInputElement | null>(null)
   const profilePictureRef = useRef<HTMLInputElement | null>(null)
+  const [user,setUser] = useUser();
 
   useEffect(() => {
     const fetchLocations = async () => {
@@ -176,7 +178,8 @@ export function EditProfileForm({ profile }: EditProfileFormProps) {
         const { message } = await response.json()
         throw new Error(message || 'Failed to update profile.')
       }
-
+      const {data:updated_user_data}= await supabase.from("user").select("*").eq("id",profile.id)
+      if(updated_user_data != null)setUser(updated_user_data);
       setSuccess('Profile updated successfully')
       router.refresh()
     } catch (error: any) {

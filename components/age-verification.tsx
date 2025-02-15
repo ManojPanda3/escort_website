@@ -1,32 +1,25 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import {
   Dialog,
   DialogContent,
   DialogDescription,
+  DialogFooter,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
-import { getCookie, setCookie } from "cookies-next";
 
-const DialogFooter = ({
-  className,
-  ...props
-}: React.HTMLAttributes<HTMLDivElement>) => (
-  <div
-    className={cn(
-      "flex flex-col-reverse sm:flex-row sm:justify-end sm:space-x-2",
-      className,
-    )}
-    {...props}
-  />
-);
-DialogFooter.displayName = "DialogFooter";
+interface AgeVerificationProps {
+  //  Safe page if the user disagrees.  Defaults to google.com
+  disagreeRedirect?: string;
+}
 
-const AgeVerificationDialog = () => {
+const AgeVerification = (
+  { disagreeRedirect = "https://www.google.com" }: AgeVerificationProps,
+) => {
   const [open, setOpen] = useState(false);
   const router = useRouter();
   const currentDate = new Date().toLocaleDateString("en-US", {
@@ -36,25 +29,22 @@ const AgeVerificationDialog = () => {
   });
 
   useEffect(() => {
-    const hasVerified = getCookie("age-verified");
+    // Check if user has already verified
+    const hasVerified = localStorage.getItem("age-verified");
     if (!hasVerified) {
       setOpen(true);
     }
   }, []);
 
   const handleAgree = () => {
-    setCookie("age-verified", "true", { maxAge: 3600 * 24 * 30 }); // 30 days
+    localStorage.setItem("age-verified", "true");
     setOpen(false);
   };
 
   const handleDisagree = () => {
-    router.push("https://www.google.com"); // Or handle it differently
+    // Redirect to a safe page
+    router.push(disagreeRedirect);
   };
-
-  // Early return if not open to prevent server-side rendering
-  if (!open) {
-    return null; // Important for hydration!
-  }
 
   return (
     <Dialog open={open} onOpenChange={setOpen} modal={true}>
@@ -114,5 +104,5 @@ const AgeVerificationDialog = () => {
   );
 };
 
-export default AgeVerificationDialog;
+export default AgeVerification;
 

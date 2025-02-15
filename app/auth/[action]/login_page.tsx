@@ -13,6 +13,7 @@ import { LoadingSpinner } from "@/components/ui/loading";
 import { Success } from "@/components/ui/success";
 import { PasswordInput } from "@/components/password-input.tsx";
 import { Eye, EyeOff, Plus, X } from "lucide-react";
+import { useUser } from "../../../components/catch_user.tsx";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -34,8 +35,10 @@ export default function LoginPage() {
       password,
     });
     if (error) setError(error.message);
-    else router.push("/");
-    setIsLoading(false);
+    else {
+      setTimeout(() => setIsLoading(false),250);
+      router.push("/");
+    }
   };
 
   const handleResetPassword = async () => {

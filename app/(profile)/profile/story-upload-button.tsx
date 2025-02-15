@@ -1,333 +1,345 @@
-'use client'
+"use client";
 
-import { useEffect, useState } from 'react'
-import { Button } from '@/components/ui/button'
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
-import { Plus, Loader2 } from 'lucide-react'
-import { createClientComponentClient } from '@supabase/auth-helpers-nextjs'
-import { useToast } from '@/components/ui/use-toast'
-import { uploadToStorage } from '@/lib/storage'
-import { StoryCircle } from '@/components/story-circle'
-import { FFmpeg } from '@ffmpeg/ffmpeg';
-import { fetchFile, toBlobURL } from '@ffmpeg/util';
+import type React from "react";
+import { useRef, useState } from "react";
+import { Loader2, Pause, Play, Plus } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Slider } from "@/components/ui/slider";
 
 interface Story {
-  url: string
-  title: string
-  isvideo?: boolean
+  url: string;
+  title: string;
+  isvideo?: boolean;
+  thumbnail?: string | null;
 }
 
 interface StoryUploadButtonProps {
-  userId: string
-  stories?: Story[]
+  userId: string;
+  stories?: Story[];
+  onUpload?: (file: File, thumbnail: File) => Promise<void>;
 }
 
-export function StoryUploadButton({ userId, stories = [] }: StoryUploadButtonProps) {
-  const [isOpen, setIsOpen] = useState(false)
-  const [title, setTitle] = useState('')
-  const [file, setFile] = useState<File | null>(null)
-  const [processedFile, setProcessedFile] = useState<File | null>(null)
-  const [isUploading, setIsUploading] = useState(false)
-  const [isProcessing, setIsProcessing] = useState(false)
-  const [stories_state, setStories] = useState<Story[]>(stories)
-  const supabase = createClientComponentClient()
-  const { toast } = useToast()
-  const [ffmpegInstance, setFfmpegInstance] = useState<FFmpeg | null>(null);
+export function StoryUploadButton(
+  { userId, stories = [], onUpload }: StoryUploadButtonProps,
+) {
+  const [isOpen, setIsOpen] = useState(false);
+  const [title, setTitle] = useState("");
+  const [file, setFile] = useState<File | null>(null);
+  const [isUploading, setIsUploading] = useState(false);
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [stories_state, setStories] = useState<Story[]>(stories);
+  const [thumbnail, setThumbnail] = useState<File | null>(null);
+  const [thumbnailURL, setThumbnailURL] = useState<string | null>(null);
+  const [fileError, setFileError] = useState<string | null>(null);
+  const [videoURL, setVideoURL] = useState<string | null>(null);
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [duration, setDuration] = useState(0);
+  const [trimRange, setTrimRange] = useState([0, 100]);
+  const videoRef = useRef<HTMLVideoElement>(null);
 
-  // initialize ffmpeg wasm
-  const initializeFFmpeg = async () => {
-    const ffmpeg = new FFmpeg();
-    try {
-      await ffmpeg.load();
-      setFfmpegInstance(ffmpeg);
-      console.log('FFmpeg loaded successfully!');
-
-    } catch (error) {
-      console.error('Error loading ffmpeg:', error);
-      toast({
-        title: "Error processing video",
-        description: "Failed to initialize ffmpeg. Please try again.",
-        variant: "destructive",
-      })
+  const handleVideoTimeUpdate = () => {
+    if (
+      videoRef.current &&
+      videoRef.current.currentTime >= (duration * trimRange[1]) / 100
+    ) {
+      videoRef.current.currentTime = (duration * trimRange[0]) / 100;
     }
   };
 
-
-  useEffect(() => {
-    initializeFFmpeg();
-  }, []);
-
-
-  const processVideo = async (file: File): Promise<File> => {
-    if (!ffmpegInstance) {
-      throw new Error('FFmpeg is not initialized yet.');
-    }
-    try {
-      const fileName = file.name;
-      const fileExtension = fileName.split('.').pop() || 'mp4';
-      const inputFileName = `input.${fileExtension}`;
-      const outputFileName = `output.mp4`;
-
-      // Write input file
-      const fileData = await fetchFile(file);
-      await ffmpegInstance.writeFile(inputFileName, fileData);
-
-      // Duration check and trim
-      const duration = await new Promise<number>((resolve, reject) => {
-        const video = document.createElement('video');
-        video.preload = 'metadata';
-        video.onloadedmetadata = () => {
-          resolve(video.duration);
-          video.remove();
-        };
-        video.onerror = (error) => reject(error);
-        video.src = URL.createObjectURL(file);
-      });
-
-      // Build ffmpeg command
-      const command = [
-        '-i', inputFileName,
-        '-c:v', 'libx264',
-        '-crf', '28',
-        '-preset', 'veryfast',
-        '-max_muxing_queue_size', '1024',
-        ...(duration > 30 ? ['-t', '30'] : []),
-        '-filter:v', 'fps=30',
-        '-movflags', '+faststart', // Enable streaming
-        outputFileName
-      ];
-
-      // Execute command
-      await ffmpegInstance.exec(command);
-
-      // Read output file
-      const outputData = await ffmpegInstance.readFile(outputFileName);
-
-      if (!(outputData instanceof Uint8Array)) {
-        throw new Error('Failed to process video: Invalid output format');
+  const togglePlayPause = () => {
+    if (videoRef.current) {
+      if (isPlaying) {
+        videoRef.current.pause();
+      } else {
+        videoRef.current.currentTime = (duration * trimRange[0]) / 100;
+        videoRef.current.play();
       }
-
-      // Create processed file
-      const processedFile = new File([outputData], 'processed-video.mp4', {
-        type: 'video/mp4'
-      });
-
-      // Verify file size
-      if (processedFile.size === 0) {
-        throw new Error('Failed to process video: Output file is empty');
-      }
-
-      return processedFile;
-    } catch (error) {
-      console.error('Error processing video:', error);
-      toast({
-        title: "Error processing video",
-        description: "There was a problem processing your video. Please try again.",
-        variant: "destructive",
-      });
-      throw error;
+      setIsPlaying(!isPlaying);
     }
   };
-
-  const compressImage = async (file: File): Promise<File> => {
-    return new Promise((resolve, reject) => {
-      const canvas = document.createElement('canvas')
-      const ctx = canvas.getContext('2d')
-      if (!ctx) return reject(new Error('Failed to get canvas context'))
-
-      const img = new Image()
-
-      img.onload = async () => {
-        let width = img.width
-        let height = img.height
-        const max_height = 360
-
-        if (height > max_height) {
-          width = Math.floor(width * (max_height / height))
-          height = max_height
-        }
-
-        canvas.width = width
-        canvas.height = height
-        ctx.drawImage(img, 0, 0, width, height)
-
-        canvas.toBlob((blob) => {
-          if (blob) {
-            const compressedFile = new File([blob], 'compressed-image.webp', {
-              type: 'image/webp'
-            })
-            resolve(compressedFile)
-          } else {
-            reject(new Error('Failed to compress image'))
-          }
-        }, 'image/webp', 0.8)
-      }
-
-      img.src = URL.createObjectURL(file)
-    })
-  }
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files[0]) {
-      const selectedFile = e.target.files[0]
-      setFile(selectedFile)
-      setIsProcessing(true)
+    setFileError(null);
+    setFile(null);
+    setThumbnail(null);
+    setThumbnailURL(null);
+    setVideoURL(null);
+    const selectedFile = e.target.files?.[0];
 
-      try {
-        const isvideo = selectedFile.type.startsWith('video/')
-        let processed: File
+    if (!selectedFile) return;
 
-        if (isvideo) {
-          processed = await processVideo(selectedFile)
-        } else if (selectedFile.type.startsWith('image/')) {
-          processed = await compressImage(selectedFile)
-        } else {
-          throw new Error('Invalid file type')
-        }
+    const isVideo = selectedFile.type.startsWith("video/");
+    const isImage = selectedFile.type.startsWith("image/");
 
-        setProcessedFile(processed)
-        toast({
-          title: "File processed successfully",
-          description: "Your file is ready to be uploaded.",
-        })
-      } catch (error) {
-        console.error('Error processing file:', error)
-        toast({
-          title: "Error processing file",
-          description: "There was a problem processing your file. Please try again.",
-          variant: "destructive",
-        })
-        setFile(null)
-      } finally {
-        setIsProcessing(false)
-      }
+    if (!isVideo && !isImage) {
+      setFileError("Invalid file type. Only videos and images are allowed.");
+      return;
     }
-  }
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    if (!processedFile) return
-
-    setIsUploading(true)
+    setFile(selectedFile);
+    setIsProcessing(true);
 
     try {
-      const isvideo = file?.type.startsWith('video/') || false
-      const result = await uploadToStorage(processedFile, userId)
+      if (isVideo) {
+        const url = URL.createObjectURL(selectedFile);
+        setVideoURL(url);
 
-      if (!result.success || !result.fileUrl) {
-        throw new Error('Failed to upload file')
+        // Load video metadata
+        const video = document.createElement("video");
+        video.src = url;
+        await new Promise((resolve) => {
+          video.onloadedmetadata = () => {
+            setDuration(video.duration);
+            resolve(null);
+          };
+        });
+
+        const thumbnailFile = await generateVideoThumbnail(selectedFile);
+        setThumbnail(thumbnailFile);
+        setThumbnailURL(URL.createObjectURL(thumbnailFile));
+      } else {
+        const thumbnailFile = await optimizeImageForThumbnail(selectedFile);
+        setThumbnail(thumbnailFile);
+        setThumbnailURL(URL.createObjectURL(thumbnailFile));
+      }
+    } catch (error: any) {
+      console.error("Error processing file:", error);
+      setFileError(
+        "There was an error processing your file. Please try again.",
+      );
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+
+  const generateVideoThumbnail = async (videoFile: File): Promise<File> => {
+    const video = document.createElement("video");
+    video.src = URL.createObjectURL(videoFile);
+    video.muted = true;
+    video.crossOrigin = "anonymous";
+
+    await new Promise((resolve) => {
+      video.onloadedmetadata = () => {
+        video.currentTime = video.duration * 0.1;
+        resolve(null);
+      };
+    });
+
+    await new Promise((resolve) => {
+      video.onseeked = resolve;
+    });
+
+    const canvas = document.createElement("canvas");
+    canvas.width = 426;
+    canvas.height = 240;
+    const ctx = canvas.getContext("2d")!;
+    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+    const blob = await new Promise<Blob>((resolve) => {
+      canvas.toBlob((blob) => resolve(blob!), "image/webp", 0.7);
+    });
+
+    video.remove();
+    return new File([blob], "thumbnail.webp", { type: "image/webp" });
+  };
+
+  const optimizeImageForThumbnail = async (imageFile: File): Promise<File> => {
+    const img = new Image();
+    const imageUrl = URL.createObjectURL(imageFile);
+
+    await new Promise((resolve) => {
+      img.onload = resolve;
+      img.src = imageUrl;
+    });
+
+    const canvas = document.createElement("canvas");
+    canvas.width = 426;
+    canvas.height = 240;
+    const ctx = canvas.getContext("2d")!;
+    ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+
+    const blob = await new Promise<Blob>((resolve) => {
+      canvas.toBlob((blob) => resolve(blob!), "image/webp", 0.7);
+    });
+
+    URL.revokeObjectURL(imageUrl);
+    return new File([blob], "thumbnail.webp", { type: "image/webp" });
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!file || !thumbnail) return;
+
+    setIsUploading(true);
+
+    try {
+      if (onUpload) {
+        await onUpload(file, thumbnail);
       }
 
-      const { error: storyError } = await supabase
-        .from('story')
-        .insert({
-          title,
-          url: result.fileUrl,
-          isvideo,
-          owner: userId
-        })
-
-      if (storyError) throw storyError
-
-      setStories([...stories_state, {
-        title,
-        url: result.fileUrl,
-        isvideo
-      }])
-
-      toast({
-        title: "Story uploaded successfully",
-        description: "Your story has been added and will be visible soon.",
-      })
-
-      setIsOpen(false)
-      setTitle('')
-      setFile(null)
-      setProcessedFile(null)
+      setIsOpen(false);
+      resetForm();
     } catch (error) {
-      console.error('Error uploading story:', error)
-      toast({
-        title: "Error uploading story",
-        description: "There was a problem uploading your story. Please try again.",
-        variant: "destructive",
-      })
+      console.error("Error uploading:", error);
+      setFileError("Upload failed. Please try again.");
     } finally {
-      setIsUploading(false)
+      setIsUploading(false);
     }
-  }
+  };
+
+  const resetForm = () => {
+    setTitle("");
+    setFile(null);
+    setThumbnail(null);
+    setThumbnailURL(null);
+    setVideoURL(null);
+    setTrimRange([0, 100]);
+    setIsPlaying(false);
+  };
 
   return (
     <div>
       <div className="mb-8 overflow-x-auto">
         <div className="flex gap-4">
-          <Dialog open={isOpen} onOpenChange={setIsOpen}>
-            <DialogTrigger asChild>
-              <div className="">
-                <div className="p-0.5 rounded-full bg-gray-700">
-                  <div className="p-0.5 rounded-full bg-black">
-                    <Button variant="outline" className="h-16 w-16 rounded-full flex items-center justify-center">
-                      <Plus className="h-6 w-6" />
-                    </Button>
-                  </div>
-                </div>
-              </div>
-            </DialogTrigger>
-            <DialogContent>
-              <DialogHeader>
-                <DialogTitle>Upload New Story</DialogTitle>
-              </DialogHeader>
-              <form onSubmit={handleSubmit} className="space-y-4">
-                <div>
-                  <Label htmlFor="title">Story Title</Label>
-                  <Input
-                    id="title"
-                    value={title}
-                    onChange={(e) => setTitle(e.target.value)}
-                    required
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="file">Upload Media</Label>
-                  <Input
-                    id="file"
-                    type="file"
-                    accept="video/*,image/*"
-                    onChange={handleFileChange}
-                    required
-                    disabled={isProcessing}
-                  />
-                  {isProcessing && (
-                    <div className="mt-2 flex items-center text-sm text-gray-500">
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      Processing file...
-                    </div>
-                  )}
-                </div>
-                <Button type="submit" disabled={isUploading || isProcessing || !processedFile}>
-                  {isUploading ? (
-                    <>
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      Uploading...
-                    </>
-                  ) : (
-                    'Upload Story'
-                  )}
-                </Button>
-              </form>
-            </DialogContent>
-          </Dialog>
-          {stories_state.map((story, index) => (
-            <StoryCircle
+          <Button
+            onClick={() => setIsOpen(true)}
+            variant="outline"
+            className="h-16 w-16 rounded-full flex items-center justify-center hover:bg-primary hover:text-primary-foreground transition-colors"
+          >
+            <Plus className="h-6 w-6" />
+          </Button>
+
+          {stories_state.map((story) => (
+            <div
               key={story.title + story.url}
-              url={story.url}
-              title={story.title}
-              isVideo={story.isvideo}
-            />
+              className="w-16 h-16 rounded-full overflow-hidden border-2 border-primary"
+            >
+              <img
+                src={story.thumbnail || story.url}
+                alt={story.title}
+                className="w-full h-full object-cover"
+              />
+            </div>
           ))}
         </div>
       </div>
+
+      <Dialog open={isOpen} onOpenChange={setIsOpen}>
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle>Upload New Story</DialogTitle>
+          </DialogHeader>
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="title">Story Title</Label>
+              <Input
+                id="title"
+                value={title}
+                onChange={(e) => setTitle(e.target.value)}
+                required
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="file">Upload Media</Label>
+              <Input
+                id="file"
+                type="file"
+                accept="video/*,image/*"
+                onChange={handleFileChange}
+                disabled={isProcessing || isUploading}
+              />
+              {fileError && (
+                <p className="text-destructive text-sm">{fileError}</p>
+              )}
+              {isProcessing && (
+                <div className="flex items-center text-sm text-muted-foreground">
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Processing file...
+                </div>
+              )}
+            </div>
+
+            {videoURL && (
+              <div className="space-y-4">
+                <div className="relative rounded-lg overflow-hidden">
+                  <video
+                    ref={videoRef}
+                    src={videoURL}
+                    className="w-full"
+                    onTimeUpdate={handleVideoTimeUpdate}
+                    onEnded={() => setIsPlaying(false)}
+                  />
+                  <Button
+                    type="button"
+                    size="icon"
+                    variant="secondary"
+                    className="absolute bottom-4 left-4"
+                    onClick={togglePlayPause}
+                  >
+                    {isPlaying
+                      ? <Pause className="h-4 w-4" />
+                      : <Play className="h-4 w-4" />}
+                  </Button>
+                </div>
+
+                <div className="space-y-2">
+                  <Label>Trim Video</Label>
+                  <Slider
+                    min={0}
+                    max={100}
+                    step={1}
+                    value={trimRange}
+                    onValueChange={setTrimRange}
+                  />
+                  <div className="flex justify-between text-sm text-muted-foreground">
+                    <span>{Math.round((duration * trimRange[0]) / 100)}s</span>
+                    <span>{Math.round((duration * trimRange[1]) / 100)}s</span>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {thumbnailURL && (
+              <div className="space-y-2">
+                <Label>Thumbnail</Label>
+                <img
+                  src={thumbnailURL || "/placeholder.svg"}
+                  alt="Thumbnail"
+                  className="max-h-40 w-auto rounded-lg"
+                />
+              </div>
+            )}
+
+            <Button
+              type="submit"
+              disabled={isUploading || isProcessing || !file ||
+                fileError !== null}
+              className="w-full"
+            >
+              {isUploading
+                ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Uploading...
+                  </>
+                )
+                : (
+                  "Upload Story"
+                )}
+            </Button>
+          </form>
+        </DialogContent>
+      </Dialog>
     </div>
-  )
+  );
 }
+

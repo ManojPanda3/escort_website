@@ -12,6 +12,7 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { AnimatePresence, motion } from "framer-motion";
+import { supabase } from "@/lib/supabase";
 
 interface StoryViewerProps {
   id: string;
@@ -20,20 +21,41 @@ interface StoryViewerProps {
   isVideo?: boolean;
   onClose: () => void;
   isMain?: boolean;
+  liked: boolean;
+  setLiked: any;
+  likes: number;
+  userId: string;
 }
 
 export function StoryViewer(
-  { id, url, title, isVideo, isMain = false, onClose }: StoryViewerProps,
+  { id, url, title, isVideo, isMain = false, onClose, likes, liked, setLiked, userId }: StoryViewerProps,
 ) {
-  const [liked, setLiked] = useState(false);
   const [isShareOpen, setIsShareOpen] = useState(false);
   const [isCopied, setIsCopied] = useState(false);
   const { toast } = useToast();
 
-  const handleLike = () => {
+  const handleLike = async () => {
     setLiked(!liked);
+    if (!userId) return;
+    if (!liked) {
+      console.log("Liking");
+      await supabase.from("story_likes").insert([{
+        post: id,
+        user: userId,
+      }]);
+    } else {
+      await supabase
+        .from("story_likes")
+        .delete()
+        .eq("post", id)
+        .eq("user", userId);
+    }
+    await supabase.from("story").update({
+      likes: (liked ? ++likes : --likes),
+    }).eq("id", id);
     // Here you would typically update the like status in your backend
   };
+
 
   const handleShare = (platform: string) => {
     const shareUrl = `${window.location.origin}/video/share/${id}`;

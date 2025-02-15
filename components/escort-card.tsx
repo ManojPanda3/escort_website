@@ -20,6 +20,15 @@ interface EscortCardProps {
   isOnline?: boolean;
 }
 
+function getDate() {
+  const date = new Date();
+  const day = String(date.getDate()).padStart(2, "0");
+  const month = String(date.getMonth() + 1).padStart(2, "0"); // Months are 0-indexed
+  const year = date.getFullYear();
+
+  return `${day}-${month}-${year}`;
+}
+
 export const EscortCard = memo(function EscortCard({
   name,
   age,
@@ -30,7 +39,7 @@ export const EscortCard = memo(function EscortCard({
   phone,
   availability,
   isVerified = true,
-  isVip = true,
+  isVip = false,
   isOnline = true,
 }: EscortCardProps) {
   return (
@@ -66,7 +75,9 @@ export const EscortCard = memo(function EscortCard({
           <div className="absolute inset-x-0 top-0 translate-y-[-100%] bg-gradient-to-b from-black/90 to-transparent p-4 text-white transition-transform duration-300 group-hover:translate-y-0">
             <div className="flex items-center gap-2">
               <Calendar className="h-4 w-4 text-amber-400" />
-              <p className="text-sm font-medium">{availability}</p>
+              <p className="text-sm font-medium">
+                {availability || getDate()}
+              </p>
             </div>
           </div>
 
@@ -103,7 +114,7 @@ export const EscortCard = memo(function EscortCard({
               </div>
               <div className="flex items-center gap-1 text-sm text-amber-200 mt-1">
                 <Phone className="h-3 w-3" />
-                {phone}
+                {phone || "Not Available"}
               </div>
             </div>
           </div>

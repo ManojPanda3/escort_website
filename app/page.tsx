@@ -2,8 +2,8 @@ import { NavBar } from "@/components/nav-bar";
 import { Hero } from "@/components/hero";
 import { FeaturedEscorts } from "@/components/featured-escorts";
 import { CategoryTabs } from "@/components/category-tabs";
-import { EscortCard } from "@/components/escort-card";
 import { StoryCircle } from "@/components/story-circle";
+import { EscortCard } from "@/components/escort-card";
 import { Footer } from "@/components/footer";
 import FaqAllNighters from "@/components/Faq02";
 import { AboutSection } from "@/components/about-section";
@@ -15,6 +15,7 @@ import { Metadata } from "next";
 import { Suspense } from "react";
 import { ScrollToTop } from "@/components/scroll_to_top";
 import { RoyalBackground } from "@/components/royal-background";
+import AgeVerification from "../components/age-verification.tsx";
 
 // Metadata for SEO
 export const metadata: Metadata = {
@@ -30,12 +31,11 @@ export const metadata: Metadata = {
 };
 
 // Function to fetch users
-async function fetchUsers() {
-  const supabase = createServerComponentClient({ cookies });
+async function fetchUsers(supabase) {
   const { data, error } = await supabase
     .from("users")
     .select(
-      "id, username, age, location_name, dress_size, profile_picture, is_verified",
+      "id, username, age, location_name, availability,dress_size, profile_picture, is_verified,current_offer",
     )
     .neq("user_type", "general")
     .order("ratings", { ascending: false });
@@ -49,13 +49,10 @@ async function fetchUsers() {
 }
 
 // Function to fetch stories
-async function fetchStories(userIds: string[]) {
-  if (!userIds.length) return [];
-
-  const supabase = createServerComponentClient({ cookies });
+async function fetchStories(supabase, userIds: string[]) {
   const { data, error } = await supabase
     .from("story")
-    .select("id, isvideo, owner, title, url")
+    .select("id, isvideo, owner, title, url, thumbnail, likes")
     .in("owner", userIds);
 
   if (error) {
@@ -73,12 +70,19 @@ function getRandomImage() {
 }
 
 export default async function Page() {
+  const supabase = createServerComponentClient({ cookies });
+  const { data: { user: currentUser }, error } = await supabase.auth.getUser();
+
+  if (error) {
+    console.error("Error fetching user:", error);
+  }
+
   let users = [];
   let stories = [];
 
   try {
-    users = await fetchUsers();
-    stories = await fetchStories(users.map((user) => user.id));
+    users = await fetchUsers(supabase);
+    stories = await fetchStories(supabase, users.map((user) => user.id));
   } catch (error) {
     console.error("Error fetching data:", error);
     return (
@@ -93,6 +97,7 @@ export default async function Page() {
       {/* Mouse Glow Effect */}
       <MouseGlow />
       <RoyalBackground />
+      <AgeVerification />
 
       <div className="relative z-10">
         <Suspense fallback={<div className="animate-pulse h-16 bg-gray-200" />}>
@@ -131,12 +136,15 @@ export default async function Page() {
                         {...story}
                         isVideo={story.isvideo}
                         isActive={index === 0}
+                        thumbnail={story.thumbnail}
+                        userId={currentUser?.id}
+                        likes={story.likes}
                       />
                     ))
                     : (
                       <div className="relative w-full h-56">
                         <img
-                          src={getRandomImage() || "/placeholder.svg"}
+                          src={getRandomImage()}
                           alt="No stories available"
                           loading="lazy"
                           className="w-full h-full object-cover rounded-lg"
@@ -159,7 +167,7 @@ export default async function Page() {
             </Suspense>
 
             <section aria-label="Escort Listings">
-              <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+              <div className="grid grid-cols-1 gap-6 sm:grid-cols-2  lg:grid-cols-3 xl:grid-cols-4">
                 {users.map((user) => (
                   <Link
                     key={user.id}
@@ -173,6 +181,8 @@ export default async function Page() {
                       measurements={user.dress_size}
                       image={user.profile_picture || getRandomImage()}
                       isVerified={user.is_verified}
+                      isVip={user.current_offer != null}
+                      availability={user.availability}
                     />
                   </Link>
                 ))}
@@ -182,8 +192,8 @@ export default async function Page() {
 
           <AboutSection />
           <FaqAllNighters />
+          <ScrollToTop />
         </main>
-        <ScrollToTop />
         <Footer />
       </div>
     </div>

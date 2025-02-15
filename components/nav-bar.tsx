@@ -25,6 +25,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
+import cities from "@/public/location.json"
+
 
 interface User {
   id: string
@@ -181,17 +183,7 @@ export function NavBar() {
                 onClick={() => router.push('/profile')}
                 aria-label="View profile"
               >
-                {user.user_metadata?.avatar_url ? (
-                  <Image
-                    src={user.user_metadata.avatar_url}
-                    alt="Profile picture"
-                    width={32}
-                    height={32}
-                    className="rounded-full"
-                  />
-                ) : (
                   <User className="h-5 w-5" />
-                )}
               </Button>
             ) : (
               <LoginBtn />
