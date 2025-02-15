@@ -9,7 +9,6 @@ const getProfileData = async (supabase: any, id: string) => {
   const [
     { data: profile, error: profileError },
     { data: pictures, error: picturesError },
-    { data: services, error: servicesError },
     { data: rates, error: ratesError },
     { data: testimonials, error: testimonialsError },
   ] = await Promise.all([
@@ -24,10 +23,6 @@ const getProfileData = async (supabase: any, id: string) => {
       .eq("owner", id)
       .order("created_at", { ascending: false }),
     supabase
-      .from("services")
-      .select("*")
-      .eq("owner", id),
-    supabase
       .from("rates")
       .select("*")
       .eq("owner", id),
@@ -39,7 +34,6 @@ const getProfileData = async (supabase: any, id: string) => {
   const errors = [
     profileError,
     picturesError,
-    servicesError,
     ratesError,
     testimonialsError,
   ];
@@ -56,7 +50,6 @@ const getProfileData = async (supabase: any, id: string) => {
   return {
     profile,
     pictures: pictures || [],
-    services: services || [],
     rates: rates || [],
     testimonials: testimonials || [],
   };
@@ -95,10 +88,10 @@ export default async function UserProfilePage(
       <ProfileTabs
         userId={id}
         pictures={userData.pictures}
-        services={userData.services}
         rates={userData.rates}
         testimonials={userData.testimonials}
         ownerId={user?.id.toString() || ""}
+        user={userData.profile}
       />
     </main>
   );
