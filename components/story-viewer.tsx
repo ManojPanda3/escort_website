@@ -1,18 +1,13 @@
-"use client";
-
-import { useState } from "react";
-import { Check, Copy, Heart, Share, X } from "lucide-react";
+"use client"
+import { useEffect, useRef, useState } from "react";
+import { Heart, Share } from "lucide-react";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { useToast } from "@/components/ui/use-toast";
 import Image from "next/image";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { AnimatePresence, motion } from "framer-motion";
 import { supabase } from "@/lib/supabase";
+import ShareIcons from "./share-icons.tsx";
 
 interface StoryViewerProps {
   id: string;
@@ -20,159 +15,145 @@ interface StoryViewerProps {
   title: string;
   isVideo?: boolean;
   onClose: () => void;
-  isMain?: boolean;
-  liked: boolean;
-  setLiked: any;
-  likes: number;
   userId: string;
+  ownerAvatar: string;
+  likes: number;
+  ownerName: string;
+  totalStories: number;
+  currentIndex: number;
+  onNext: () => unknown;
+  onPrevious: () => unknown;
 }
 
-export function StoryViewer(
-  { id, url, title, isVideo, isMain = false, onClose, likes, liked, setLiked, userId }: StoryViewerProps,
-) {
+const default_time: number = 10;
+export function StoryViewer({
+  id,
+  url,
+  title,
+  isVideo,
+  onClose,
+  likes,
+  userId,
+  ownerAvatar,
+  ownerName,
+  totalStories = 1,
+  currentIndex = 0,
+  onNext = () => { },
+  onPrevious = () => { },
+}: StoryViewerProps) {
+  const [liked, setLiked] = useState(false);
   const [isShareOpen, setIsShareOpen] = useState(false);
-  const [isCopied, setIsCopied] = useState(false);
-  const { toast } = useToast();
+  const [likeCount, setLikeCount] = useState(likes);
+  const [progress, setProgress] = useState(2);
+
+  useEffect(() => {
+    const intervalId = setInterval(() => {
+      if (progress >= default_time) {
+        onNext();
+        setProgress(2);
+      } else {
+        setProgress(prev => prev + 1);
+      }
+    }, 1000);
+
+    return () => {
+      clearInterval(intervalId);
+    };
+  }, [progress]);
+
+  useEffect(() => {
+    if (!userId) return;
+    supabase
+      .from("story_likes")
+      .select("user,id")
+      .eq("user", userId)
+      .eq("post", id)
+      .single()
+      .then(({ data, error }) => {
+        if (error) {
+          console.error(error);
+        } else {
+          const isLiked = data && data.id ? true : false;
+          setLiked(isLiked);
+        }
+      });
+  }, [id, userId]);
 
   const handleLike = async () => {
-    setLiked(!liked);
     if (!userId) return;
-    if (!liked) {
-      console.log("Liking");
-      await supabase.from("story_likes").insert([{
-        post: id,
-        user: userId,
-      }]);
+    const newLikedState = !liked;
+    setLiked(newLikedState);
+
+    setLikeCount((prev) => (newLikedState ? prev + 1 : prev - 1));
+    if (newLikedState) {
+      await supabase.from("story_likes").insert([{ post: id, user: userId }]);
     } else {
-      await supabase
-        .from("story_likes")
-        .delete()
-        .eq("post", id)
-        .eq("user", userId);
+      await supabase.from("story_likes").delete().eq("post", id).eq("user", userId);
     }
-    await supabase.from("story").update({
-      likes: (liked ? ++likes : --likes),
-    }).eq("id", id);
-    // Here you would typically update the like status in your backend
+
+    await supabase.from("story").update({ likes: likeCount }).eq("id", id);
   };
 
-
-  const handleShare = (platform: string) => {
-    const shareUrl = `${window.location.origin}/video/share/${id}`;
-    let shareLink = "";
-
-    switch (platform) {
-      case "whatsapp":
-        shareLink = `https://wa.me/?text=${encodeURIComponent(shareUrl)}`;
-        break;
-      case "twitter":
-        shareLink = `https://twitter.com/intent/tweet?url=${encodeURIComponent(shareUrl)
-          }`;
-        break;
-      case "instagram":
-        // Instagram doesn't have a direct share URL, so we'll just copy the link
-        navigator.clipboard.writeText(shareUrl);
-        toast({
-          title: "Link copied!",
-          description: "Share this link on Instagram.",
-        });
-        return;
-      case "facebook":
-        shareLink = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(shareUrl)
-          }`;
-        break;
-      default:
-        break;
-    }
-
-    if (shareLink) {
-      window.open(shareLink, "_blank");
-    }
-  };
-
-  const copyLink = () => {
-    const shareUrl = `${window.location.origin}/video/share/${id}`;
-
-    if (navigator.clipboard && navigator.clipboard.writeText) {
-      navigator.clipboard.writeText(shareUrl)
-        .then(() => {
-          setIsCopied(true);
-          setTimeout(() => setIsCopied(false), 2000);
-          toast({
-            title: "Link copied!",
-            description: "The story link has been copied to your clipboard.",
-          });
-        })
-        .catch((err) => {
-          console.error("Failed to copy text: ", err);
-          fallbackCopyTextToClipboard(shareUrl);
-        });
-    } else {
-      fallbackCopyTextToClipboard(shareUrl);
-    }
-  };
-
-  const fallbackCopyTextToClipboard = (text: string) => {
-    const textArea = document.createElement("textarea");
-    textArea.value = text;
-
-    textArea.style.position = "absolute";
-    textArea.style.top = "-9999px";
-    document.body.appendChild(textArea);
-
-    textArea.focus();
-    textArea.select();
-
-    try {
-      const successful = document.execCommand("copy");
-      if (successful) {
-        setIsCopied(true);
-        setTimeout(() => setIsCopied(false), 2000);
-        toast({
-          title: "Link copied!",
-          description: "The story link has been copied to your clipboard.",
-        });
-      } else {
-        console.error("Fallback: Copying text failed");
-      }
-    } catch (err) {
-      console.error("Fallback: Unable to copy", err);
-    }
-
-    // Clean up the textarea
-    document.body.removeChild(textArea);
-  };
   return (
     <Dialog open={true} onOpenChange={onClose}>
-      <DialogContent
-        className="sm:max-w-[425px] p-0 overflow-hidden"
-        isMain={isMain}
-      >
+      <DialogContent className="sm:max-w-[425px] p-0 overflow-hidden bg-black">
         <div className="relative w-full h-[80vh]">
-          {isVideo
-            ? (
-              <video
-                src={url}
-                className="w-full h-full object-cover"
-                controls
-                autoPlay
-                loop
-              />
-            )
-            : (
-              <Image
-                src={url || "/placeholder.svg"}
-                alt={title}
-                layout="fill"
-                objectFit="cover"
-              />
-            )}
-          <div className="absolute bottom-4 right-4 flex flex-col items-end space-y-2 h-full justify-center">
+          {isVideo ? (
+            <video
+              src={url}
+              className="w-full h-full object-cover"
+              controls
+              autoPlay
+              loop
+            />
+          ) : (
+            <Image
+              src={url || "/placeholder.svg"}
+              alt={title}
+              layout="fill"
+              objectFit="cover"
+            />
+          )}
+          {/* Progress Bar */}
+          <div className="absolute top-0 left-0 right-0 h-1 flex justify-between gap-[2px] w-full">
+            {
+              Array.from(Array(totalStories)).map((_, index) => (
+                <div
+                  key={index}
+                  className="bg-gray-600 overflow-hidden rounded-sm flex-grow w-full"
+                >
+                  {index === currentIndex && (
+                    <motion.div
+                      className="h-full bg-gradient-to-r from-green-400 to-blue-500"
+                      initial={{ width: 0 }}
+                      animate={{ width: `${(progress / default_time) * 100}%` }} // Animate to the desired width
+                      transition={{
+                        duration: 1,
+                        ease: "linear",
+                      }}
+                    />
+                  )}
+                </div>
+              ))
+            }
+          </div>
+
+          <div className="absolute top-4 left-4 flex items-center space-x-2">
+            <Image
+              src={ownerAvatar || "/placeholder.svg"}
+              alt={ownerName}
+              width={40}
+              height={40}
+              className="rounded-full"
+            />
+            <span className="text-white font-semibold">{ownerName}</span>
+          </div>
+          <div className="absolute bottom-4 left-4 right-4 flex justify-between items-center">
             <Button variant="ghost" size="icon" onClick={handleLike}>
               <Heart
-                className={`h-6 w-6 ${liked ? "text-red-500 fill-red-500" : "text-white"
-                  }`}
+                className={`h-6 w-6 ${liked ? "text-red-500 fill-red-500" : "text-white"}`}
               />
+              <span className="ml-2 text-white">{likeCount}</span>
             </Button>
             <Popover open={isShareOpen} onOpenChange={setIsShareOpen}>
               <PopoverTrigger asChild>
@@ -180,69 +161,9 @@ export function StoryViewer(
                   <Share className="h-6 w-6 text-white" />
                 </Button>
               </PopoverTrigger>
-              <PopoverContent>
+              <PopoverContent className="w-56">
                 <AnimatePresence>
-                  {isShareOpen && (
-                    <motion.div
-                      initial={{ opacity: 0, scale: 0.9 }}
-                      animate={{ opacity: 1, scale: 1 }}
-                      exit={{ opacity: 0, scale: 0.9 }}
-                      transition={{ duration: 0.2 }}
-                      className="grid gap-4"
-                    >
-                      <div className="flex gap-2 justify-center items-center">
-                        <Image
-                          title={"whatsapp"}
-                          src={"/whatsapp-logo.svg"}
-                          width={24}
-                          height={24}
-                          alt={"WhatsApp"}
-                          onClick={() => handleShare("whatsapp")}
-                          className="hover:opacity-80 cursor-pointer"
-                        />
-                        <Image
-                          title={"twitter"}
-                          src={"/x-logo.svg"}
-                          width={24}
-                          height={24}
-                          alt={"X"}
-                          onClick={() => handleShare("twitter")}
-                          className="hover:opacity-80 cursor-pointer"
-                        />
-                        <Image
-                          title={"instagram"}
-                          src={"/instagram-logo.svg"}
-                          width={24}
-                          height={24}
-                          alt={"Instagram"}
-                          onClick={() => handleShare("instagram")}
-                          className="hover:opacity-80 cursor-pointer"
-                        />
-                        <Image
-                          title={"facebook"}
-                          src={"/facebook-logo.svg"}
-                          width={24}
-                          height={24}
-                          alt={"Facebook"}
-                          onClick={() => handleShare("facebook")}
-                          className="hover:opacity-80 cursor-pointer"
-                        />
-                      </div>
-                      <div className="flex items-center">
-                        <input
-                          type="text"
-                          value={`${window.location.origin}/video/share/${id}`}
-                          readOnly
-                          className="flex-grow mr-2 p-2 rounded border"
-                        />
-                        <Button size="icon" onClick={copyLink} title="copy">
-                          {isCopied
-                            ? <Check className="h-4 w-4" />
-                            : <Copy className="h-4 w-4" />}
-                        </Button>
-                      </div>
-                    </motion.div>
-                  )}
+                  {isShareOpen && <ShareIcons id={id} />}
                 </AnimatePresence>
               </PopoverContent>
             </Popover>

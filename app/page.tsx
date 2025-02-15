@@ -2,7 +2,6 @@ import { NavBar } from "@/components/nav-bar";
 import { Hero } from "@/components/hero";
 import { FeaturedEscorts } from "@/components/featured-escorts";
 import { CategoryTabs } from "@/components/category-tabs";
-import { StoryCircle } from "@/components/story-circle";
 import { EscortCard } from "@/components/escort-card";
 import { Footer } from "@/components/footer";
 import FaqAllNighters from "@/components/Faq02";
@@ -16,7 +15,7 @@ import { Suspense } from "react";
 import { ScrollToTop } from "@/components/scroll_to_top";
 import { RoyalBackground } from "@/components/royal-background";
 import AgeVerification from "../components/age-verification.tsx";
-
+import { StoriesContainer } from "../components/sotry-container.tsx";
 // Metadata for SEO
 export const metadata: Metadata = {
   title: "Find Your Perfect Companion | Premium Escort Directory",
@@ -35,10 +34,11 @@ async function fetchUsers(supabase) {
   const { data, error } = await supabase
     .from("users")
     .select(
-      "id, username, age, location_name, availability,dress_size, profile_picture, is_verified,current_offer",
+      "id, name,username, age, location_name, availability,dress_size, profile_picture, is_verified,current_offer",
     )
     .neq("user_type", "general")
-    .order("ratings", { ascending: false });
+    .order("ratings", { ascending: false })
+    .limit(20);
 
   if (error) {
     console.error("Error fetching users:", error);
@@ -72,10 +72,6 @@ function getRandomImage() {
 export default async function Page() {
   const supabase = createServerComponentClient({ cookies });
   const { data: { user: currentUser }, error } = await supabase.auth.getUser();
-
-  if (error) {
-    console.error("Error fetching user:", error);
-  }
 
   let users = [];
   let stories = [];
@@ -120,7 +116,6 @@ export default async function Page() {
           </Suspense>
 
           <div className="container mx-auto px-4 py-6 text-foreground">
-            {/* Stories Section */}
             <Suspense
               fallback={<div className="animate-pulse h-24 bg-gray-200 mb-8" />}
             >
@@ -130,17 +125,12 @@ export default async function Page() {
               >
                 <div className="flex gap-4 pb-2">
                   {stories.length > 0
-                    ? stories.map((story, index) => (
-                      <StoryCircle
-                        key={story.id || index}
-                        {...story}
-                        isVideo={story.isvideo}
-                        isActive={index === 0}
-                        thumbnail={story.thumbnail}
-                        userId={currentUser?.id}
-                        likes={story.likes}
+                    ? (
+                      <StoriesContainer
+                        users={users.map((user) => ({ ...user, stories }))}
+                        currentUserId={currentUser?.id}
                       />
-                    ))
+                    )
                     : (
                       <div className="relative w-full h-56">
                         <img
@@ -175,7 +165,7 @@ export default async function Page() {
                     prefetch={false}
                   >
                     <EscortCard
-                      name={user.username}
+                      name={user.name || user.username}
                       age={user.age}
                       location={user.location_name}
                       measurements={user.dress_size}

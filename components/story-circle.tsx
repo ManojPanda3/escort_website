@@ -1,10 +1,8 @@
 "use client";
 
 import Image from "next/image";
-import { cn } from "@/lib/utils";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { StoryViewer } from "./story-viewer";
-import { supabase } from "../lib/supabase.ts";
 
 interface StoryCircleProps {
   id: string;
@@ -14,69 +12,51 @@ interface StoryCircleProps {
   isVideo?: boolean;
   likes: number;
   userId: string;
+  ownerAvatar: string;
+  ownerName: string;
+  totalStories: number;
+  currentIndex: number;
+  onNext: () => unknown;
+  onPrevious: () => unknown;
+  onClick: () => unknown
 }
 
-export function StoryCircle(
-  { id, url, thumbnail, title, isVideo, userId, likes }: StoryCircleProps,
-) {
-  const [isOpen, setIsOpen] = useState(false);
-  const [liked, setLiked] = useState(false);
-
-  useEffect(() => {
-    if (!userId) return;
-    supabase.from("story_likes").select("user,id").eq("post", id).eq(
-      "user",
-      userId,
-    ).single().then(({ data, error }) => {
-      if (error) {
-        console.error(error);
-      } else {
-        const isLiked = data && data.id ? true : false;
-        setLiked(isLiked);
-      }
-    });
-  }, []);
+export function StoryCircle({
+  id,
+  url,
+  thumbnail,
+  title,
+  isVideo,
+  userId,
+  likes,
+  ownerAvatar,
+  ownerName,
+  onClick
+}: StoryCircleProps) {
 
   return (
     <>
       <button
         className="group flex flex-col items-center gap-1"
-        onClick={() => setIsOpen(true)}
+        onClick={onClick}
       >
-        <div className="p-0.5 rounded-full bg-gray-700">
+        <div className="p-0.5 rounded-full bg-gradient-to-tr from-yellow-400 to-fuchsia-600">
           <div className="p-0.5 rounded-full bg-black">
             <div className="relative h-16 w-16 overflow-hidden rounded-full ring-2 ring-black">
               <Image
-                src={thumbnail}
-                alt={title}
+                src={ownerAvatar || "/placeholder.svg"}
+                alt={ownerName}
                 fill
-                className={cn(
-                  "object-cover transition-opacity duration-300",
-                  isVideo
-                    ? "opacity-100"
-                    : "group-hover:opacity-100 opacity-75",
-                )}
+                className="object-cover"
               />
             </div>
           </div>
         </div>
         <span className="text-xs text-gray-300 group-hover:text-white transition-colors">
-          {title}
+          {ownerName}
         </span>
       </button>
-      {isOpen && (
-        <StoryViewer
-          id={id}
-          url={url}
-          title={title}
-          isVideo={isVideo}
-          onClose={() => setIsOpen(false)}
-          userId={userId}
-          likes={likes}
-          liked={liked}
-          setLiked={setLiked}
-        />
-      )}
     </>
   );
 }
+

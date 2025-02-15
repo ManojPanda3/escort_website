@@ -14,15 +14,13 @@ export async function POST(request: NextRequest) {
     const age = formData.get("age") as string;
     const location = formData.get("location") as string;
     const locationName = formData.get("locationName") as string;
-    const interest = formData.get("interest") as string;
     const gender = formData.get("gender") as string;
     const userId = formData.get("userId") as string;
-    const categoriesString = formData.get("categories") as string; // Get as string
     const interested_servicesString = formData.get(
       "interested_services",
     ) as string; // Get as string
 
-    if (!age || parseInt(age) < 18) {
+    if (userType !== "general" && (!age || parseInt(age) < 18)) {
       return NextResponse.json(
         { message: "Must be 18 or older to register." },
         { status: 400 },
@@ -44,20 +42,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Parse categories and services from JSON strings to JavaScript arrays
-    let categories: string[] = [];
     let interested_services: string[] = [];
-
-    if (categoriesString) {
-      try {
-        categories = JSON.parse(categoriesString) as string[];
-      } catch (parseError) {
-        console.error("Error parsing categories JSON:", parseError);
-        return NextResponse.json(
-          { message: "Invalid categories format." },
-          { status: 400 },
-        );
-      }
-    }
 
     if (interested_servicesString) {
       try {
@@ -76,19 +61,21 @@ export async function POST(request: NextRequest) {
       username,
       email,
       user_type: userType,
-      age: parseInt(age),
+      age: age != null ? parseInt(age) : null,
       is_verified: false,
       location,
-      interest,
       gender,
       location_name: locationName,
-      categories: categories, // Use the parsed array
       interested_services: interested_services, // Use the parsed array
     };
-    if (location.trim() == "") delete userDataToInsert.location;
-    if (locationName.trim() == "") delete userDataToInsert.location_name;
+    if (!location?.trim()) {
+      delete userDataToInsert.location;
+    }
+    if (!locationName?.trim()) {
+      delete userDataToInsert.location_name;
+    }
+    if (userDataToInsert.age == null) delete userDataToInsert.age;
 
-    console.log("Right Before updating", userDataToInsert.id);
     const { data: insertedUser, error: userInsertError } = await supabaseAdmin
       .from("users")
       .insert([userDataToInsert])

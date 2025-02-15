@@ -110,8 +110,9 @@ export function ProfileTabs({
 
       toast({
         title: "Success",
-        description: `${type.charAt(0).toUpperCase() + type.slice(1)
-          } deleted successfully`,
+        description: `${
+          type.charAt(0).toUpperCase() + type.slice(1)
+        } deleted successfully`,
       });
       setIsLoading(false);
     } catch (error) {
@@ -348,6 +349,7 @@ export function ProfileTabs({
             description: "Service added successfully",
           });
         }}
+        userId={userId}
       />
       <AddPictureModal
         isOpen={activeModal === "picture"}
@@ -391,4 +393,3 @@ export function ProfileTabs({
     </>
   );
 }
-

@@ -12,17 +12,21 @@ import { Button } from "@/components/ui/button";
 import { useRouter } from "next/navigation";
 import { Loader2 } from "lucide-react";
 import { InterestSelector } from "@/components/interest-selector";
+import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
 
 interface AddServiceModalProps {
   isOpen: boolean;
   onClose: (services?: { id: string; service: string }[]) => void;
+  userId: any;
 }
 
-export function AddServiceModal({ isOpen, onClose }: AddServiceModalProps) {
+export function AddServiceModal(
+  { isOpen, userId, onClose }: AddServiceModalProps,
+) {
   const [loading, setLoading] = useState(false);
   const [selectedServices, setSelectedServices] = useState<string[]>([]);
   const [availableServices, setAvailableServices] = useState<string[]>([]);
-  const router = useRouter();
+  const supabase = createClientComponentClient();
 
   useEffect(() => {
     const fetchServices = async () => {
@@ -48,23 +52,10 @@ export function AddServiceModal({ isOpen, onClose }: AddServiceModalProps) {
     setLoading(true);
 
     try {
-      const addedServices = await Promise.all(
-        selectedServices.map(async (service) => {
-          const response = await fetch("/api/profile/addService", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ service }),
-          });
-
-          if (!response.ok) {
-            throw new Error(`Failed to add service: ${service}`);
-          }
-          const data = await response.json();
-          return { id: data.id, service };
-        }),
-      );
-
-      onClose(addedServices);
+      const { data, error } = await supabase.from("user").update({
+        services: selectedServices,
+      }).eq("id", user.id);
+      onClose();
     } catch (error) {
       console.error("Error adding services:", error);
       onClose();
@@ -105,4 +96,3 @@ export function AddServiceModal({ isOpen, onClose }: AddServiceModalProps) {
     </Dialog>
   );
 }
-

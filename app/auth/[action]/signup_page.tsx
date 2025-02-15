@@ -1,121 +1,377 @@
+// app/auth/signup/page.tsx
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
-import { Progress } from "@/components/ui/progress";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { AlertCircle } from "lucide-react";
-import { LoadingSpinner } from "@/components/ui/loading";
-import UserDetailsForm from "@/components/signup/UserDetailsForm";
-import EmailVerification from "@/components/signup/EmailVerification";
-import ProfileImageUpload from "@/components/signup/ProfileImageUpload";
-import InterestsServicesForm from "@/components/signup/InterestsServicesForm";
-import AgeProofUpload from "@/components/signup/AgeProofUpload";
+import { AlertCircle, Plus, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Badge } from "@/components/ui/badge";
-import { X } from "lucide-react";
-import { InterestSelector } from "@/components/interest-selector";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import { LoadingSpinner } from "@/components/ui/loading";
+import { uploadToStorage } from "@/lib/storage";
+import { PasswordInput } from "@/components/password-input";
+import { InterestSelector } from "@/components/interest-selector"; //  Adjust path if needed
+import services from "@/public/services.json";
+import { EmailConfirmationDialog } from "@/components/EmailConfirmationDialog"; // Adjust path
+
+interface Location {
+  id: string;
+  name: string;
+  country: string;
+  region: string;
+  city: string;
+  created_at: string;
+}
+
+interface FileUploadHandlerProps {
+  fileNumber: 1 | 2;
+  fileTitle: string;
+  preview: string | null;
+  handleFileChange: (
+    e: React.ChangeEvent<HTMLInputElement>,
+    fileNumber: 1 | 2,
+  ) => void;
+  handleDeleteFile: (fileNumber: 1 | 2) => void;
+  uploaderRef: React.RefObject<HTMLInputElement | null>;
+}
+
+function FileUploadHandler({
+  fileNumber,
+  fileTitle,
+  preview,
+  handleFileChange,
+  handleDeleteFile,
+  uploaderRef,
+}: FileUploadHandlerProps) {
+  return (
+    <div>
+      <Label htmlFor={`ageProof${fileNumber}`}>{fileTitle}</Label>
+      <div className="mt-2 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 border-dashed rounded-md">
+        {preview
+          ? (
+            <div className="relative">
+              <img
+                src={preview}
+                alt={`Age Proof ${fileNumber}`}
+                className="max-h-40 rounded"
+              />
+              <Button
+                type="button"
+                variant="destructive"
+                size="icon"
+                onClick={() => handleDeleteFile(fileNumber)}
+                className="absolute top-0 right-0"
+              >
+                <X className="h-4 w-4" />
+              </Button>
+            </div>
+          )
+          : (
+            <div
+              className="space-y-1 text-center cursor-pointer"
+              onClick={() => uploaderRef.current?.click()}
+            >
+              <Plus className="mx-auto h-12 w-12 text-gray-400" />
+              <div className="flex text-sm text-gray-600">
+                <label
+                  htmlFor={`ageProof${fileNumber}`}
+                  className="relative cursor-pointer rounded-md font-medium text-indigo-600 hover:text-indigo-500 focus-within:outline-none focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-indigo-500"
+                >
+                  <span>Upload a file</span>
+                  <input
+                    ref={uploaderRef}
+                    id={`ageProof${fileNumber}`}
+                    name={`ageProof${fileNumber}`}
+                    type="file"
+                    accept="image/*"
+                    className="sr-only"
+                    onChange={(e) => handleFileChange(e, fileNumber)}
+                  />
+                  <p className="pl-1">or drag and drop</p>
+                </label>
+              </div>
+              <p className="text-xs text-gray-500">PNG, JPG, GIF up to 5MB</p>
+            </div>
+          )}
+      </div>
+    </div>
+  );
+}
 
 export default function SignUpPage() {
   const router = useRouter();
   const supabase = createClientComponentClient();
-  const [step, setStep] = useState(1);
+  const uploader1 = useRef<HTMLInputElement>(null);
+  const uploader2 = useRef<HTMLInputElement>(null);
+
   const [formData, setFormData] = useState({
     email: "",
     password: "",
     username: "",
     userType: "general",
-    gender: "",
-    interest: "",
-    locationId: "",
     age: "",
-    profilePicture: null as File | null,
-    coverImage: null as File | null,
-    interests: [] as string[],
-    services: [] as string[],
-    ageProof1: null as File | null,
-    ageProof2: null as File | null,
+    agreeToTerms: false,
+    gender: "" as "male" | "female" | "other",
+    locationId: "",
+    interested_services: [] as string[],
+    interest: "", // Consider removing if deprecated.
   });
+
+  const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  const [selectedServices, setSelectedServices] = useState([] as string[]);
-  const [isInterestSelectorOpen, setIsInterestSelectorOpen] = useState(false);
+  const [isAgeProofDialogOpen, setIsAgeProofDialogOpen] = useState(false);
+  const [locations, setLocations] = useState<Location[]>([]);
+  const [isInterestOpen, setInterestOpen] = useState(false);
+  const [isConfirmationOpen, setIsConfirmationOpen] = useState(false);
 
-  const totalSteps = formData.userType === "general" ? 4 : 5;
-  const progress = (step / totalSteps) * 100;
-  const userType = formData.userType;
+  const [ageProofFile1, setAgeProofFile1] = useState<File | null>(null);
+  const [ageProofFile2, setAgeProofFile2] = useState<File | null>(null);
+  const [ageProofPreview1, setAgeProofPreview1] = useState<string | null>(
+    null,
+  );
+  const [ageProofPreview2, setAgeProofPreview2] = useState<string | null>(
+    null,
+  );
 
-  const handleNext = () => setStep(step + 1);
-  const handlePrevious = () => setStep(step - 1);
+  useEffect(() => {
+    const fetchLocations = async () => {
+      const { data: locationsData, error } = await supabase
+        .from("locations")
+        .select("*");
+      if (error) {
+        console.error("Error fetching locations:", error);
+        setError("Failed to load locations.");
+        return;
+      }
+      setLocations(locationsData || []);
+    };
+    fetchLocations();
+  }, []);
 
-  const updateFormData = (newData: Partial<typeof formData>) => {
-    setFormData((prev) => ({ ...prev, ...newData }));
+  const handleFileChange = async (
+    e: React.ChangeEvent<HTMLInputElement>,
+    fileNumber: 1 | 2,
+  ) => {
+    if (!e.target.files?.length) return;
+
+    const file = e.target.files[0];
+    if (!file.type.startsWith("image/")) {
+      setError(`File ${fileNumber} must be an image`);
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      setError(`File ${fileNumber} size should be less than 5MB`);
+      return;
+    }
+
+    const img = new Image();
+    img.onload = async () => {
+      const canvas = document.createElement("canvas");
+      const ctx = canvas.getContext("2d");
+      let width = img.width;
+      let height = img.height;
+      const maxHeight = 480;
+
+      if (height > maxHeight) {
+        width = Math.floor(width * (maxHeight / height));
+        height = maxHeight;
+      }
+
+      canvas.width = width;
+      canvas.height = height;
+      ctx?.drawImage(img, 0, 0, width, height);
+
+      try {
+        const webpBlob = await new Promise<Blob>((resolve) => {
+          canvas.toBlob((blob) => blob && resolve(blob), "image/webp");
+        });
+
+        const optimizedFile = new File(
+          [webpBlob],
+          file.name.replace(/\.[^/.]+$/, ".webp"),
+          { type: "image/webp" },
+        );
+
+        const reader = new FileReader();
+        reader.onloadend = () => {
+          if (fileNumber === 1) {
+            setAgeProofFile1(optimizedFile);
+            setAgeProofPreview1(reader.result as string);
+          } else {
+            setAgeProofFile2(optimizedFile);
+            setAgeProofPreview2(reader.result as string);
+          }
+          setError("");
+        };
+        reader.readAsDataURL(optimizedFile);
+      } catch (err) {
+        setError("Error processing image");
+      }
+    };
+    img.src = URL.createObjectURL(file);
   };
 
-  const handleSubmit = async () => {
+  const handleDeleteFile = (fileNumber: 1 | 2) => {
+    if (fileNumber === 1) {
+      setAgeProofFile1(null);
+      setAgeProofPreview1(null);
+      if (uploader1.current) uploader1.current.value = "";
+    } else {
+      setAgeProofFile2(null);
+      setAgeProofPreview2(null);
+      if (uploader2.current) uploader2.current.value = "";
+    }
+  };
+
+  const handleInputChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>,
+  ) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({ ...prev, [name]: value }));
+  };
+
+  const handleCheckboxChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, checked } = e.target;
+    setFormData((prev) => ({ ...prev, [name]: checked }));
+  };
+
+  const handleAuth = async (e: React.FormEvent) => {
+    e.preventDefault();
     setIsLoading(true);
     setError("");
 
-    try {
-      // Sign up user with Supabase auth
-      const { data: authData, error: signUpError } = await supabase.auth.signUp(
-        {
-          email: formData.email,
-          password: formData.password,
-          options: {
-            data: { username: formData.username, type: formData.userType },
-          },
-        },
-      );
+    if (!formData.agreeToTerms) {
+      setError("You must agree to the terms and conditions");
+      setIsLoading(false);
+      return;
+    }
 
-      if (signUpError) throw signUpError;
+    const { data: userData, error: userError } = await supabase
+      .from("users")
+      .select("*")
+      .or(`email.eq.${formData.email},username.eq.${formData.username}`);
+
+    if (userData?.length) {
+      setError(
+        userData[0].email === formData.email
+          ? "Email already exists"
+          : "Username already exists",
+      );
+      setIsLoading(false);
+      return;
+    }
+
+    const {
+      email,
+      password,
+      username,
+      userType,
+      age,
+      gender,
+      locationId,
+      interested_services,
+    } = formData;
+
+    try {
+      const { data: authData, error: signUpError } = await supabase.auth
+        .signUp({
+          email,
+          password,
+          options: {
+            data: { username, type: userType },
+          },
+        });
+
+      if (signUpError) {
+        setError(signUpError.message);
+        setIsLoading(false); // Ensure loading is stopped on error
+        return;
+      }
 
       const userId = authData?.user?.id;
-      if (!userId) throw new Error("Failed to get auth ID");
+      if (!userId) {
+        setError("Failed to get auth ID");
+        setIsLoading(false);
+        return;
+      }
 
-      // Create user profile
-      const profileData = {
-        email: formData.email,
-        username: formData.username,
-        userType: formData.userType,
-        age: formData.age,
-        interest: formData.interest,
-        gender: formData.gender,
-        location: formData.locationId,
-        userId: userId,
-        services: selectedServices,
-      };
+      const profileFormData = new FormData();
+      Object.entries(formData).forEach(([key, value]) => {
+        if (Array.isArray(value)) {
+          profileFormData.append(key, JSON.stringify(value));
+        } else if (
+          typeof value === "string" ||
+          typeof value === "number" ||
+          typeof value === "boolean"
+        ) {
+          profileFormData.append(key, value.toString());
+        }
+      });
+      profileFormData.append("userId", userId);
+      profileFormData.append(
+        "locationName",
+        locations.find((location) => location.id === locationId)?.name || "",
+      );
+      profileFormData.append(
+        "interested_services",
+        JSON.stringify(interested_services),
+      );
 
       const profileResponse = await fetch("/api/auth/signup", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(profileData),
+        body: profileFormData,
       });
 
       if (!profileResponse.ok) {
         const errorData = await profileResponse.json();
-        throw new Error(errorData.message || "Failed to create user profile");
+        setError(errorData.message || "Failed to create user profile");
+        setIsLoading(false);
+        return;
       }
 
-      // Handle file uploads
-      if (formData.profilePicture) {
-        await uploadFile(formData.profilePicture, userId, "profile_picture");
-      }
-      if (formData.coverImage) {
-        await uploadFile(formData.coverImage, userId, "cover_image");
-      }
-      if (
-        formData.userType !== "general" && formData.ageProof1 &&
-        formData.ageProof2
-      ) {
-        await uploadFile(formData.ageProof1, userId, "age_proof_1");
-        await uploadFile(formData.ageProof2, userId, "age_proof_2");
+      if (userType !== "general" && ageProofFile1 && ageProofFile2) {
+        const [upload1, upload2] = await Promise.all([
+          uploadToStorage(ageProofFile1, userId),
+          uploadToStorage(ageProofFile2, userId),
+        ]);
+
+        if (!upload1.success || !upload2.success) {
+          throw new Error(upload1.error || upload2.error);
+        }
+
+        await fetch("/api/ageProofUpload", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            age_proofs: [upload1.fileUrl, upload2.fileUrl],
+            username,
+            email,
+            userId,
+          }),
+        });
       }
 
-      // Redirect to login page or dashboard
-      router.push("/auth/login");
+      // Show confirmation dialog instead of redirecting
+      setIsConfirmationOpen(true);
     } catch (err: any) {
       setError(err.message);
     } finally {
@@ -123,37 +379,47 @@ export default function SignUpPage() {
     }
   };
 
-  const uploadFile = async (file: File, userId: string, fileType: string) => {
-    const { error } = await supabase.storage.from("user_uploads").upload(
-      `${userId}/${fileType}`,
-      file,
-    );
-
-    if (error) throw error;
+  const handleServiceSelection = (selected: string[]) => {
+    setFormData((prev) => ({ ...prev, interested_services: selected }));
   };
 
-  const handleSaveInterests = (interests: string[]) => {
-    setSelectedServices(interests);
-  };
-
-  const handleRemoveService = (serviceToRemove: string) => {
-    setSelectedServices((prevServices) =>
-      prevServices.filter((service) => service !== serviceToRemove)
-    );
+  const handleResendEmail = async () => {
+    if (formData.email) {
+      const { error } = await supabase.auth.resend({
+        email: formData.email,
+        type: "signup",
+      });
+      if (error) {
+        setError(error.message || "Failed to resend email");
+      }
+    } else {
+      setError("Email is required to resend confirmation.");
+    }
   };
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-r from-background via-background/80 to-background dark:from-black dark:via-gray-900 dark:to-black">
       {isLoading && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-30">
           <LoadingSpinner />
         </div>
       )}
-      <div className="bg-white dark:bg-background/80 backdrop-blur-sm p-8 rounded-lg shadow-lg w-full max-w-md">
-        <h2 className="text-3xl font-bold text-center mb-6 bg-gradient-to-r from-amber-200 to-yellow-400 bg-clip-text text-transparent">
+
+      {/* Conditionally render the dialog *outside* the main form container */}
+      <EmailConfirmationDialog
+        isOpen={isConfirmationOpen}
+        onClose={() => {
+          setIsConfirmationOpen(false);
+          router.push("/auth/login"); // Redirect after closing
+        }}
+        email={formData.email}
+        onResend={handleResendEmail}
+      />
+
+      <div className="w-full max-w-md rounded-lg bg-white p-8 shadow-lg dark:bg-background/80 backdrop-blur-sm">
+        <h2 className="mb-6 bg-gradient-to-r from-amber-200 to-yellow-400 bg-clip-text text-center text-3xl font-bold text-transparent">
           Sign Up
         </h2>
-        <Progress value={progress} className="mb-4" />
         {error && (
           <Alert variant="destructive" className="mb-4">
             <AlertCircle className="h-4 w-4" />
@@ -161,82 +427,243 @@ export default function SignUpPage() {
             <AlertDescription>{error}</AlertDescription>
           </Alert>
         )}
-        {step === 1 && (
-          <UserDetailsForm
-            formData={formData}
-            updateFormData={updateFormData}
-            onNext={handleNext}
-          />
-        )}
-        {step === 2 && (
-          <EmailVerification
-            email={formData.email}
-            onNext={handleNext}
-            onPrevious={handlePrevious}
-          />
-        )}
-        {step === 3 && (
-          <ProfileImageUpload
-            formData={formData}
-            updateFormData={updateFormData}
-            onNext={handleNext}
-            onPrevious={handlePrevious}
-          />
-        )}
-        {step === 4 && (
-          <InterestsServicesForm
-            formData={formData}
-            updateFormData={updateFormData}
-            onNext={formData.userType === "general" ? handleSubmit : handleNext}
-            onPrevious={handlePrevious}
-            selectedServices={selectedServices}
-            setSelectedServices={setSelectedServices}
-          />
-        )}
-        {step === 5 && formData.userType !== "general" && (
-          <AgeProofUpload
-            formData={formData}
-            updateFormData={updateFormData}
-            onSubmit={handleSubmit}
-            onPrevious={handlePrevious}
-          />
-        )}
-        {userType !== "general" && (
-          <div className="space-y-2">
-            <Label htmlFor="interested_services">Interested Services</Label>
-            <Button
-              variant="outline"
-              className="w-full justify-start text-left font-normal"
-              onClick={() => setIsInterestSelectorOpen(true)}
-            >
-              {selectedServices.length > 0
-                ? `${selectedServices.length} services selected`
-                : "Select services"}
-            </Button>
-            <div className="flex flex-wrap gap-2 mt-2">
-              {selectedServices.map((service) => (
-                <Badge key={service} variant="secondary" className="px-2 py-1">
-                  {service}
-                  <button
-                    type="button"
-                    onClick={() =>
-                      handleRemoveService(service)}
-                    className="ml-2 text-red-500 hover:text-red-700"
-                  >
-                    <X className="h-3 w-3" />
-                  </button>
-                </Badge>
-              ))}
-            </div>
+        <form onSubmit={handleAuth} className="space-y-4 text-foreground">
+          {/* Form fields (same as before) */}
+          <div>
+            <Label htmlFor="email">Email</Label>
+            <Input
+              id="email"
+              type="email"
+              name="email"
+              value={formData.email}
+              onChange={handleInputChange}
+              required
+            />
           </div>
-        )}
+          <PasswordInput
+            password={formData.password}
+            setPassword={(value) =>
+              setFormData((prev) => ({ ...prev, password: value }))}
+            showPassword={showPassword}
+            setShowPassword={setShowPassword}
+          />
+          <div>
+            <Label htmlFor="username">Username</Label>
+            <Input
+              id="username"
+              name="username"
+              value={formData.username}
+              onChange={handleInputChange}
+              required
+            />
+          </div>
+          <div>
+            <Label htmlFor="userType">User Type</Label>
+            <Select
+              name="userType"
+              value={formData.userType}
+              onValueChange={(value) =>
+                setFormData((prev) => ({ ...prev, userType: value }))}
+              required
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Select user type" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="general">General</SelectItem>
+                <SelectItem value="escort">Escort</SelectItem>
+                <SelectItem value="bdsm">BDSM</SelectItem>
+                <SelectItem value="couple">Couple</SelectItem>
+                <SelectItem value="content creator">Content Creator</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          <div>
+            <Label htmlFor="gender">Gender</Label>
+            <Select
+              name="gender"
+              value={formData.gender}
+              onValueChange={(value) =>
+                setFormData((prev) => ({
+                  ...prev,
+                  gender: value as "male" | "female" | "other",
+                }))}
+              required
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Select your gender" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="male">Male</SelectItem>
+                <SelectItem value="female">Female</SelectItem>
+                <SelectItem value="other">Other</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
 
-        <InterestSelector
-          isOpen={isInterestSelectorOpen}
-          onClose={() => setIsInterestSelectorOpen(false)}
-          selectedInterests={selectedServices}
-          onSave={handleSaveInterests}
-        />
+          {formData.userType !== "general" && (
+            <div>
+              <Label htmlFor="location">Location</Label>
+              <Select
+                name="locationId"
+                value={formData.locationId}
+                onValueChange={(value) =>
+                  setFormData((prev) => ({ ...prev, locationId: value }))}
+                required
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select your location" />
+                </SelectTrigger>
+                <SelectContent>
+                  {locations.map((location) => (
+                    <SelectItem key={location.id} value={location.id}>
+                      {location.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
+          <div>
+            <Label>Select Interests</Label>
+            <br />
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setInterestOpen(true)}
+            >
+              + Add/Edit
+            </Button>
+            <InterestSelector
+              isOpen={isInterestOpen}
+              onClose={() => setInterestOpen(false)}
+              selectedInterests={formData.interested_services}
+              onSave={handleServiceSelection}
+              availableInterests={services}
+              title="Select Services"
+            />
+            {formData.interested_services.length > 0 && (
+              <div className="mt-2">
+                <Label>Selected Interests:</Label>
+                <div className="flex flex-wrap gap-2">
+                  {formData.interested_services.map((interest) => (
+                    <span
+                      key={interest}
+                      className="bg-blue-100 text-blue-800 text-xs font-medium px-2.5 py-0.5 rounded dark:bg-blue-900 dark:text-blue-300"
+                    >
+                      {interest}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+
+          {formData.userType !== "general" && (
+            <div>
+              {" "}
+              <Label htmlFor="age">Age</Label>
+              <Input
+                id="age"
+                type="number"
+                name="age"
+                min="18"
+                max="200"
+                value={formData.age}
+                onChange={handleInputChange}
+                required
+              />
+            </div>
+          )}
+
+          {formData.userType !== "general" && (
+            <div>
+              <Label htmlFor="ageProof">Age Proof</Label>
+              <Dialog
+                open={isAgeProofDialogOpen}
+                onOpenChange={setIsAgeProofDialogOpen}
+              >
+                <DialogTrigger asChild>
+                  <Button variant="outline" className="w-full">
+                    Upload Age Proof
+                  </Button>
+                </DialogTrigger>
+                <DialogContent>
+                  <DialogHeader>
+                    <DialogTitle>Upload Age Proof</DialogTitle>
+                  </DialogHeader>
+                  <div className="grid grid-cols-2 gap-4">
+                    <FileUploadHandler
+                      fileNumber={1}
+                      fileTitle="Upload your ID card"
+                      preview={ageProofPreview1}
+                      handleFileChange={handleFileChange}
+                      handleDeleteFile={handleDeleteFile}
+                      uploaderRef={uploader1}
+                    />
+                    <FileUploadHandler
+                      fileNumber={2}
+                      fileTitle="Upload your photo"
+                      preview={ageProofPreview2}
+                      handleFileChange={handleFileChange}
+                      handleDeleteFile={handleDeleteFile}
+                      uploaderRef={uploader2}
+                    />
+                  </div>
+                  <Button
+                    onClick={() => setIsAgeProofDialogOpen(false)}
+                    className="mt-4"
+                  >
+                    Done
+                  </Button>
+                </DialogContent>
+              </Dialog>
+              {(ageProofPreview1 || ageProofPreview2) && (
+                <p className="mt-1 text-xs text-muted-foreground">
+                  {ageProofPreview1 && ageProofPreview2
+                    ? "Both files uploaded"
+                    : "One file uploaded"}
+                </p>
+              )}
+            </div>
+          )}
+
+          <div className="flex items-center space-x-2">
+            <Checkbox
+              id="terms"
+              name="agreeToTerms"
+              checked={formData.agreeToTerms}
+              onCheckedChange={(checked) =>
+                setFormData((prev) => ({
+                  ...prev,
+                  agreeToTerms: checked as boolean,
+                }))}
+            />
+            <Label htmlFor="terms" className="text-sm">
+              I agree to the{" "}
+              <Link href="/terms_and_conditions" className="text-blue-500">
+                Terms & Conditions
+              </Link>
+            </Label>
+          </div>
+
+          <Button
+            type="submit"
+            className="w-full bg-gradient-to-r from-amber-400 to-amber-600 text-black"
+            disabled={isLoading}
+          >
+            {isLoading ? "Signing Up..." : "Sign Up"}
+          </Button>
+        </form>
+        <p className="mt-4 text-center">
+          Already have an account?{" "}
+          <Link
+            href="/auth/login"
+            className="text-amber-400 hover:text-amber-300"
+          >
+            Login
+          </Link>
+        </p>
       </div>
     </div>
   );

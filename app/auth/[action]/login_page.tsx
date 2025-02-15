@@ -36,8 +36,8 @@ export default function LoginPage() {
     });
     if (error) setError(error.message);
     else {
-      setTimeout(() => setIsLoading(false),250);
-      router.push("/");
+      setTimeout(() => setIsLoading(false), 250);
+      router.push("/profile");
     }
   };
 
