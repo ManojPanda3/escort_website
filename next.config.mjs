@@ -24,9 +24,6 @@ const nextConfig = {
     // Ignores TypeScript errors during builds
     ignoreBuildErrors: true,
   },
-  experimental: {
-    useCache: true,
-  },
 };
 
 export default nextConfig;
