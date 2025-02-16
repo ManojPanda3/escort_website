@@ -42,7 +42,15 @@ interface User {
 export function NavBar() {
   // Use useUserData to get the user
   const { user: cachedUser, clearCache } = useUserData(); // Get user from useUserData and clearCache
-  const [user, setUser] = useState<User | null>(null);
+  // Initialize user state based on cachedUser directly.  No need for separate state.
+  const user = cachedUser
+    ? {
+      id: cachedUser.id,
+      username: cachedUser.username || cachedUser.name || "",
+      avatar: cachedUser.profile_picture || "/placeholder.svg",
+    }
+    : null;
+
   const router = useRouter();
   const supabase = createClientComponentClient();
   const [isSearchOpen, setIsSearchOpen] = useState(false);
@@ -73,20 +81,6 @@ export function NavBar() {
       setSearchQuery(""); // Clear search query after search
     }
   };
-
-  // Use cachedUser from useUserData
-  useEffect(() => {
-    if (cachedUser) {
-      // Map cached user data to the User interface
-      setUser({
-        id: cachedUser.id,
-        username: cachedUser.username || cachedUser.name || "", // Use appropriate fields
-        avatar: cachedUser.profile_picture || "/placeholder.svg", // Provide a default
-      });
-    } else {
-      setUser(null); // No user logged in (or cache is empty)
-    }
-  }, [cachedUser]);
 
   // Listen for auth state changes
   useEffect(() => {

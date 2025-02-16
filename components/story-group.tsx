@@ -39,7 +39,7 @@ export function StoryGroup(
   const nextStory = () => {
     if (currentStoryIndex < stories.length - 1) {
       setCurrentStoryIndex(currentStoryIndex + 1);
-      console.log(currentStoryIndex)
+      console.log(currentStoryIndex);
     } else {
       closeViewer();
     }
@@ -50,7 +50,6 @@ export function StoryGroup(
       setCurrentStoryIndex(currentStoryIndex - 1);
     }
   };
-  console.log(currentStoryIndex, stories.length)
 
   return (
     <>
@@ -73,7 +72,8 @@ export function StoryGroup(
           title={stories[currentStoryIndex].title}
           isVideo={stories[currentStoryIndex].isVideo}
           onClose={closeViewer}
-          userId={userId} likes={stories[currentStoryIndex].likes}
+          userId={userId}
+          likes={stories[currentStoryIndex].likes}
           ownerAvatar={ownerAvatar}
           ownerName={ownerName}
           onNext={nextStory}

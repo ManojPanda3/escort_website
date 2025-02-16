@@ -1,4 +1,3 @@
-// app/auth/login/page.tsx
 "use client";
 
 import { useState } from "react";
@@ -23,8 +22,9 @@ export default function LoginPage() {
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [isResetMode, setIsResetMode] = useState(false); // Track reset mode
 
-  const handleAuth = async (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
     setError("");
@@ -38,7 +38,7 @@ export default function LoginPage() {
       if (error) {
         setError(error.message);
       } else {
-        router.push("/profile"); // Redirect to profile page after successful login.
+        router.push("/profile");
       }
     } catch (err: any) {
       setError(err.message || "An unexpected error occurred.");
@@ -47,7 +47,8 @@ export default function LoginPage() {
     }
   };
 
-  const handleResetPassword = async () => {
+  const handleResetPassword = async (e: React.FormEvent) => { // Changed to form event
+    e.preventDefault(); // Prevent default form submission
     setError("");
     setSuccess("");
     if (!email) {
@@ -57,7 +58,7 @@ export default function LoginPage() {
     setIsLoading(true);
     try {
       const { error } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: `${window.location.origin}/auth/update-password`,
+        redirectTo: `${window.location.origin}/auth/update-password`, // IMPORTANT: Redirect URL
       });
       if (error) {
         setError(error.message);
@@ -73,15 +74,14 @@ export default function LoginPage() {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-r from-background via-background/80 to-background dark:from-black dark:via-gray-900 dark:to-black">
-      {isLoading &&
-        (
-          <div className="w-full h-full fixed top-0-left-0 bg-transparent flex justify-center items-center before:w-full before:h-full before:fixed before:bg-black before:opacity-30 z-50">
-            <LoadingSpinner />
-          </div>
-        )}
+      {isLoading && (
+        <div className="w-full h-full fixed top-0-left-0 bg-transparent flex justify-center items-center before:w-full before:h-full before:fixed before:bg-black before:opacity-30 z-50">
+          <LoadingSpinner />
+        </div>
+      )}
       <div className="bg-white dark:bg-background/80 backdrop-blur-sm p-8 rounded-lg shadow-lg w-full max-w-md">
         <h2 className="text-3xl font-bold text-center mb-6 bg-gradient-to-r from-amber-200 to-yellow-400 bg-clip-text text-transparent">
-          Login
+          {isResetMode ? "Reset Password" : "Login"}
         </h2>
         {error && (
           <Alert variant="destructive" className="mb-4">
@@ -91,7 +91,11 @@ export default function LoginPage() {
           </Alert>
         )}
         {success && <Success>{success}</Success>}
-        <form onSubmit={handleAuth} className="space-y-4 text-foreground">
+
+        <form
+          onSubmit={isResetMode ? handleResetPassword : handleLogin} // Use correct handler
+          className="space-y-4 text-foreground"
+        >
           <div>
             <Label htmlFor="email">Email</Label>
             <Input
@@ -102,36 +106,56 @@ export default function LoginPage() {
               required
             />
           </div>
-          <PasswordInput
-            password={password}
-            setPassword={setPassword}
-            showPassword={showPassword}
-            setShowPassword={setShowPassword}
-          />
+          {!isResetMode && (
+            <PasswordInput
+              password={password}
+              setPassword={setPassword}
+              showPassword={showPassword}
+              setShowPassword={setShowPassword}
+            />
+          )}
           <Button
             type="submit"
             className="w-full bg-gradient-to-r from-amber-400 to-amber-600 text-black"
           >
-            Login
+            {isResetMode ? "Reset Password" : "Login"}
           </Button>
         </form>
-        <p className="mt-4 text-center">
-          Don't have an account?{" "}
-          <Link
-            href="/auth/signup"
-            className="text-amber-400 hover:text-amber-300"
-          >
-            Sign Up
-          </Link>
-        </p>
-        <p className="mt-2 text-center">
-          <button
-            onClick={handleResetPassword}
-            className="text-amber-400 hover:text-amber-300"
-          >
-            Forgot Password?
-          </button>
-        </p>
+
+        {isResetMode
+          ? (
+            <p className="mt-4 text-center">
+              Remember your password?{" "}
+              <button
+                onClick={() => setIsResetMode(false)}
+                className="text-amber-400 hover:text-amber-300"
+              >
+                Back to Login
+              </button>
+            </p>
+          )
+          : (
+            <>
+              <p className="mt-4 text-center">
+                Don't have an account?{" "}
+                <Link
+                  href="/auth/signup"
+                  className="text-amber-400 hover:text-amber-300"
+                >
+                  Sign Up
+                </Link>
+              </p>
+
+              <p className="mt-2 text-center">
+                <button
+                  onClick={() => setIsResetMode(true)}
+                  className="text-amber-400 hover:text-amber-300"
+                >
+                  Forgot Password?
+                </button>
+              </p>
+            </>
+          )}
       </div>
     </div>
   );

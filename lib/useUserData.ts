@@ -155,4 +155,3 @@ export function useUserData(): UserData {
 
   return userData;
 }
-
