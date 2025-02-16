@@ -27,30 +27,33 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/components/ui/use-toast";
 import { Toaster } from "@/components/ui/toaster";
+import getRandomImage from "../../../../lib/randomImage.ts";
 
 interface ProfileTabsProps {
   pictures: any[];
   rates: any[];
   testimonials: any[];
-  userId: string;
   ownerId: string;
   user: any;
+  currentUser: any;
 }
 
 interface Testimonial {
   id: string;
   comment: string;
   created_at: string; //  Use string and parse on display
-  profile_picture?: string;
-  name?: string;
+  owner: {
+    id: string;
+    profile_picture?: string;
+    username?: string;
+  };
 }
 
 export function ProfileTabs({
   pictures,
   rates,
   testimonials: initialTestimonials, // Renamed for clarity
-  userId,
-  ownerId,
+  currentUser,
   user,
 }: ProfileTabsProps) {
   const [comment, setComment] = useState<string>("");
@@ -60,10 +63,17 @@ export function ProfileTabs({
     initialTestimonials,
   ); // Use a state for testimonials
   const { toast } = useToast();
+  const userId = currentUser?.id;
+  const ownerId = user?.id;
 
   const handleSubmitTestimonial = async (to: string) => {
     if (ownerId === "") {
       console.error("You have to login to give testimonies to other");
+      toast({
+        title: "Error",
+        description: "You have to login to give testimonies to other",
+        variant: "destructive",
+      });
       return;
     }
     if (comment.trim().length === 0) {
@@ -84,8 +94,6 @@ export function ProfileTabs({
         body: JSON.stringify({
           to,
           comment,
-          profile_picture: user.profile_picture,
-          name: user.username,
         }),
       });
 
@@ -97,11 +105,14 @@ export function ProfileTabs({
 
       //Optimistically update the testimonials state *before* the fetch.
       const newTestimonial: Testimonial = {
-        id: data.id, // Get the new ID from the response
+        id: data?.id,
         comment: comment,
-        created_at: new Date().toISOString(), // Use current time.  Database will likely override.
-        profile_picture: data.user?.profile_picture || "", // get profile pic from response data
-        name: data.user?.username || "", //get name from response
+        created_at: new Date().toISOString(),
+        owner: {
+          id: userId,
+          profile_picture: currentUser?.profile_picture || getRandomImage(), // get profile pic from response data
+          username: currentUser?.username || "", //get name from response
+        },
       };
       setTestimonials(
         (prevTestimonials) => [newTestimonial, ...prevTestimonials],
@@ -243,7 +254,7 @@ export function ProfileTabs({
                     </div>
                     <Button
                       className="w-full"
-                      onClick={() => handleSubmitTestimonial(userId)}
+                      onClick={() => handleSubmitTestimonial(ownerId)}
                       disabled={isSubmitting}
                     >
                       {isSubmitting ? "Submitting..." : "Submit Testimonial"}
@@ -260,15 +271,15 @@ export function ProfileTabs({
                     <div className="flex items-start gap-4">
                       <div className="h-10 w-10 relative rounded-full overflow-hidden flex-shrink-0">
                         <Image
-                          src={testimonial.profile_picture || ""}
-                          alt={testimonial.name || "Anonymous"}
+                          src={testimonial.owner.profile_picture || ""}
+                          alt={testimonial.owner.username || "Anonymous"}
                           fill
                           className="object-cover"
                         />
                       </div>
                       <div className="min-w-0">
                         <h3 className="font-semibold truncate">
-                          {testimonial.name ||
+                          {testimonial.owner.username ||
                             "Anonymous"}
                         </h3>
                         <p className="text-sm text-muted-foreground">
@@ -291,4 +302,3 @@ export function ProfileTabs({
     </>
   );
 }
-

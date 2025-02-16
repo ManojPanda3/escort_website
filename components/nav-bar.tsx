@@ -1,119 +1,152 @@
-'use client'
+// nav-bar.tsx
+"use client";
 
-import { useState, useEffect } from 'react'
-import Link from 'next/link'
-import { LogOut, Menu, Search, User } from 'lucide-react'
-import { motion, AnimatePresence } from 'framer-motion'
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
-import { Input } from "@/components/ui/input"
-import { Button } from '@/components/ui/button'
-import { ThemeToggle } from '@/components/ui/theme-toggle'
+import { useEffect, useState } from "react";
+import Link from "next/link";
+import { LogOut, Menu, Search, User } from "lucide-react";
+import { AnimatePresence, motion } from "framer-motion";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { ThemeToggle } from "@/components/ui/theme-toggle";
 import {
   Sheet,
   SheetContent,
   SheetHeader,
   SheetTitle,
   SheetTrigger,
-} from "@/components/ui/sheet"
-import { useRouter } from 'next/navigation'
-import { createClientComponentClient } from '@supabase/auth-helpers-nextjs'
-import Image from 'next/image'
+} from "@/components/ui/sheet";
+import { useRouter } from "next/navigation";
+import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
+import Image from "next/image";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select"
-import cities from "@/public/location.json"
-
+} from "@/components/ui/select";
+import { useUserData } from "@/lib/useUserData"; // Import useUserData
 
 interface User {
-  id: string
-  username: string
-  avatar: string
+  id: string;
+  username: string;
+  avatar: string;
 }
 
 export function NavBar() {
-  const [user, setUser] = useState<User | null>(null)
-  const router = useRouter()
-  const supabase = createClientComponentClient()
-  const [isSearchOpen, setIsSearchOpen] = useState(false)
-  const [searchQuery, setSearchQuery] = useState('')
-  const [searchType, setSearchType] = useState('all')
-  const [suggestions, setSuggestions] = useState<User[]>([])
+  // Use useUserData to get the user
+  const { user: cachedUser, clearCache } = useUserData(); // Get user from useUserData and clearCache
+  const [user, setUser] = useState<User | null>(null);
+  const router = useRouter();
+  const supabase = createClientComponentClient();
+  const [isSearchOpen, setIsSearchOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [searchType, setSearchType] = useState("all");
+  const [suggestions, setSuggestions] = useState<User[]>([]);
 
   // Pre-fetch suggestions on mount
   useEffect(() => {
     const fetchSuggestions = async () => {
       // Replace with actual API call
       const topUsers: User[] = [
-        { id: '1', username: 'user1', avatar: '/placeholder.svg' },
-        { id: '2', username: 'user2', avatar: '/placeholder.svg' },
-        { id: '3', username: 'user3', avatar: '/placeholder.svg' },
-      ]
-      setSuggestions(topUsers)
-    }
-    fetchSuggestions()
-  }, [])
+        { id: "1", username: "user1", avatar: "/placeholder.svg" },
+        { id: "2", username: "user2", avatar: "/placeholder.svg" },
+        { id: "3", username: "user3", avatar: "/placeholder.svg" },
+      ];
+      setSuggestions(topUsers);
+    };
+    fetchSuggestions();
+  }, []);
 
   const handleSearch = () => {
     if (searchQuery.trim()) {
-      router.push(`/search?q=${encodeURIComponent(searchQuery)}&type=${searchType}`)
-      setIsSearchOpen(false)
+      router.push(
+        `/search?q=${encodeURIComponent(searchQuery)}&type=${searchType}`,
+      );
+      setIsSearchOpen(false);
+      setSearchQuery(""); // Clear search query after search
     }
-  }
+  };
 
+  // Use cachedUser from useUserData
   useEffect(() => {
-    const fetchUser = async () => {
-      const { data: { user } } = await supabase.auth.getUser()
-      setUser(user)
+    if (cachedUser) {
+      // Map cached user data to the User interface
+      setUser({
+        id: cachedUser.id,
+        username: cachedUser.username || cachedUser.name || "", // Use appropriate fields
+        avatar: cachedUser.profile_picture || "/placeholder.svg", // Provide a default
+      });
+    } else {
+      setUser(null); // No user logged in (or cache is empty)
     }
+  }, [cachedUser]);
 
-    fetchUser()
-
+  // Listen for auth state changes
+  useEffect(() => {
     const { data: authListener } = supabase.auth.onAuthStateChange(
       (event, session) => {
-        setUser(session?.user ?? null)
-      }
-    )
-
+        if (session?.user) {
+          //If there is a session (user logged in), refetch data to ensure cache is updated.  Even if we don't *display*
+          // the data, we want `useUserData` to have the latest. This handles cases where profile data
+          // changes while the user is logged in.
+          const { refetch } = useUserData(); // Get refetch function from useUserData
+          refetch(); // Refetch user data and update local storage.
+        }
+        //setUser is no longer needed, useUserData handles the update and changes on cache.
+      },
+    );
     return () => {
-      authListener.subscription.unsubscribe()
-    }
-  }, [supabase.auth])
+      authListener.subscription.unsubscribe();
+    };
+  }, [supabase]);
 
   const handleLogout = async () => {
-    await supabase.auth.signOut()
-    router.push('/')
-  }
+    await supabase.auth.signOut();
+    clearCache(); // Clear the cache on logout
+    router.push("/"); // Redirect to home page
+  };
 
   const cities = [
-    'AUSTRALIA', 
-    'SYDNEY',
-    'MELBOURNE',
-    'BRISBANE',
-    'GOLD COAST',
-    'SUNSHINE COAST',
-    'PERTH',
-    'ADELAIDE',
-    'CANBERRA',
-    'HOBART',
-    'DARWIN'
-  ]
+    "AUSTRALIA",
+    "SYDNEY",
+    "MELBOURNE",
+    "BRISBANE",
+    "GOLD COAST",
+    "SUNSHINE COAST",
+    "PERTH",
+    "ADELAIDE",
+    "CANBERRA",
+    "HOBART",
+    "DARWIN",
+  ];
 
   const mainNav = [
-    'LOCATIONS',
-    'ESCORTS',
-    'BDSM',
-    'COUPLES', 
-    'CATEGORIES'
-  ]
+    "LOCATIONS",
+    "ESCORTS",
+    "BDSM",
+    "COUPLES",
+    "CATEGORIES",
+  ];
 
   return (
-    <nav className="bg-background/80 backdrop-blur-sm sticky top-0 z-50 border-b border-border" role="navigation" aria-label="Main navigation">
+    <nav
+      className="bg-background/80 backdrop-blur-sm sticky top-0 z-50 border-b border-border"
+      role="navigation"
+      aria-label="Main navigation"
+    >
       {/* Top Cities Bar */}
-      <div className="hidden lg:flex items-center justify-center gap-4 p-2 text-xs border-b border-border" role="navigation" aria-label="City navigation">
+      <div
+        className="hidden lg:flex items-center justify-center gap-4 p-2 text-xs border-b border-border"
+        role="navigation"
+        aria-label="City navigation"
+      >
         {cities.map((city) => (
           <Link
             key={city}
@@ -130,7 +163,11 @@ export function NavBar() {
       <div className="container mx-auto px-4">
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
-          <Link href="/" className="flex items-center gap-2" aria-label="Go to homepage">
+          <Link
+            href="/"
+            className="flex items-center gap-2"
+            aria-label="Go to homepage"
+          >
             <h1 className="text-2xl font-bold bg-gradient-to-r from-amber-200 to-yellow-400 bg-clip-text text-transparent">
               <span className="hidden sm:inline">ALL-NIGHTER</span>
               <span className="sm:hidden">A-N</span>
@@ -138,7 +175,11 @@ export function NavBar() {
           </Link>
 
           {/* Desktop Navigation */}
-          <div className="hidden lg:flex items-center gap-6" role="navigation" aria-label="Primary navigation">
+          <div
+            className="hidden lg:flex items-center gap-6"
+            role="navigation"
+            aria-label="Primary navigation"
+          >
             {mainNav.map((item) => (
               <Link
                 key={item}
@@ -163,12 +204,12 @@ export function NavBar() {
             </Link>
 
             <ThemeToggle />
-            
+
             {/* Search */}
-            <Button 
-              variant="ghost" 
-              size="icon" 
-              className="hidden sm:inline-flex" 
+            <Button
+              variant="ghost"
+              size="icon"
+              className="hidden sm:inline-flex"
               onClick={() => setIsSearchOpen(true)}
               aria-label="Open search"
             >
@@ -176,23 +217,28 @@ export function NavBar() {
             </Button>
 
             {/* User */}
-            {user ? (
-              <Button 
-                variant="ghost" 
-                size="icon" 
-                onClick={() => router.push('/profile')}
-                aria-label="View profile"
-              >
+            {user
+              ? (
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => router.push("/profile")}
+                  aria-label="View profile"
+                >
                   <User className="h-5 w-5" />
-              </Button>
-            ) : (
-              <LoginBtn />
-            )}
+                </Button>
+              )
+              : <LoginBtn />}
 
             {/* Mobile Menu */}
             <Sheet>
               <SheetTrigger asChild>
-                <Button variant="ghost" size="icon" className="lg:hidden" aria-label="Open menu">
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="lg:hidden"
+                  aria-label="Open menu"
+                >
                   <Menu className="h-5 w-5" />
                 </Button>
               </SheetTrigger>
@@ -218,17 +264,17 @@ export function NavBar() {
                   >
                     PREMIUM
                   </Link>
-                  {user ? (
-                    <button
-                      className="block py-2 text-sm font-semibold text-red-600 hover:text-red-300 transition-colors"
-                      onClick={handleLogout}
-                      aria-label="Log out"
-                    >
-                      <LogOut />
-                    </button>
-                  ) : (
-                    <LoginBtn className="rounded-sm" />
-                  )}
+                  {user
+                    ? (
+                      <button
+                        className="block py-2 text-sm font-semibold text-red-600 hover:text-red-300 transition-colors"
+                        onClick={handleLogout}
+                        aria-label="Log out"
+                      >
+                        <LogOut />
+                      </button>
+                    )
+                    : <LoginBtn className="rounded-sm" />}
                   <div className="pt-4 border-t">
                     <p className="text-sm font-medium mb-2">Popular Cities</p>
                     <div className="grid grid-cols-2 gap-2">
@@ -265,11 +311,20 @@ export function NavBar() {
                     type="text"
                     placeholder="Search..."
                     value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
+                    onChange={(e) =>
+                      setSearchQuery(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") {
+                        handleSearch();
+                      }
+                    }}
                     aria-label="Search query"
                   />
                   <Select value={searchType} onValueChange={setSearchType}>
-                    <SelectTrigger className="w-[180px]" aria-label="Search type">
+                    <SelectTrigger
+                      className="w-[180px]"
+                      aria-label="Search type"
+                    >
                       <SelectValue placeholder="Search type" />
                     </SelectTrigger>
                     <SelectContent>
@@ -291,13 +346,19 @@ export function NavBar() {
                       exit={{ opacity: 0, y: 10 }}
                       className="flex items-center space-x-2 p-2 rounded-md hover:bg-gray-100 dark:hover:bg-gray-800 cursor-pointer"
                       onClick={() => {
-                        setSearchQuery(user.username)
-                        handleSearch()
+                        setSearchQuery(user.username); // Set the input field to the clicked username
+                        handleSearch();
                       }}
                       role="button"
                       aria-label={`Search for ${user.username}`}
                     >
-                      <Image src={user.avatar} alt={`${user.username}'s avatar`} width={32} height={32} className="rounded-full" />
+                      <Image
+                        src={user.avatar}
+                        alt={`${user.username}'s avatar`}
+                        width={32}
+                        height={32}
+                        className="rounded-full"
+                      />
                       <span>{user.username}</span>
                     </motion.div>
                   ))}
@@ -308,19 +369,21 @@ export function NavBar() {
         )}
       </AnimatePresence>
     </nav>
-  )
+  );
 }
 
 const LoginBtn = ({ className }: { className?: string }) => {
-  const router = useRouter()
+  const router = useRouter();
   return (
-    <Button 
-      className={"bg-primary hover:bg-primary/80 font-bold py-2 px-4 rounded-full transition duration-300 text-black " + className} 
-      onClick={() => router?.push('/auth/login')}
+    <Button
+      className={"bg-primary hover:bg-primary/80 font-bold py-2 px-4 rounded-full transition duration-300 text-black " +
+        className}
+      onClick={() => router?.push("/auth/login")}
       aria-label="Log in"
     >
       <User className="h-5 w-5 mr-2" />
       Login
     </Button>
   );
-}
+};
+

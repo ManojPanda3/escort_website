@@ -1,115 +1,38 @@
+// app/profile/page.tsx
+import { notFound, redirect } from "next/navigation";
 import { createServerComponentClient } from "@supabase/auth-helpers-nextjs";
 import { cookies } from "next/headers";
-import { notFound, redirect } from "next/navigation";
-import { supabaseAdmin } from "@/lib/supabase";
 
 // Components
-import { ProfileHeader } from "./profile-header";
-import { ProfileTabs } from "./profile-tabs";
+import { ProfileTabsWrapper } from "./profile-tabs-wrapper";
 import { StoryUploadButton } from "./story-upload-button";
+import { Database } from "@/lib/database.types";
+import { ProfileHeaderWrapper } from "./profile-header-wrapper.tsx";
 
-// Fetch profile data from Supabase
-const getProfileData = async (supabase: any, id: string) => {
-  const [
-    { data: profile, error: profileError },
-    { data: pictures, error: picturesError },
-    { data: rates, error: ratesError },
-    { data: testimonials, error: testimonialsError },
-    { data: stories, error: storyError },
-  ] = await Promise.all([
-    supabase
-      .from("users")
-      .select("*")
-      .eq("id", id)
-      .single(),
-    supabase
-      .from("pictures")
-      .select("*")
-      .eq("owner", id)
-      .order("created_at", { ascending: false }),
-    supabase
-      .from("rates")
-      .select("*")
-      .eq("owner", id),
-    supabase
-      .from("testimonials")
-      .select("*")
-      .eq("to", id),
-    supabase
-      .from("story")
-      .select("*")
-      .eq("owner", id),
-  ]);
-
-  // Handle errors
-  const errors = [
-    profileError,
-    picturesError,
-    ratesError,
-    testimonialsError,
-    storyError,
-  ];
-  if (errors.some((error) => error !== null)) {
-    const errorMessage = errors
-      .map((error) => error?.message)
-      .filter(Boolean)
-      .join(", ");
-    console.error("Failed to fetch profile data\nerrors are:\t" + errorMessage);
-  }
-
-  return {
-    profile,
-    pictures: pictures || [],
-    rates: rates || [],
-    testimonials: testimonials || [],
-    stories,
-  };
-};
+type User = Database["public"]["Tables"]["users"]["Row"];
 
 export default async function ProfilePage() {
-  // Get authenticated user
-  const supabase = createServerComponentClient({ cookies });
-  const { data: { user: authUserData }, error } = await supabase.auth.getUser();
-  if (!authUserData) {
-    notFound();
-    return;
-  }
-  const { id: userId } = authUserData;
+  const supabase = createServerComponentClient<Database>({ cookies });
+  const { data: { user: authUser }, error: authError } = await supabase.auth
+    .getUser();
 
-  if (!userId || error) {
-    redirect("/auth/login");
+  if (authError || !authUser) {
+    redirect("/auth/login"); // Redirect if not authenticated
+    return null; //  redirect does this automatically
   }
 
-  // Fetch user data
-  const userData = await getProfileData(supabaseAdmin, userId);
-
-  if (userData == null) {
-    return (
-      <div className="min-h-screen bg-gradient-to-b from-black via-gray-900 to-black text-center">
-        <div className="container mx-auto px-4 py-8">
-          <h1 className="text-3xl font-bold mb-6 text-white">
-            Some Errors Occured while fetching your profile data
-          </h1>
-        </div>
-      </div>
-    );
-  }
-
-  const { profile, pictures, rates, testimonials, stories } = userData;
+  // We ONLY need the user ID at this stage.  Everything else comes from the cache.
+  const userId = authUser.id;
 
   return (
     <main className="container mx-auto px-4 py-8">
-      <ProfileHeader profile={profile} />
+      {/* ProfileHeader will get data from useUserData, so we don't pass anything here */}
+      <ProfileHeaderWrapper userId={userId} />
       <div className="mb-6">
-        <StoryUploadButton userId={userId} stories={stories} />
+        {/* Pass an empty stories array.  StoryUploadButton should handle this gracefully. */}
+        <StoryUploadButton userId={userId} stories={[]} />
       </div>
-      <ProfileTabs
-        pictures={pictures}
-        services={profile.services}
-        rates={rates}
-        testimonials={testimonials}
-        userId={userId}
-      />
+      <ProfileTabsWrapper userId={userId} />
     </main>
   );
 }

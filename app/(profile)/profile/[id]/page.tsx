@@ -28,7 +28,13 @@ const getProfileData = async (supabase: any, id: string) => {
       .eq("owner", id),
     supabase
       .from("testimonials")
-      .select("*")
+      .select(` *,
+        owner:users(
+        id,
+        username,
+        profile_picture
+        )
+        `)
       .eq("to", id),
   ]);
   const errors = [
@@ -63,11 +69,19 @@ export default async function UserProfilePage(
   const params = await props.params;
   const id = params.id;
   const supabase = createServerComponentClient({ cookies });
-  const { data: { user }, error } = await supabase.auth.getUser();
-  if (error) {
-    console.error("Either server error or user does not exist");
-    console.error(error.message);
-  }
+  const user = await (async () => {
+    try {
+      const { data: { user }, error } = await supabase.auth.getUser();
+      if (error) throw Error(JSON.stringify(error));
+      const { data: currentUser, error: currentUserError } = await supabase
+        .from("users").select("id,profile_picture,username").eq("id", user.id)
+        .single();
+      if (currentUserError) throw Error(JSON.stringify(currentUserError));
+    } catch (error) {
+      console.error(error);
+      return null;
+    }
+  })();
 
   const userData = await getProfileData(supabase, id);
   if (userData == null) {
@@ -86,12 +100,11 @@ export default async function UserProfilePage(
     <main className="container mx-auto px-4 py-8">
       <ProfileHeader profile={userData.profile} />
       <ProfileTabs
-        userId={id}
         pictures={userData.pictures}
         rates={userData.rates}
         testimonials={userData.testimonials}
-        ownerId={user?.id.toString() || ""}
         user={userData.profile}
+        currentUser={user}
       />
     </main>
   );

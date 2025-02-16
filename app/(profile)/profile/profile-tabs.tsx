@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react"; // Import useEffect
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -25,17 +25,24 @@ import { Toaster } from "@/components/ui/toaster";
 import Image from "next/image";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { LoadingSpinner } from "@/components/ui/loading";
-import { Dialog, DialogContent, DialogTitle } from "@radix-ui/react-dialog";
-import { DialogHeader } from "@/components/ui/dialog";
-import { Label } from "recharts";
 import { deleteFromStorage } from "@/lib/storage";
+import { Database } from "@/lib/database.types"; // Import Supabase types
+
+type User = Database["public"]["Tables"]["users"]["Row"];
+type Picture = Database["public"]["Tables"]["pictures"]["Row"];
+type Rate = Database["public"]["Tables"]["rates"]["Row"];
+type Testimonial = Database["public"]["Tables"]["testimonials"]["Row"] & {
+  owner: Pick<User, "id" | "username" | "profile_picture">;
+};
+// type Service = Database['public']['Tables']['services']['Row']; // No longer a separate table
 
 interface ProfileTabsProps {
-  pictures: any[];
-  services: any[];
-  rates: any[];
-  testimonials: any[];
+  pictures: Picture[];
+  services: string[] | null | undefined; // Services are now strings in an array
+  rates: Rate[];
+  testimonials: Testimonial[];
   userId: string;
+  refetch: () => Promise<void>; // Add refetch prop
 }
 
 export function ProfileTabs({
@@ -44,6 +51,7 @@ export function ProfileTabs({
   rates: initialRates,
   testimonials,
   userId,
+  refetch, // Receive refetch function
 }: ProfileTabsProps) {
   const [activeModal, setActiveModal] = useState<
     "service" | "picture" | "rate" | "story" | null
@@ -53,8 +61,15 @@ export function ProfileTabs({
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
   const [pictures, setPictures] = useState(initialPictures);
-  const [services, setServices] = useState(initialServices);
+  const [services, setServices] = useState(initialServices || []); // Initialize as empty array
   const [rates, setRates] = useState(initialRates);
+
+  // Use useEffect to update local state when props change (e.g., after refetch)
+  useEffect(() => {
+    setPictures(initialPictures);
+    setServices(initialServices || []);
+    setRates(initialRates);
+  }, [initialPictures, initialServices, initialRates]);
 
   async function handlePictureDelete(id: string, fileUrl: string) {
     try {
@@ -75,7 +90,7 @@ export function ProfileTabs({
       if (!response.ok) throw new Error(`Failed to delete picture`);
 
       setPictures(pictures.filter((picture) => picture.id !== id));
-
+      await refetch(); // Invalidate cache after deletion
       toast({
         title: "Success",
         description: "Picture deleted successfully",
@@ -88,26 +103,31 @@ export function ProfileTabs({
       setIsLoading(false);
     }
   }
-
   const handleDelete = async (type: "service" | "rate", id: string) => {
     try {
       setIsLoading(true);
-      const response = await fetch(
-        `/api/profile/add${type[0].toUpperCase() + type.slice(1)}`,
-        {
+
+      // Special handling for services (since they are now part of the user)
+      if (type === "service") {
+        const newServices = services.filter((service) => service !== id); // id is the service string itself
+        const response = await fetch(`/api/profile/updateUser`, { // API endpoint to update user
+          method: "PATCH", // Use PATCH for partial updates
+          body: JSON.stringify({ services: newServices }), // Send updated services array
+          headers: {
+            "Content-Type": "application/json",
+          },
+        });
+        if (!response.ok) throw new Error("Failed to update user services");
+        setServices(newServices);
+      } else if (type === "rate") {
+        const response = await fetch(`/api/profile/addRate`, { // Your existing rate API
           method: "DELETE",
           body: JSON.stringify({ id }),
-        },
-      );
-
-      if (!response.ok) throw new Error(`Failed to delete ${type}`);
-
-      if (type === "service") {
-        setServices(services.filter((service) => service.id !== id));
-      } else if (type === "rate") {
+        });
+        if (!response.ok) throw new Error(`Failed to delete ${type}`);
         setRates(rates.filter((rate) => rate.id !== id));
       }
-
+      await refetch(); // Invalidate cache after change
       toast({
         title: "Success",
         description: `${
@@ -131,12 +151,11 @@ export function ProfileTabs({
           <AlertDescription>{error}</AlertDescription>
         </Alert>
       )}
-      {isLoading &&
-        (
-          <div className="w-full h-full fixed top-0 left-0 bg-transparent flex justify-center items-center before:w-full before:h-full before:fixed before:bg-black before:opacity-30 z-50">
-            <LoadingSpinner />
-          </div>
-        )}
+      {isLoading && (
+        <div className="w-full h-full fixed top-0 left-0 bg-transparent flex justify-center items-center before:w-full before:h-full before:fixed before:bg-black before:opacity-30 z-50">
+          <LoadingSpinner />
+        </div>
+      )}
       <Tabs defaultValue="pictures" className="space-y-4">
         <TabsList className="grid w-full grid-cols-4">
           <TabsTrigger value="pictures" className="flex items-center gap-2">
@@ -214,24 +233,23 @@ export function ProfileTabs({
           <Card>
             <CardContent className="p-6">
               <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-                {services?.map((service) => (
+                {services?.map((service, index) => ( // Use index as key since service is a string
                   <div
-                    key={service.id}
+                    key={index} // Use index as key
                     className="flex items-center justify-between gap-2 text-sm p-3 border rounded-md hover:border-primary transition-colors cursor-pointer"
-                    onClick={() => setSelectedService(service.service)}
+                    onClick={() => setSelectedService(service)}
                   >
                     <div className="flex items-center gap-2 overflow-hidden">
-                      {/* <Check className="h-4 w-4 text-green-500 flex-shrink-0" /> */}
                       <span className="truncate text-ellipsis text-nowrap overflow-hidden">
-                        {service.service}
+                        {service}
                       </span>
                     </div>
                     <Button
                       variant="ghost"
                       size="sm"
                       onClick={(e) => {
-                        e.stopPropagation(); // Prevent event bubbling to parent div
-                        handleDelete("service", service.id);
+                        e.stopPropagation();
+                        handleDelete("service", service); // Pass the service string itself
                       }}
                     >
                       <Trash2 className="h-4 w-4 text-red-500" />
@@ -294,35 +312,41 @@ export function ProfileTabs({
 
         <TabsContent value="testimonials">
           <div className="grid gap-4">
-            {testimonials.map((testimonial) => (
-              <Card
-                key={testimonial.id}
-                className="hover:shadow-md transition-shadow"
-              >
-                <CardContent className="p-6">
-                  <div className="flex items-start gap-4">
-                    <div className="h-10 w-10 relative rounded-full overflow-hidden flex-shrink-0">
-                      <Image
-                        src={testimonial.users?.profile_picture ||
-                          "/placeholder.svg"}
-                        alt={testimonial.users?.name || "Anonymous"}
-                        fill
-                        className="object-cover"
-                      />
+            {testimonials.length === 0 ? <p>No testimonials yet.</p> : (
+              testimonials.map((testimonial) => (
+                <Card
+                  key={testimonial.id}
+                  className="hover:shadow-md transition-shadow"
+                >
+                  <CardContent className="p-6">
+                    <div className="flex items-start gap-4">
+                      <div className="h-10 w-10 relative rounded-full overflow-hidden flex-shrink-0">
+                        <Image
+                          src={testimonial.owner.profile_picture ||
+                            "/placeholder.svg"}
+                          alt={testimonial.owner.username || "Anonymous"}
+                          fill
+                          className="object-cover"
+                        />
+                      </div>
+                      <div className="min-w-0">
+                        <h3 className="font-semibold truncate">
+                          {testimonial.owner.username || "Anonymous"}
+                        </h3>
+                        <p className="text-sm text-muted-foreground">
+                          {new Date(
+                            testimonial.created_at,
+                          ).toLocaleDateString()}
+                        </p>
+                        <p className="mt-2 break-words">
+                          {testimonial.comment}
+                        </p>
+                      </div>
                     </div>
-                    <div className="min-w-0">
-                      <h3 className="font-semibold truncate">
-                        {testimonial.users?.name || "Anonymous"}
-                      </h3>
-                      <p className="text-sm text-muted-foreground">
-                        {new Date(testimonial.created_at).toLocaleDateString()}
-                      </p>
-                      <p className="mt-2 break-words">{testimonial.comment}</p>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
+                  </CardContent>
+                </Card>
+              ))
+            )}
           </div>
         </TabsContent>
       </Tabs>
@@ -339,9 +363,25 @@ export function ProfileTabs({
       )}
       <AddServiceModal
         isOpen={activeModal === "service"}
-        onClose={(newService) => {
+        onClose={async (newService) => { // Make onClose async
           if (newService) {
-            setServices([...services, newService]);
+            // Add the new service to the user's services array in the database
+            const updatedServices = [...services, newService.service]; //newService contains service object {id:string, service:string}.
+            const response = await fetch(`/api/profile/updateUser`, {
+              method: "PATCH",
+              body: JSON.stringify({ services: updatedServices }),
+              headers: {
+                "Content-Type": "application/json",
+              },
+            });
+
+            if (!response.ok) {
+              setError("Failed to update services.");
+              return; // Early return on error
+            }
+            //If updated on the server update in local storage
+            setServices(updatedServices); // Update local state *after* successful server update
+            await refetch(); // Invalidate cache after change
           }
           setActiveModal(null);
           toast({
@@ -355,9 +395,15 @@ export function ProfileTabs({
         isOpen={activeModal === "picture"}
         userId={userId}
         setError={setError}
-        onClose={(newPicture) => {
+        onClose={async (newPicture) => {
           if (newPicture) {
-            setPictures([...pictures, newPicture]);
+            // Type check before updating state
+            if (
+              newPicture && typeof newPicture === "object" && "id" in newPicture
+            ) {
+              setPictures([...pictures, newPicture as Picture]);
+              await refetch();
+            }
           }
           setActiveModal(null);
           toast({
@@ -368,9 +414,13 @@ export function ProfileTabs({
       />
       <AddRateModal
         isOpen={activeModal === "rate"}
-        onClose={(newRate) => {
+        onClose={async (newRate) => {
           if (newRate) {
-            setRates([...rates, newRate]);
+            // Type check before updating state
+            if (newRate && typeof newRate === "object" && "id" in newRate) {
+              setRates([...rates, newRate as Rate]);
+              await refetch(); // Invalidate cache
+            }
           }
           setActiveModal(null);
           toast({
@@ -381,8 +431,9 @@ export function ProfileTabs({
       />
       <AddStoryModal
         isOpen={activeModal === "story"}
-        onClose={() => {
+        onClose={async () => { // Add async
           setActiveModal(null);
+          await refetch(); // Invalidate cache
           toast({
             title: "Success",
             description: "Story added successfully",
@@ -393,3 +444,4 @@ export function ProfileTabs({
     </>
   );
 }
+

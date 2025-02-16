@@ -1,3 +1,4 @@
+// app/auth/login/page.tsx
 "use client";
 
 import { useState } from "react";
@@ -12,8 +13,6 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { LoadingSpinner } from "@/components/ui/loading";
 import { Success } from "@/components/ui/success";
 import { PasswordInput } from "@/components/password-input.tsx";
-import { Eye, EyeOff, Plus, X } from "lucide-react";
-import { useUser } from "../../../components/catch_user.tsx";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -26,18 +25,25 @@ export default function LoginPage() {
   const [isLoading, setIsLoading] = useState(false);
 
   const handleAuth = async (e: React.FormEvent) => {
-    setIsLoading(true);
     e.preventDefault();
+    setIsLoading(true);
     setError("");
     setSuccess("");
-    const { error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    });
-    if (error) setError(error.message);
-    else {
-      setTimeout(() => setIsLoading(false), 250);
-      router.push("/profile");
+
+    try {
+      const { error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
+      if (error) {
+        setError(error.message);
+      } else {
+        router.push("/profile"); // Redirect to profile page after successful login.
+      }
+    } catch (err: any) {
+      setError(err.message || "An unexpected error occurred.");
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -49,15 +55,20 @@ export default function LoginPage() {
       return;
     }
     setIsLoading(true);
-    const { error } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: `${window.location.origin}/auth/update-password`,
-    });
-    if (error) {
-      setError(error.message);
-    } else {
-      setSuccess("Password reset link sent to your email!");
+    try {
+      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: `${window.location.origin}/auth/update-password`,
+      });
+      if (error) {
+        setError(error.message);
+      } else {
+        setSuccess("Password reset link sent to your email!");
+      }
+    } catch (err: any) {
+      setError(err.message || "An unexpected error occurred.");
+    } finally {
+      setIsLoading(false);
     }
-    setIsLoading(false);
   };
 
   return (
@@ -125,3 +136,4 @@ export default function LoginPage() {
     </div>
   );
 }
+

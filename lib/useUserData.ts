@@ -1,0 +1,158 @@
+// lib/useUserData.ts
+"use client";
+import { useCallback, useEffect, useState } from "react";
+import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
+import { Database } from "./database.types";
+
+type User = Database["public"]["Tables"]["users"]["Row"];
+type Picture = Database["public"]["Tables"]["pictures"]["Row"];
+type Rate = Database["public"]["Tables"]["rates"]["Row"];
+type Testimonial = Database["public"]["Tables"]["testimonials"]["Row"] & {
+  owner: Pick<User, "id" | "username" | "profile_picture">;
+};
+type Story = Database["public"]["Tables"]["story"]["Row"];
+type Bookmark = Database["public"]["Tables"]["bookmarks"]["Row"];
+
+interface UserData {
+  user: User | null;
+  pictures: Picture[];
+  rates: Rate[];
+  testimonials: Testimonial[];
+  stories: Story[];
+  bookmarks: Bookmark[];
+  isLoading: boolean;
+  error: string | null;
+  refetch: () => Promise<void>;
+  clearCache: () => void; // Add clearCache function
+}
+
+const CACHE_KEY = "userData";
+const CACHE_EXPIRY = 5 * 60 * 1000;
+
+export function useUserData(): UserData {
+  const [userData, setUserData] = useState<UserData>({
+    user: null,
+    pictures: [],
+    rates: [],
+    testimonials: [],
+    stories: [],
+    bookmarks: [],
+    isLoading: true,
+    error: null,
+    refetch: async () => {},
+    clearCache: () => {}, // Initialize clearCache
+  });
+
+  const supabase = createClientComponentClient<Database>();
+
+  const fetchData = useCallback(async () => {
+    setUserData((prev) => ({ ...prev, isLoading: true, error: null }));
+
+    try {
+      const {
+        data: { user },
+        error: authError,
+      } = await supabase.auth.getUser();
+      if (authError || !user) {
+        throw new Error(authError?.message || "User not authenticated");
+      }
+
+      const [
+        { data: profile, error: profileError },
+        { data: pictures, error: picturesError },
+        { data: rates, error: ratesError },
+        { data: testimonials, error: testimonialsError },
+        { data: stories, error: storyError },
+        { data: bookmarks, error: bookmarksError },
+      ] = await Promise.all([
+        supabase.from("users").select("*").eq("id", user.id).single(),
+        supabase.from("pictures").select("*").eq("owner", user.id).order(
+          "created_at",
+          { ascending: false },
+        ),
+        supabase.from("rates").select("*").eq("owner", user.id),
+        supabase.from("testimonials").select(
+          "*, owner:users (id, username, profile_picture)",
+        ).eq("to", user.id),
+        supabase.from("story").select("*").eq("owner", user.id).order(
+          "created_at",
+          { ascending: false },
+        ),
+        supabase.from("bookmarks").select("*").eq("owner", user.id),
+      ]);
+
+      const errors = [
+        profileError,
+        picturesError,
+        ratesError,
+        testimonialsError,
+        storyError,
+        bookmarksError,
+      ];
+      const errorMessage = errors.filter(Boolean).map((e) => e?.message).join(
+        ", ",
+      );
+      if (errorMessage) {
+        throw new Error(errorMessage);
+      }
+      if (!profile) throw new Error("Profile Not Found");
+
+      const fetchedUserData = {
+        user: profile as User,
+        pictures: pictures || [],
+        rates: rates || [],
+        testimonials: (testimonials as Testimonial[]) || [],
+        stories: stories || [],
+        bookmarks: bookmarks || [],
+      };
+
+      localStorage.setItem(
+        CACHE_KEY,
+        JSON.stringify({
+          data: fetchedUserData,
+          expiresAt: Date.now() + CACHE_EXPIRY,
+        }),
+      );
+      setUserData({
+        ...fetchedUserData,
+        isLoading: false,
+        error: null,
+        refetch: fetchData,
+        clearCache: () => localStorage.removeItem(CACHE_KEY), // Implement clearCache
+      });
+    } catch (error: any) {
+      setUserData((prev) => ({
+        ...prev,
+        isLoading: false,
+        error: error.message,
+        refetch: fetchData,
+        clearCache: () => localStorage.removeItem(CACHE_KEY), // Implement in error case too
+      }));
+    }
+  }, [supabase]);
+
+  useEffect(() => {
+    const cachedDataString = localStorage.getItem(CACHE_KEY);
+
+    if (cachedDataString) {
+      const cachedData = JSON.parse(cachedDataString);
+      if (cachedData.expiresAt > Date.now()) {
+        setUserData({
+          ...cachedData.data,
+          isLoading: false,
+          error: null,
+          refetch: fetchData,
+          clearCache: () => localStorage.removeItem(CACHE_KEY), // Set clearCache in useEffect
+        });
+        return;
+      } else {
+        localStorage.removeItem(CACHE_KEY);
+      }
+    }
+
+    fetchData();
+  }, [fetchData]);
+
+  return userData;
+}
+

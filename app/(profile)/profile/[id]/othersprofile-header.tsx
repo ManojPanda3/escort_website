@@ -1,9 +1,11 @@
+// otherprofile-header.tsx
 "use client";
 
 import Image from "next/image";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import {
+  Bookmark,
   Calendar,
   Crown,
   Eye,
@@ -14,18 +16,77 @@ import {
   Ruler,
   Star,
 } from "lucide-react";
+import getRandomImage from "@/lib/randomImage";
+import { useUserData } from "@/lib/useUserData";
+import { Button } from "@/components/ui/button";
+import { useCallback, useEffect, useState } from "react";
+import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
+import { Database } from "@/lib/database.types";
 
 interface ProfileHeaderProps {
   profile: any;
 }
 
-function getRandomImage() {
-  // Random image generator
-  const imageIndex = Math.floor(Math.random() * 18);
-  return `http://raw.githubusercontent.com/riivana/All-nighter-random-images/refs/heads/main/image%20${imageIndex}.webp`;
-}
-
 export function ProfileHeader({ profile }: ProfileHeaderProps) {
+  const { user: currentUser, refetch, bookmarks } = useUserData();
+  const [isBookmarked, setIsBookmarked] = useState(false);
+  const [isLoadingBookmark, setIsLoadingBookmark] = useState(false);
+  const supabase = createClientComponentClient<Database>();
+
+  // Get isBookmarked status from cache
+  const checkBookmarkFromCache = useCallback(() => {
+    if (!currentUser || !profile || !bookmarks) return;
+
+    setIsLoadingBookmark(true);
+    try {
+      const bookmarked = bookmarks.some((bookmark) =>
+        bookmark.to === profile.id
+      );
+      setIsBookmarked(bookmarked);
+    } catch (error) {
+      console.error("Error checking bookmark from cache:", error);
+    } finally {
+      setIsLoadingBookmark(false);
+    }
+  }, [currentUser, profile, bookmarks]);
+
+  useEffect(() => {
+    checkBookmarkFromCache();
+  }, [checkBookmarkFromCache]);
+
+  const handleBookmark = async () => {
+    if (!currentUser || !profile) return;
+
+    setIsLoadingBookmark(true);
+    try {
+      if (isBookmarked) {
+        // Remove bookmark
+        const { error: deleteError } = await supabase
+          .from("bookmarks")
+          .delete()
+          .eq("owner", currentUser.id)
+          .eq("to", profile.id);
+
+        if (deleteError) throw deleteError;
+        setIsBookmarked(false);
+      } else {
+        // Add bookmark
+        const { error: insertError } = await supabase
+          .from("bookmarks")
+          .insert([{ owner: currentUser.id, to: profile.id }]);
+
+        if (insertError) throw insertError;
+        setIsBookmarked(true);
+      }
+      // Refetch user data to update the cache
+      await refetch();
+    } catch (error) {
+      console.error("Error handling bookmark:", error);
+    } finally {
+      setIsLoadingBookmark(false);
+    }
+  };
+
   return (
     <Card className="relative overflow-hidden bg-black/40 backdrop-blur-sm mb-8">
       {/* Cover Image */}
@@ -46,7 +107,7 @@ export function ProfileHeader({ profile }: ProfileHeaderProps) {
             <div className="h-32 w-32 relative rounded-full overflow-hidden border-4 border-background">
               <Image
                 src={profile?.profile_picture || getRandomImage()}
-                alt={profile?.name || "Profile Picture"} // Use a default alt text if name is missing
+                alt={profile?.name || "Profile Picture"}
                 fill
                 className="object-cover"
               />
@@ -56,28 +117,61 @@ export function ProfileHeader({ profile }: ProfileHeaderProps) {
           {/* Profile Info */}
           <div className="flex-1">
             <div className="flex items-start justify-between">
-              <div>
-                <h1 className="text-3xl font-bold flex items-center gap-2">
-                  <span className="truncate" title={profile?.name || ""}>
-                    {profile?.name}
-                  </span>
-                  {profile?.isvip && (
-                    <Badge variant="secondary">
-                      <Crown className="h-4 w-4 mr-1" />
-                      VIP
-                    </Badge>
+              <div className="flex items-center w-full justify-between">
+                <div>
+                  <h1 className="text-3xl font-bold flex items-center gap-2">
+                    <span
+                      className="truncate"
+                      title={profile?.name || profile?.username || ""}
+                    >
+                      {profile?.name || profile?.username}
+                    </span>
+                    {profile?.current_offer !== null && (
+                      <Badge variant="secondary">
+                        <Crown className="h-4 w-4 mr-1" />
+                        VIP
+                      </Badge>
+                    )}
+                  </h1>
+                  {profile?.about && ( // Conditionally render the about section
+                    <p
+                      className="text-muted-foreground truncate"
+                      title={profile.about}
+                    >
+                      {profile.about}
+                    </p>
                   )}
-                </h1>
-                <p
-                  className="text-muted-foreground truncate"
-                  title={profile?.about || ""}
-                >
-                  {profile?.about}
-                </p>
+                </div>
+
+                {/* Bookmark Button */}
+                {currentUser && currentUser.id !== profile.id && (
+                  <Button
+                    onClick={handleBookmark}
+                    disabled={isLoadingBookmark}
+                    variant={isBookmarked ? "secondary" : "default"}
+                  >
+                    {isLoadingBookmark
+                      ? (
+                        "Loading..."
+                      )
+                      : isBookmarked
+                      ? (
+                        <>
+                          <Bookmark className="h-4 w-4 mr-2" />
+                          Bookmarked
+                        </>
+                      )
+                      : (
+                        <>
+                          <Bookmark className="h-4 w-4 mr-2" />
+                          Bookmark
+                        </>
+                      )}
+                  </Button>
+                )}
               </div>
             </div>
-
-            {/* Stats Grid */}
+            {/* Stats Grid (moved below the about section)*/}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-6">
               {profile?.location_name && (
                 <div className="space-y-1">
@@ -125,8 +219,7 @@ export function ProfileHeader({ profile }: ProfileHeaderProps) {
                 </div>
               )}
             </div>
-
-            {/* Physical Attributes */}
+            {/* Physical Attributes (kept below the stats grid)*/}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-6">
               {profile?.height && (
                 <div className="space-y-1">
@@ -180,4 +273,3 @@ export function ProfileHeader({ profile }: ProfileHeaderProps) {
     </Card>
   );
 }
-
