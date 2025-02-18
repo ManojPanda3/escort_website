@@ -1,5 +1,3 @@
-import { NavBar } from "@/components/nav-bar";
-import { Footer } from "@/components/footer";
 import { EscortCard } from "@/components/escort-card";
 import { createServerComponentClient } from "@supabase/auth-helpers-nextjs";
 import { cookies } from "next/headers";

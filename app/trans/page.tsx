@@ -1,5 +1,3 @@
-import { NavBar } from "@/components/nav-bar";
-import { Footer } from "@/components/footer";
 import { EscortCard } from "@/components/escort-card";
 import { createServerComponentClient } from "@supabase/auth-helpers-nextjs";
 import { cookies } from "next/headers";
@@ -17,7 +15,6 @@ export default async function TransPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-background via-background/80 to-background dark:from-black dark:via-gray-900 dark:to-black">
-      <NavBar />
       <main className="container mx-auto px-4 py-8">
         <h1 className="text-3xl font-bold mb-6 text-center bg-gradient-to-r from-amber-200 to-yellow-400 bg-clip-text text-transparent">
           Trans Escorts
@@ -42,7 +39,6 @@ export default async function TransPage() {
           ))}
         </div>
       </main>
-      <Footer />
     </div>
   );
 }

@@ -36,6 +36,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
+import locations from "@/public/location.json"
 
 interface User {
   id: string;
@@ -128,19 +129,20 @@ export function NavBar() {
     router.push("/");
   };
 
-  const cities = [
-    "AUSTRALIA",
-    "SYDNEY",
-    "MELBOURNE",
-    "BRISBANE",
-    "GOLD COAST",
-    "SUNSHINE COAST",
-    "PERTH",
-    "ADELAIDE",
-    "CANBERRA",
-    "HOBART",
-    "DARWIN",
-  ];
+  const cities = locations?.slice(11) ||
+    [
+      "AUSTRALIA",
+      "SYDNEY",
+      "MELBOURNE",
+      "BRISBANE",
+      "GOLD COAST",
+      "SUNSHINE COAST",
+      "PERTH",
+      "ADELAIDE",
+      "CANBERRA",
+      "HOBART",
+      "DARWIN",
+    ];
 
   const mainNav = [
     "LOCATIONS",
@@ -149,6 +151,7 @@ export function NavBar() {
     "COUPLES",
     "CATEGORIES",
   ];
+  console.log(cities)
 
   return (
     <nav
@@ -320,7 +323,7 @@ export function NavBar() {
                       {cities.slice(0, 6).map((city) => (
                         <Link
                           key={city}
-                          href={`/location/${city.toLowerCase()}`}
+                          href={`/escorts?location=${city.toLowerCase()}`}
                           className="text-sm hover:text-primary transition-colors"
                           aria-label={`View escorts in ${city}`}
                         >
