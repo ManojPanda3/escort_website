@@ -1,7 +1,8 @@
+// app/auth/login/page.tsx
 "use client";
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react"; // Import useEffect
+import { useRouter, useSearchParams } from "next/navigation"; // Import useSearchParams
 import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -12,10 +13,10 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { LoadingSpinner } from "@/components/ui/loading";
 import { Success } from "@/components/ui/success";
 import { PasswordInput } from "@/components/password-input.tsx";
-
+import type { Database } from "@/types/supabase"; // Import Database type
 export default function LoginPage() {
   const router = useRouter();
-  const supabase = createClientComponentClient();
+  const supabase = createClientComponentClient<Database>();
   const [showPassword, setShowPassword] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -23,6 +24,26 @@ export default function LoginPage() {
   const [success, setSuccess] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [isResetMode, setIsResetMode] = useState(false); // Track reset mode
+  const searchParams = useSearchParams(); // Get query parameters
+
+  useEffect(() => {
+    const verified = searchParams.get("verified");
+    if (verified === "true") {
+      // Attempt to get the user session (it should be set by the verify route)
+      supabase.auth.getUser().then(({ data: { user }, error }) => {
+        if (user) {
+          // User is already authenticated, redirect to profile
+          router.push("/profile");
+        } else if (error) {
+          setError("Verification failed. Please try logging in manually.");
+        } else {
+          setError(
+            "Verification failed, No User. Please try logging in manually.",
+          );
+        }
+      });
+    }
+  }, [searchParams, supabase, router]);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();

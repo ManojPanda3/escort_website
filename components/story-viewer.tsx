@@ -1,10 +1,14 @@
-"use client"
+"use client";
 import { useEffect, useRef, useState } from "react";
 import { Heart, Share } from "lucide-react";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import Image from "next/image";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 import { AnimatePresence, motion } from "framer-motion";
 import { supabase } from "@/lib/supabase";
 import ShareIcons from "./share-icons.tsx";
@@ -38,13 +42,14 @@ export function StoryViewer({
   ownerName,
   totalStories = 1,
   currentIndex = 0,
-  onNext = () => { },
-  onPrevious = () => { },
+  onNext = () => {},
+  onPrevious = () => {},
 }: StoryViewerProps) {
   const [liked, setLiked] = useState(false);
   const [isShareOpen, setIsShareOpen] = useState(false);
   const [likeCount, setLikeCount] = useState(likes);
   const [progress, setProgress] = useState(2);
+  const containerRef = useRef<HTMLDivElement>(null); // Ref for the container
 
   useEffect(() => {
     const intervalId = setInterval(() => {
@@ -52,14 +57,14 @@ export function StoryViewer({
         onNext();
         setProgress(2);
       } else {
-        setProgress(prev => prev + 1);
+        setProgress((prev) => prev + 1);
       }
     }, 1000);
 
     return () => {
       clearInterval(intervalId);
     };
-  }, [progress]);
+  }, [progress, onNext]); // Add onNext to dependency array
 
   useEffect(() => {
     if (!userId) return;
@@ -88,54 +93,78 @@ export function StoryViewer({
     if (newLikedState) {
       await supabase.from("story_likes").insert([{ post: id, user: userId }]);
     } else {
-      await supabase.from("story_likes").delete().eq("post", id).eq("user", userId);
+      await supabase.from("story_likes").delete().eq("post", id).eq(
+        "user",
+        userId,
+      );
     }
 
-    await supabase.from("story").update({ likes: likeCount }).eq("id", id);
+    //removed await
+    supabase.from("story").update({ likes: likeCount }).eq("id", id);
+  };
+
+  const handleClick = (event: React.MouseEvent<HTMLDivElement>) => {
+    if (containerRef.current) {
+      const rect = containerRef.current.getBoundingClientRect();
+      const clickX = event.clientX - rect.left; // x position within the element.
+      const containerWidth = rect.width;
+
+      if (clickX < containerWidth / 2) {
+        onPrevious();
+        setProgress(2);
+      } else {
+        onNext();
+        setProgress(2);
+      }
+    }
   };
 
   return (
     <Dialog open={true} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-[425px] p-0 overflow-hidden bg-black">
-        <div className="relative w-full h-[80vh]">
-          {isVideo ? (
-            <video
-              src={url}
-              className="w-full h-full object-cover"
-              controls
-              autoPlay
-              loop
-            />
-          ) : (
-            <Image
-              src={url || "/placeholder.svg"}
-              alt={title}
-              layout="fill"
-              objectFit="cover"
-            />
-          )}
+        <div
+          className="relative w-full h-[80vh]"
+          ref={containerRef}
+          onClick={handleClick}
+        >
+          {isVideo
+            ? (
+              <video
+                src={url}
+                className="w-full h-full object-cover"
+                controls
+                autoPlay
+                loop
+              />
+            )
+            : (
+              <Image
+                src={url || "/placeholder.svg"}
+                alt={title}
+                fill={true}
+                style={{ objectFit: "cover" }}
+              />
+            )}
           {/* Progress Bar */}
           <div className="absolute top-0 left-0 right-0 h-1 flex justify-between gap-[2px] w-full">
-            {
-              Array.from(Array(totalStories)).map((_, index) => (
-                <div
-                  key={index}
-                  className="bg-gray-600 overflow-hidden rounded-sm flex-grow w-full"
-                >
-                  {index === currentIndex && (
-                    <motion.div
-                      className="h-full bg-gradient-to-r from-green-400 to-blue-500"
-                      initial={{ width: 0 }}
-                      animate={{ width: `${(progress / default_time) * 100}%` }} // Animate to the desired width
-                      transition={{
-                        duration: 1,
-                        ease: "linear",
-                      }}
-                    />
-                  )}
-                </div>
-              ))
-            }
+            {Array.from(Array(totalStories)).map((_, index) => (
+              <div
+                key={index}
+                className="bg-gray-600 overflow-hidden rounded-sm flex-grow w-full"
+              >
+                {index === currentIndex && (
+                  <motion.div
+                    className="h-full bg-gradient-to-r from-green-400 to-blue-500"
+                    initial={{ width: 0 }}
+                    animate={{ width: `${(progress / default_time) * 100}%` }} // Animate to the desired width
+                    transition={{
+                      duration: 1,
+                      ease: "linear",
+                    }}
+                  />
+                )}
+              </div>
+            ))}
           </div>
 
           <div className="absolute top-4 left-4 flex items-center space-x-2">
@@ -151,7 +180,9 @@ export function StoryViewer({
           <div className="absolute bottom-4 left-4 right-4 flex justify-between items-center">
             <Button variant="ghost" size="icon" onClick={handleLike}>
               <Heart
-                className={`h-6 w-6 ${liked ? "text-red-500 fill-red-500" : "text-white"}`}
+                className={`h-6 w-6 ${
+                  liked ? "text-red-500 fill-red-500" : "text-white"
+                }`}
               />
               <span className="ml-2 text-white">{likeCount}</span>
             </Button>
@@ -173,3 +204,4 @@ export function StoryViewer({
     </Dialog>
   );
 }
+

@@ -1,4 +1,4 @@
-// app/auth/signup/page.tsx
+// app/auth/[action]/signup_page.tsx
 "use client";
 
 import { useEffect, useRef, useState } from "react";
@@ -28,18 +28,8 @@ import {
 import { LoadingSpinner } from "@/components/ui/loading";
 import { uploadToStorage } from "@/lib/storage";
 import { PasswordInput } from "@/components/password-input";
-import { InterestSelector } from "@/components/interest-selector"; //  Adjust path if needed
-import services from "@/public/services.json";
-import { EmailConfirmationDialog } from "@/components/EmailConfirmationDialog"; // Adjust path
-
-interface Location {
-  id: string;
-  name: string;
-  country: string;
-  region: string;
-  city: string;
-  created_at: string;
-}
+import { EmailConfirmationDialog } from "@/components/EmailConfirmationDialog";
+import type { Database } from "@/types/supabase";
 
 interface FileUploadHandlerProps {
   fileNumber: 1 | 2;
@@ -118,7 +108,7 @@ function FileUploadHandler({
 
 export default function SignUpPage() {
   const router = useRouter();
-  const supabase = createClientComponentClient();
+  const supabase = createClientComponentClient<Database>();
   const uploader1 = useRef<HTMLInputElement>(null);
   const uploader2 = useRef<HTMLInputElement>(null);
 
@@ -126,46 +116,27 @@ export default function SignUpPage() {
     email: "",
     password: "",
     username: "",
-    userType: "general",
+    userType: "general" as
+      | "general"
+      | "escort"
+      | "bdsm"
+      | "couple"
+      | "content creator", // Added type
     age: "",
     agreeToTerms: false,
     gender: "" as "male" | "female" | "other",
-    locationId: "",
-    interested_services: [] as string[],
-    interest: "", // Consider removing if deprecated.
   });
 
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [isAgeProofDialogOpen, setIsAgeProofDialogOpen] = useState(false);
-  const [locations, setLocations] = useState<Location[]>([]);
-  const [isInterestOpen, setInterestOpen] = useState(false);
   const [isConfirmationOpen, setIsConfirmationOpen] = useState(false);
 
   const [ageProofFile1, setAgeProofFile1] = useState<File | null>(null);
   const [ageProofFile2, setAgeProofFile2] = useState<File | null>(null);
-  const [ageProofPreview1, setAgeProofPreview1] = useState<string | null>(
-    null,
-  );
-  const [ageProofPreview2, setAgeProofPreview2] = useState<string | null>(
-    null,
-  );
-
-  useEffect(() => {
-    const fetchLocations = async () => {
-      const { data: locationsData, error } = await supabase
-        .from("locations")
-        .select("*");
-      if (error) {
-        console.error("Error fetching locations:", error);
-        setError("Failed to load locations.");
-        return;
-      }
-      setLocations(locationsData || []);
-    };
-    fetchLocations();
-  }, []);
+  const [ageProofPreview1, setAgeProofPreview1] = useState<string | null>(null);
+  const [ageProofPreview2, setAgeProofPreview2] = useState<string | null>(null);
 
   const handleFileChange = async (
     e: React.ChangeEvent<HTMLInputElement>,
@@ -187,6 +158,11 @@ export default function SignUpPage() {
     img.onload = async () => {
       const canvas = document.createElement("canvas");
       const ctx = canvas.getContext("2d");
+      if (!ctx) {
+        setError("Error processing image, no context");
+        return;
+      }
+
       let width = img.width;
       let height = img.height;
       const maxHeight = 480;
@@ -198,7 +174,7 @@ export default function SignUpPage() {
 
       canvas.width = width;
       canvas.height = height;
-      ctx?.drawImage(img, 0, 0, width, height);
+      ctx.drawImage(img, 0, 0, width, height);
 
       try {
         const webpBlob = await new Promise<Blob>((resolve) => {
@@ -280,16 +256,7 @@ export default function SignUpPage() {
       return;
     }
 
-    const {
-      email,
-      password,
-      username,
-      userType,
-      age,
-      gender,
-      locationId,
-      interested_services,
-    } = formData;
+    const { email, password, username, userType, age, gender } = formData;
 
     try {
       const { data: authData, error: signUpError } = await supabase.auth
@@ -298,12 +265,13 @@ export default function SignUpPage() {
           password,
           options: {
             data: { username, type: userType },
+            redirectTo: `${window.location.origin}/api/auth/verify`, // Redirect to verification route
           },
         });
 
       if (signUpError) {
         setError(signUpError.message);
-        setIsLoading(false); // Ensure loading is stopped on error
+        setIsLoading(false);
         return;
       }
 
@@ -316,9 +284,7 @@ export default function SignUpPage() {
 
       const profileFormData = new FormData();
       Object.entries(formData).forEach(([key, value]) => {
-        if (Array.isArray(value)) {
-          profileFormData.append(key, JSON.stringify(value));
-        } else if (
+        if (
           typeof value === "string" ||
           typeof value === "number" ||
           typeof value === "boolean"
@@ -327,14 +293,6 @@ export default function SignUpPage() {
         }
       });
       profileFormData.append("userId", userId);
-      profileFormData.append(
-        "locationName",
-        locations.find((location) => location.id === locationId)?.name || "",
-      );
-      profileFormData.append(
-        "interested_services",
-        JSON.stringify(interested_services),
-      );
 
       const profileResponse = await fetch("/api/auth/signup", {
         method: "POST",
@@ -370,17 +328,12 @@ export default function SignUpPage() {
         });
       }
 
-      // Show confirmation dialog instead of redirecting
-      setIsConfirmationOpen(true);
+      setIsConfirmationOpen(true); // Show confirmation dialog
     } catch (err: any) {
       setError(err.message);
     } finally {
       setIsLoading(false);
     }
-  };
-
-  const handleServiceSelection = (selected: string[]) => {
-    setFormData((prev) => ({ ...prev, interested_services: selected }));
   };
 
   const handleResendEmail = async () => {
@@ -405,12 +358,11 @@ export default function SignUpPage() {
         </div>
       )}
 
-      {/* Conditionally render the dialog *outside* the main form container */}
       <EmailConfirmationDialog
         isOpen={isConfirmationOpen}
         onClose={() => {
           setIsConfirmationOpen(false);
-          router.push("/auth/login"); // Redirect after closing
+          router.push("/auth/login");
         }}
         email={formData.email}
         onResend={handleResendEmail}
@@ -428,7 +380,6 @@ export default function SignUpPage() {
           </Alert>
         )}
         <form onSubmit={handleAuth} className="space-y-4 text-foreground">
-          {/* Form fields (same as before) */}
           <div>
             <Label htmlFor="email">Email</Label>
             <Input
@@ -463,7 +414,15 @@ export default function SignUpPage() {
               name="userType"
               value={formData.userType}
               onValueChange={(value) =>
-                setFormData((prev) => ({ ...prev, userType: value }))}
+                setFormData((prev) => ({
+                  ...prev,
+                  userType: value as
+                    | "general"
+                    | "escort"
+                    | "bdsm"
+                    | "couple"
+                    | "content creator",
+                }))}
               required
             >
               <SelectTrigger>
@@ -503,65 +462,6 @@ export default function SignUpPage() {
 
           {formData.userType !== "general" && (
             <div>
-              <Label htmlFor="location">Location</Label>
-              <Select
-                name="locationId"
-                value={formData.locationId}
-                onValueChange={(value) =>
-                  setFormData((prev) => ({ ...prev, locationId: value }))}
-                required
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Select your location" />
-                </SelectTrigger>
-                <SelectContent>
-                  {locations.map((location) => (
-                    <SelectItem key={location.id} value={location.id}>
-                      {location.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          )}
-          <div>
-            <Label>Select Interests</Label>
-            <br />
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => setInterestOpen(true)}
-            >
-              + Add/Edit
-            </Button>
-            <InterestSelector
-              isOpen={isInterestOpen}
-              onClose={() => setInterestOpen(false)}
-              selectedInterests={formData.interested_services}
-              onSave={handleServiceSelection}
-              availableInterests={services}
-              title="Select Services"
-            />
-            {formData.interested_services.length > 0 && (
-              <div className="mt-2">
-                <Label>Selected Interests:</Label>
-                <div className="flex flex-wrap gap-2">
-                  {formData.interested_services.map((interest) => (
-                    <span
-                      key={interest}
-                      className="bg-blue-100 text-blue-800 text-xs font-medium px-2.5 py-0.5 rounded dark:bg-blue-900 dark:text-blue-300"
-                    >
-                      {interest}
-                    </span>
-                  ))}
-                </div>
-              </div>
-            )}
-          </div>
-
-          {formData.userType !== "general" && (
-            <div>
-              {" "}
               <Label htmlFor="age">Age</Label>
               <Input
                 id="age"
@@ -668,4 +568,3 @@ export default function SignUpPage() {
     </div>
   );
 }
-

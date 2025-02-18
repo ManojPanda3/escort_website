@@ -1,5 +1,10 @@
 import { ThemeProvider } from "@/components/theme-provider";
 import "@/app/globals.css";
+import { NavBar } from "@/components/nav-bar";
+import { Footer } from "@/components/footer";
+import AgeVerification from "../components/age-verification.tsx";
+import { LoadingSpinner } from "@/components/ui/loading";
+import { Suspense } from "react";
 
 export default function RootLayout({
   children,
@@ -8,13 +13,22 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <body>
+      <body className="bg-background dark:bg-black text-foreground dark:text-white flex flex-col min-h-screen">
         <ThemeProvider
           attribute="class"
           defaultTheme="dark"
           enableSystem={false}
         >
-          {children}
+          <AgeVerification />
+          <NavBar />
+          <main className="flex-grow">
+            <Suspense
+              fallback={<LoadingSpinner />}
+            >
+              {children}
+            </Suspense>
+          </main>
+          <Footer />
         </ThemeProvider>
       </body>
     </html>

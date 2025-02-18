@@ -1,13 +1,14 @@
 import Link from "next/link";
 import { Facebook, Twitter } from "lucide-react";
 import { supabase } from "../lib/supabase.ts";
+import locationsData from "@/public/location.json"; // Import the JSON data
 
 export function Footer() {
   const isUserExist: boolean = (supabase.auth.getUser()?.id) ? true : false;
 
   return (
     <footer
-      className="bg-black text-gray-300 py-12 px-4"
+      className="bg-black text-gray-300 py-12 px-4 z-10"
       role="contentinfo"
       aria-label="Site footer"
     >
@@ -121,116 +122,17 @@ export function Footer() {
             >
               LOCATIONS
             </h3>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div className="mb-4">
-                <h4 className="font-medium text-sm mb-2">NEW SOUTH WALES</h4>
-                <ul className="space-y-1">
-                  <li>
-                    <Link
-                      href="/location/sydney"
-                      className="text-xs hover:text-primary transition-colors"
-                    >
-                      SYDNEY
-                    </Link>
-                  </li>
-                  <li>
-                    <Link
-                      href="/location/newcastle"
-                      className="text-xs hover:text-primary transition-colors"
-                    >
-                      NEWCASTLE
-                    </Link>
-                  </li>
-                  <li>
-                    <Link
-                      href="/location/wollongong"
-                      className="text-xs hover:text-primary transition-colors"
-                    >
-                      WOLLONGONG
-                    </Link>
-                  </li>
-                </ul>
-              </div>
-
-              <div className="mb-4">
-                <h4 className="font-medium text-sm mb-2">VICTORIA</h4>
-                <ul className="space-y-1">
-                  <li>
-                    <Link
-                      href="/location/melbourne"
-                      className="text-xs hover:text-primary transition-colors"
-                    >
-                      MELBOURNE
-                    </Link>
-                  </li>
-                  <li>
-                    <Link
-                      href="/location/geelong"
-                      className="text-xs hover:text-primary transition-colors"
-                    >
-                      GEELONG
-                    </Link>
-                  </li>
-                  <li>
-                    <Link
-                      href="/location/ballarat"
-                      className="text-xs hover:text-primary transition-colors"
-                    >
-                      BALLARAT
-                    </Link>
-                  </li>
-                </ul>
-              </div>
-
-              <div className="mb-4">
-                <h4 className="font-medium text-sm mb-2">QUEENSLAND</h4>
-                <ul className="space-y-1">
-                  <li>
-                    <Link
-                      href="/location/brisbane"
-                      className="text-xs hover:text-primary transition-colors"
-                    >
-                      BRISBANE
-                    </Link>
-                  </li>
-                  <li>
-                    <Link
-                      href="/location/gold-coast"
-                      className="text-xs hover:text-primary transition-colors"
-                    >
-                      GOLD COAST
-                    </Link>
-                  </li>
-                </ul>
-              </div>
-
-              <div className="mb-4">
-                <h4 className="font-medium text-sm mb-2">WESTERN AUSTRALIA</h4>
-                <ul className="space-y-1">
-                  <li>
-                    <Link
-                      href="/location/perth"
-                      className="text-xs hover:text-primary transition-colors"
-                    >
-                      PERTH
-                    </Link>
-                  </li>
-                </ul>
-              </div>
-
-              <div className="mb-4">
-                <h4 className="font-medium text-sm mb-2">SOUTH AUSTRALIA</h4>
-                <ul className="space-y-1">
-                  <li>
-                    <Link
-                      href="/location/adelaide"
-                      className="text-xs hover:text-primary transition-colors"
-                    >
-                      ADELAIDE
-                    </Link>
-                  </li>
-                </ul>
-              </div>
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+              {/* Dynamically render locations */}
+              {locationsData.map((city) => (
+                <Link
+                  key={city}
+                  href={`/escorts?location=${encodeURIComponent(city)}`}
+                  className="text-xs hover:text-primary transition-colors block" // Use block to fill the space
+                >
+                  {city}
+                </Link>
+              ))}
             </div>
           </nav>
         </div>

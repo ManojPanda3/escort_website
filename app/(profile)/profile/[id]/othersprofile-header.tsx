@@ -148,7 +148,7 @@ export function ProfileHeader({ profile }: ProfileHeaderProps) {
                   <Button
                     onClick={handleBookmark}
                     disabled={isLoadingBookmark}
-                    variant={isBookmarked ? "secondary" : "default"}
+                    variant={isBookmarked ? "default" : "secondary"}
                   >
                     {isLoadingBookmark
                       ? (

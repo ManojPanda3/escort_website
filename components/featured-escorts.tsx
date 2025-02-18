@@ -5,6 +5,7 @@ import Image from "next/image";
 import { AnimatePresence, easeIn, motion } from "framer-motion";
 import { Card } from "@/components/ui/card";
 import { MapPin, Star } from "lucide-react";
+import getRandomImage from "../lib/randomImage.ts";
 
 interface FeaturedEscortProps {
   username: string;
@@ -26,12 +27,6 @@ const rankEmojis = {
   day: "🌞",
   month: "👑",
 };
-
-function getRandomImage() {
-  // Random image generator
-  const imageIndex = Math.floor(Math.random() * 18);
-  return `http://raw.githubusercontent.com/riivana/All-nighter-random-images/refs/heads/main/image%20${imageIndex}.webp`;
-}
 
 function FeaturedEscort(
   { username, profile_picture, age, location_name, price, rank }:

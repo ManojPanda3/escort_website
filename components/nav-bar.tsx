@@ -1,4 +1,3 @@
-// nav-bar.tsx
 "use client";
 
 import { useEffect, useState } from "react";
@@ -31,7 +30,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { useUserData } from "@/lib/useUserData"; // Import useUserData
+import { useUserData } from "@/lib/useUserData";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 
 interface User {
   id: string;
@@ -40,9 +44,7 @@ interface User {
 }
 
 export function NavBar() {
-  // Use useUserData to get the user
-  const { user: cachedUser, clearCache } = useUserData(); // Get user from useUserData and clearCache
-  // Initialize user state based on cachedUser directly.  No need for separate state.
+  const { user: cachedUser, clearCache, refetch } = useUserData();
   const user = cachedUser
     ? {
       id: cachedUser.id,
@@ -57,20 +59,44 @@ export function NavBar() {
   const [searchQuery, setSearchQuery] = useState("");
   const [searchType, setSearchType] = useState("all");
   const [suggestions, setSuggestions] = useState<User[]>([]);
+  const [loading, setLoading] = useState(false); //loading State
 
-  // Pre-fetch suggestions on mount
+  //Simulated Search (replace with actual API call)
+  const fetchSearchResults = async (query: string, type: string) => {
+    setLoading(true);
+    try {
+      // Simulate an API call with a delay
+      await new Promise((resolve) => setTimeout(resolve, 500));
+
+      //Example results (replace with real data from your backend)
+      const results: User[] = query.trim() === ""
+        ? [] // Return empty array if the query is empty
+        : [
+          {
+            id: "1",
+            username: `result1_for_${query}`,
+            avatar: "/placeholder.svg",
+          },
+          {
+            id: "2",
+            username: `result2_for_${query}`,
+            avatar: "/placeholder.svg",
+          },
+        ].filter((res) => type === "all" || res.username.includes(type)); // basic type filtering
+
+      setSuggestions(results);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
-    const fetchSuggestions = async () => {
-      // Replace with actual API call
-      const topUsers: User[] = [
-        { id: "1", username: "user1", avatar: "/placeholder.svg" },
-        { id: "2", username: "user2", avatar: "/placeholder.svg" },
-        { id: "3", username: "user3", avatar: "/placeholder.svg" },
-      ];
-      setSuggestions(topUsers);
-    };
-    fetchSuggestions();
-  }, []);
+    if (searchQuery.trim() !== "") {
+      fetchSearchResults(searchQuery, searchType);
+    } else {
+      setSuggestions([]); // Clear suggestions when query is empty
+    }
+  }, [searchQuery, searchType]);
 
   const handleSearch = () => {
     if (searchQuery.trim()) {
@@ -78,22 +104,17 @@ export function NavBar() {
         `/search?q=${encodeURIComponent(searchQuery)}&type=${searchType}`,
       );
       setIsSearchOpen(false);
-      setSearchQuery(""); // Clear search query after search
+      setSearchQuery("");
+      setSuggestions([]);
     }
   };
 
-  // Listen for auth state changes
   useEffect(() => {
     const { data: authListener } = supabase.auth.onAuthStateChange(
       (event, session) => {
         if (session?.user) {
-          //If there is a session (user logged in), refetch data to ensure cache is updated.  Even if we don't *display*
-          // the data, we want `useUserData` to have the latest. This handles cases where profile data
-          // changes while the user is logged in.
-          const { refetch } = useUserData(); // Get refetch function from useUserData
-          refetch(); // Refetch user data and update local storage.
+          refetch();
         }
-        //setUser is no longer needed, useUserData handles the update and changes on cache.
       },
     );
     return () => {
@@ -103,8 +124,8 @@ export function NavBar() {
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
-    clearCache(); // Clear the cache on logout
-    router.push("/"); // Redirect to home page
+    clearCache();
+    router.push("/");
   };
 
   const cities = [
@@ -199,7 +220,7 @@ export function NavBar() {
 
             <ThemeToggle />
 
-            {/* Search */}
+            {/* Search Button (Opens Dialog) */}
             <Button
               variant="ghost"
               size="icon"
@@ -210,17 +231,41 @@ export function NavBar() {
               <Search className="h-5 w-5" />
             </Button>
 
-            {/* User */}
+            {/* User (Popover for options) */}
             {user
               ? (
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => router.push("/profile")}
-                  aria-label="View profile"
-                >
-                  <User className="h-5 w-5" />
-                </Button>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      aria-label="User options"
+                    >
+                      <User className="h-5 w-5" />
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0">
+                    <div className="flex flex-col">
+                      <Button
+                        variant="ghost"
+                        className="justify-start"
+                        onClick={() => router.push("/profile")}
+                        aria-label="Go to profile"
+                      >
+                        Profile
+                      </Button>
+                      <Button
+                        variant="ghost" // Use destructive variant for red color
+                        className="justify-start group"
+                        onClick={handleLogout}
+                        aria-label="Log out"
+                      >
+                        <LogOut className="mr-2 h-4 w-4 text-red-500 group-hover:text-red-600" />
+                        Log Out
+                      </Button>
+                    </div>
+                  </PopoverContent>
+                </Popover>
               )
               : <LoginBtn />}
 
@@ -263,12 +308,12 @@ export function NavBar() {
                       <button
                         className="block py-2 text-sm font-semibold text-red-600 hover:text-red-300 transition-colors"
                         onClick={handleLogout}
-                        aria-label="Log out"
                       >
                         <LogOut />
                       </button>
                     )
                     : <LoginBtn className="rounded-sm" />}
+
                   <div className="pt-4 border-t">
                     <p className="text-sm font-medium mb-2">Popular Cities</p>
                     <div className="grid grid-cols-2 gap-2">
@@ -290,8 +335,7 @@ export function NavBar() {
           </div>
         </div>
       </div>
-
-      {/* Search Popup */}
+      {/* Search Popup (Dialog) */}
       <AnimatePresence>
         {isSearchOpen && (
           <Dialog open={isSearchOpen} onOpenChange={setIsSearchOpen}>
@@ -314,7 +358,12 @@ export function NavBar() {
                     }}
                     aria-label="Search query"
                   />
-                  <Select value={searchType} onValueChange={setSearchType}>
+                  <Select
+                    value={searchType}
+                    onValueChange={(value) => {
+                      setSearchType(value);
+                    }}
+                  >
                     <SelectTrigger
                       className="w-[180px]"
                       aria-label="Search type"
@@ -328,34 +377,39 @@ export function NavBar() {
                       <SelectItem value="couples">Couples</SelectItem>
                     </SelectContent>
                   </Select>
-                  <Button onClick={handleSearch}>Search</Button>
+                  <Button onClick={handleSearch} aria-label="Search">
+                    Search
+                  </Button>
                 </div>
                 <div className="space-y-2">
-                  <h3 className="text-sm font-medium">Top Users</h3>
-                  {suggestions.map((user) => (
-                    <motion.div
-                      key={user.id}
-                      initial={{ opacity: 0, y: -10 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, y: 10 }}
-                      className="flex items-center space-x-2 p-2 rounded-md hover:bg-gray-100 dark:hover:bg-gray-800 cursor-pointer"
-                      onClick={() => {
-                        setSearchQuery(user.username); // Set the input field to the clicked username
-                        handleSearch();
-                      }}
-                      role="button"
-                      aria-label={`Search for ${user.username}`}
-                    >
-                      <Image
-                        src={user.avatar}
-                        alt={`${user.username}'s avatar`}
-                        width={32}
-                        height={32}
-                        className="rounded-full"
-                      />
-                      <span>{user.username}</span>
-                    </motion.div>
-                  ))}
+                  {loading ? <p>Loading...</p> : suggestions.length > 0
+                    ? (
+                      suggestions.map((user) => (
+                        <motion.div
+                          key={user.id}
+                          initial={{ opacity: 0, y: -10 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          exit={{ opacity: 0, y: 10 }}
+                          className="flex items-center space-x-2 p-2 rounded-md hover:bg-gray-100 dark:hover:bg-gray-800 cursor-pointer"
+                          onClick={() => {
+                            setSearchQuery(user.username); // Set input to clicked username
+                            handleSearch(); // Perform the search
+                          }}
+                          role="button"
+                          aria-label={`Search result for ${user.username}`}
+                        >
+                          <Image
+                            src={user.avatar}
+                            alt={`${user.username}'s avatar`}
+                            width={32}
+                            height={32}
+                            className="rounded-full"
+                          />
+                          <span>{user.username}</span>
+                        </motion.div>
+                      ))
+                    )
+                    : <p>No results found.</p>}
                 </div>
               </div>
             </DialogContent>
@@ -373,11 +427,9 @@ const LoginBtn = ({ className }: { className?: string }) => {
       className={"bg-primary hover:bg-primary/80 font-bold py-2 px-4 rounded-full transition duration-300 text-black " +
         className}
       onClick={() => router?.push("/auth/login")}
-      aria-label="Log in"
     >
       <User className="h-5 w-5 mr-2" />
       Login
     </Button>
   );
 };
-

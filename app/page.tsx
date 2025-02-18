@@ -1,9 +1,7 @@
-import { NavBar } from "@/components/nav-bar";
 import { Hero } from "@/components/hero";
 import { FeaturedEscorts } from "@/components/featured-escorts";
 import { CategoryTabs } from "@/components/category-tabs";
 import { EscortCard } from "@/components/escort-card";
-import { Footer } from "@/components/footer";
 import FaqAllNighters from "@/components/Faq02";
 import { AboutSection } from "@/components/about-section";
 import { MouseGlow } from "@/components/mouse-glow";
@@ -14,8 +12,8 @@ import { Metadata } from "next";
 import { Suspense } from "react";
 import { ScrollToTop } from "@/components/scroll_to_top";
 import { RoyalBackground } from "@/components/royal-background";
-import AgeVerification from "../components/age-verification.tsx";
 import { StoriesContainer } from "../components/sotry-container.tsx";
+import getRandomImage from "../lib/randomImage.ts";
 // Metadata for SEO
 export const metadata: Metadata = {
   title: "Find Your Perfect Companion | Premium Escort Directory",
@@ -63,12 +61,6 @@ async function fetchStories(supabase, userIds: string[]) {
   return data;
 }
 
-function getRandomImage() {
-  // Random image generator
-  const imageIndex = Math.floor(Math.random() * 18);
-  return `http://raw.githubusercontent.com/riivana/All-nighter-random-images/refs/heads/main/image%20${imageIndex}.webp`;
-}
-
 export default async function Page() {
   const supabase = createServerComponentClient({ cookies });
   const { data: { user: currentUser }, error } = await supabase.auth.getUser();
@@ -93,13 +85,7 @@ export default async function Page() {
       {/* Mouse Glow Effect */}
       <MouseGlow />
       <RoyalBackground />
-      <AgeVerification />
-
       <div className="relative z-10">
-        <Suspense fallback={<div className="animate-pulse h-16 bg-gray-200" />}>
-          <NavBar />
-        </Suspense>
-
         <main>
           <h1 className="sr-only">Premium Escort Directory</h1>
 
@@ -169,7 +155,7 @@ export default async function Page() {
                       age={user.age}
                       location={user.location_name}
                       measurements={user.dress_size}
-                      image={user.profile_picture || getRandomImage()}
+                      image={user.profile_picture}
                       isVerified={user.is_verified}
                       isVip={user.current_offer != null}
                       availability={user.availability}
@@ -184,7 +170,6 @@ export default async function Page() {
           <FaqAllNighters />
           <ScrollToTop />
         </main>
-        <Footer />
       </div>
     </div>
   );

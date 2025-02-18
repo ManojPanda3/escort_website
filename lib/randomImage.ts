@@ -1,3 +1,4 @@
+"use client";
 export default function getRandomImage() {
   // Random image generator
   const imageIndex = Math.floor(Math.random() * 18);

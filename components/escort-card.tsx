@@ -5,6 +5,7 @@ import { Card } from "@/components/ui/card";
 import { Calendar, MapPin, Phone, Shield, Star } from "lucide-react";
 import { motion } from "framer-motion";
 import { memo, useState } from "react";
+import getRandomImage from "../lib/randomImage.ts";
 
 interface EscortCardProps {
   name: string;
@@ -66,7 +67,7 @@ export const EscortCard = memo(function EscortCard({
         {/* Image and Hover Effect */}
         <div className="relative aspect-[3/4] w-full">
           <img
-            src={image}
+            src={image || getRandomImage()}
             alt={`Profile photo of ${name}`}
             className="object-cover w-full h-full transition-all duration-500 group-hover:scale-105"
           />

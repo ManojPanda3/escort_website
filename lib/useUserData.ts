@@ -23,13 +23,15 @@ interface UserData {
   isLoading: boolean;
   error: string | null;
   refetch: () => Promise<void>;
-  clearCache: () => void; // Add clearCache function
+  clearCache: () => void;
 }
 
 const CACHE_KEY = "userData";
 const CACHE_EXPIRY = 5 * 60 * 1000;
 
 export function useUserData(): UserData {
+  const supabase = createClientComponentClient<Database>(); // Move Supabase client initialization here
+
   const [userData, setUserData] = useState<UserData>({
     user: null,
     pictures: [],
@@ -39,11 +41,14 @@ export function useUserData(): UserData {
     bookmarks: [],
     isLoading: true,
     error: null,
-    refetch: async () => {},
-    clearCache: () => {}, // Initialize clearCache
+    refetch: async () => { }, // Initialize with empty functions
+    clearCache: () => { },
   });
 
-  const supabase = createClientComponentClient<Database>();
+  // Define clearCache outside of fetchData, so it's always available.
+  const clearCache = useCallback(() => {
+    localStorage.removeItem(CACHE_KEY);
+  }, []);
 
   const fetchData = useCallback(async () => {
     setUserData((prev) => ({ ...prev, isLoading: true, error: null }));
@@ -113,12 +118,13 @@ export function useUserData(): UserData {
           expiresAt: Date.now() + CACHE_EXPIRY,
         }),
       );
+
       setUserData({
         ...fetchedUserData,
         isLoading: false,
         error: null,
         refetch: fetchData,
-        clearCache: () => localStorage.removeItem(CACHE_KEY), // Implement clearCache
+        clearCache, // Use the defined clearCache function
       });
     } catch (error: any) {
       setUserData((prev) => ({
@@ -126,10 +132,11 @@ export function useUserData(): UserData {
         isLoading: false,
         error: error.message,
         refetch: fetchData,
-        clearCache: () => localStorage.removeItem(CACHE_KEY), // Implement in error case too
+        clearCache, // Use the defined clearCache function
       }));
+      console.error("Error fetching user data:", error); // Log the error for debugging
     }
-  }, [supabase]);
+  }, [supabase, clearCache]); // Include clearCache in dependency array
 
   useEffect(() => {
     const cachedDataString = localStorage.getItem(CACHE_KEY);
@@ -142,16 +149,17 @@ export function useUserData(): UserData {
           isLoading: false,
           error: null,
           refetch: fetchData,
-          clearCache: () => localStorage.removeItem(CACHE_KEY), // Set clearCache in useEffect
+          clearCache, //Use defined ClearCache
         });
         return;
       } else {
-        localStorage.removeItem(CACHE_KEY);
+        clearCache(); // Clear expired cache
       }
     }
 
     fetchData();
-  }, [fetchData]);
+  }, [fetchData, clearCache]); // Include clearCache in dependency array
 
   return userData;
 }
+

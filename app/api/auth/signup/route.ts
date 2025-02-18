@@ -1,5 +1,7 @@
+// app/api/auth/signup/route.ts
 import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase";
+import type { Database } from "@/types/supabase"; // Import the Database type
 
 export async function POST(request: NextRequest) {
   try {
@@ -12,13 +14,9 @@ export async function POST(request: NextRequest) {
     const username = formData.get("username") as string;
     const userType = formData.get("userType") as string;
     const age = formData.get("age") as string;
-    const location = formData.get("location") as string;
     const locationName = formData.get("locationName") as string;
     const gender = formData.get("gender") as string;
     const userId = formData.get("userId") as string;
-    const interested_servicesString = formData.get(
-      "interested_services",
-    ) as string; // Get as string
 
     if (userType !== "general" && (!age || parseInt(age) < 18)) {
       return NextResponse.json(
@@ -33,7 +31,7 @@ export async function POST(request: NextRequest) {
       });
     }
     const uuidRegex =
-      /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i; // Basic UUID regex
+      /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
     if (!uuidRegex.test(userId)) {
       console.error("Invalid userId format:", userId);
       return NextResponse.json({ message: "Invalid user ID format." }, {
@@ -41,36 +39,17 @@ export async function POST(request: NextRequest) {
       });
     }
 
-    // Parse categories and services from JSON strings to JavaScript arrays
-    let interested_services: string[] = [];
-
-    if (interested_servicesString) {
-      try {
-        interested_services = JSON.parse(interested_servicesString) as string[];
-      } catch (parseError) {
-        console.error("Error parsing interested_services JSON:", parseError);
-        return NextResponse.json(
-          { message: "Invalid interested services format." },
-          { status: 400 },
-        );
-      }
-    }
-
-    const userDataToInsert = {
+    const userDataToInsert: Database["public"]["Tables"]["users"]["Insert"] = { // Use TablesInsert
       id: userId,
       username,
       email,
       user_type: userType,
       age: age != null ? parseInt(age) : null,
       is_verified: false,
-      location,
       gender,
-      location_name: locationName,
-      interested_services: interested_services, // Use the parsed array
+      location_name: locationName || null,
+      interested_services: undefined,
     };
-    if (!location?.trim()) {
-      delete userDataToInsert.location;
-    }
     if (!locationName?.trim()) {
       delete userDataToInsert.location_name;
     }
@@ -99,3 +78,4 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ message }, { status: 500 });
   }
 }
+
