@@ -12,6 +12,20 @@ import { FaqAllNighters } from "@/components/Faq02";
 import { AboutSection } from "@/components/about-section";
 import { StoriesContainer } from "@/components/sotry-container";
 import getRandomImage from "@/lib/randomImage";
+// Function to fetch stories
+async function fetchStories(supabase, userIds: string[]) {
+  const { data, error } = await supabase
+    .from("story")
+    .select("id, isvideo, owner, title, url, thumbnail, likes")
+    .in("owner", userIds);
+
+  if (error) {
+    console.error("Error fetching stories:", error);
+    throw error;
+  }
+
+  return data;
+}
 
 export default async function EscortsPage(
   { searchParams }: { searchParams: { location?: string; gender?: string } },
@@ -42,6 +56,7 @@ export default async function EscortsPage(
     return <div>Error loading escorts. Please try again later.</div>;
   }
 
+  const stories = await fetchStories(supabase, escorts.map(({ id }) => { return id }));
 
   return (
     <div className="relative min-h-screen bg-gradient-to-b from-background via-background/80 to-background dark:from-black dark:via-gray-900 dark:to-black">
@@ -113,7 +128,7 @@ export default async function EscortsPage(
             </div>
           </section>
 
-    
+
           {/* FAQ Section */}
           <section className="container mx-auto px-4 py-8">
             <h2 className="text-3xl font-bold text-center mb-6 bg-gradient-to-r from-amber-200 to-yellow-400 bg-clip-text text-transparent">
