@@ -42,7 +42,7 @@ export default async function EscortsPage(
           initial_location={location || ""}
           initial_gender={gender || ""}
         />
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+        <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 mt-2">
           {escorts.map((escort) => (
             <EscortCard
               key={escort.id}

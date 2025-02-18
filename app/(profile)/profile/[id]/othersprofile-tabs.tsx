@@ -67,7 +67,7 @@ export function ProfileTabs({
   const ownerId = user?.id;
 
   const handleSubmitTestimonial = async (to: string) => {
-    if (ownerId === "") {
+    if (!userId) { // Corrected to check for userId being present
       console.error("You have to login to give testimonies to other");
       toast({
         title: "Error",
@@ -137,6 +137,7 @@ export function ProfileTabs({
 
   return (
     <>
+      <Toaster /> {/* Moved Toaster here */}
       <Tabs defaultValue="pictures" className="space-y-4">
         <TabsList className="grid w-full grid-cols-4">
           <TabsTrigger value="pictures" className="flex items-center gap-2">
@@ -298,7 +299,7 @@ export function ProfileTabs({
           </div>
         </TabsContent>
       </Tabs>
-      <Toaster />
     </>
   );
 }
+
