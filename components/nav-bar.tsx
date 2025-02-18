@@ -165,7 +165,7 @@ export function NavBar() {
         {cities.map((city) => (
           <Link
             key={city}
-            href={`/location/${city.toLowerCase()}`}
+            href={`/escorts?location=${city.toLowerCase()}`}
             className="hover:text-primary transition-colors"
             aria-label={`View escorts in ${city}`}
           >
