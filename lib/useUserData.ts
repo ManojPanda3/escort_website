@@ -59,7 +59,7 @@ export function useUserData(): UserData {
         error: authError,
       } = await supabase.auth.getUser();
       if (authError || !user) {
-        throw new Error(authError?.message || "User not authenticated");
+        console.error(authError?.message || "User not authenticated");
       }
 
       const [
