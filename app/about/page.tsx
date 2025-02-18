@@ -1,10 +1,11 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import getRandomImage from "@/lib/randomImage";
 import { Avatar } from "@/components/ui/avatar";
-import { AvatarFallback, AvatarImage } from "@radix-ui/react-avatar";
+import { AvatarImage, AvatarFallback } from "@radix-ui/react-avatar";
 import { Separator } from "@/components/ui/separator";
+import { Card, CardContent } from "@/components/ui/card";
 
 const AboutPage = () => {
   const [isMounted, setIsMounted] = useState(false);
@@ -51,14 +52,25 @@ const AboutPage = () => {
           className="flex flex-col md:flex-row gap-12 items-start"
         >
           <div className="md:w-1/3 flex flex-col items-center md:items-start">
-            <Avatar className="w-32 h-32 mb-4">
-              <AvatarImage src={getRandomImage()} alt="Royal Avatar" />
+            <Avatar className="w-32 h-32 mb-4 overflow-hidden"> {/* ADDED overflow-hidden */}
+              <AvatarImage
+                src={getRandomImage()}
+                alt="Royal Avatar"
+                style={{ objectFit: "cover", objectPosition: "center", height: "100%", width: "100%" }} // Added inline styles
+              />
               <AvatarFallback>AN</AvatarFallback>
             </Avatar>
             <p className="text-lg text-center md:text-left">
-              "Committed to providing experiences fit for royalty. Discretion
-              and Excellence above all."
+              "Committed to providing experiences fit for royalty. Discretion and
+              Excellence above all."
             </p>
+            <Card className="mt-6 bg-stone-50 dark:bg-stone-900 shadow-md">
+              <CardContent className="p-4 text-center">
+                <p className="text-sm text-stone-600 dark:text-stone-400">
+                  All-Nighter: Your trusted destination for refined companionship.
+                </p>
+              </CardContent>
+            </Card>
           </div>
 
           <div className="md:w-2/3 prose max-w-none prose-lg dark:prose-invert">
@@ -70,9 +82,8 @@ const AboutPage = () => {
               At All-Nighter, we uphold the highest standards of discretion,
               safety, and refinement. We connect discerning clientele with
               professional, vetted companions, each offering bespoke experiences
-              tailored to individual desires. Our commitment to excellence
-              ensures every interaction is conducted with grace and
-              sophistication.
+              tailored to individual desires. Our commitment to excellence ensures
+              every interaction is conducted with grace and sophistication.
             </p>
 
             <Separator className="my-8" />
@@ -81,10 +92,10 @@ const AboutPage = () => {
               Our Noble Mission
             </h2>
             <p>
-              Our mission is to redefine the landscape of companionship,
-              creating a realm of transparency, security, and unparalleled user
-              experience. We are dedicated to fostering an environment of mutual
-              respect, unwavering consent, and consummate professionalism.
+              Our mission is to redefine the landscape of companionship, creating a
+              realm of transparency, security, and unparalleled user experience.
+              We are dedicated to fostering an environment of mutual respect,
+              unwavering consent, and consummate professionalism.
             </p>
 
             <Separator className="my-8" />
@@ -94,29 +105,24 @@ const AboutPage = () => {
             </h2>
             <ul className="list-decimal pl-6">
               <li>
-                <b>Elite Vetting:</b>{" "}
-                A rigorous selection process ensures only the most refined and
-                reputable companions grace our platform.
+                <b>Elite Vetting:</b> A rigorous selection process ensures only the
+                most refined and reputable companions grace our platform.
               </li>
               <li>
-                <b>Elegant Interface:</b>{" "}
-                An intuitive and seamless platform facilitates effortless
-                browsing and booking.
+                <b>Elegant Interface:</b> An intuitive and seamless platform
+                facilitates effortless browsing and booking.
               </li>
               <li>
-                <b>Unwavering Discretion:</b>{" "}
-                Your privacy is paramount; we employ stringent measures to
-                safeguard your anonymity.
+                <b>Unwavering Discretion:</b> Your privacy is paramount; we employ
+                stringent measures to safeguard your anonymity.
               </li>
               <li>
-                <b>Round-the-Clock Concierge:</b>{" "}
-                Our dedicated support staff is available 24/7 to attend to your
-                every need.
+                <b>Round-the-Clock Concierge:</b> Our dedicated support staff is
+                available 24/7 to attend to your every need.
               </li>
               <li>
-                <b>A Tapestry of Choices:</b>{" "}
-                A diverse array of companions and services ensures a perfect
-                match for every discerning taste.
+                <b>A Tapestry of Choices:</b> A diverse array of companions and
+                services ensures a perfect match for every discerning taste.
               </li>
             </ul>
 
@@ -141,4 +147,3 @@ const AboutPage = () => {
 };
 
 export default AboutPage;
-

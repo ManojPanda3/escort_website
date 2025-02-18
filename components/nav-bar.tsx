@@ -36,7 +36,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import locations from "@/public/location.json"
+import locations from "@/public/location.json";
 
 interface User {
   id: string;
@@ -129,7 +129,7 @@ export function NavBar() {
     router.push("/");
   };
 
-  const cities = locations?.slice(11) ||
+  const cities = locations ||
     [
       "AUSTRALIA",
       "SYDNEY",
@@ -151,7 +151,6 @@ export function NavBar() {
     "COUPLES",
     "CATEGORIES",
   ];
-  console.log(cities)
 
   return (
     <nav

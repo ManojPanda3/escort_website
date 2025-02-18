@@ -1,46 +1,68 @@
 import { EscortCard } from "@/components/escort-card";
 import { createServerComponentClient } from "@supabase/auth-helpers-nextjs";
 import { cookies } from "next/headers";
-import getRandomImage from "@/lib/randomImage";
+import HeroCard from "@/components/HeroCard.tsx";
 
-export default async function CouplesPage() {
+export default async function EscortsPage(
+  { searchParams }: { searchParams: { location?: string; gender?: string } },
+) {
   const supabase = createServerComponentClient({ cookies });
+  const search_params = await searchParams;
+  const location = search_params?.location;
+  const gender = search_params?.gender;
 
-  const { data: couples, error } = await supabase.from("users").select("*").eq(
-    "user_type",
-    "Couple",
-  );
+  let query = supabase.from("users").select("*").eq("user_type", "escort");
+
+  // Apply location filter, handling "all locations"
+  if (
+    location && location.trim() !== "" &&
+    location.toLocaleLowerCase() === "all locations"
+  ) {
+    query = query.eq("location_name", location);
+  }
+
+  // Apply gender filter, handling "viewall"
+  if (
+    gender && gender.trim() !== "" &&
+    gender.toLocaleLowerCase() === "viewall"
+  ) {
+    query = query.eq("gender", gender);
+  }
+
+  const { data: escorts, error } = await query;
 
   if (error) {
-    console.error("Error fetching couples:", error);
-    return <div>Error loading couples. Please try again later.</div>;
+    console.error("Error fetching escorts:", error);
+    return <div>Error loading escorts. Please try again later.</div>;
   }
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-background via-background/80 to-background dark:from-black dark:via-gray-900 dark:to-black">
-      <main className="container mx-auto px-4 py-8">
-        <h1 className="text-3xl font-bold mb-6 text-center bg-gradient-to-r from-amber-200 to-yellow-400 bg-clip-text text-transparent">
-          Couples
-        </h1>
+      <div className="container mx-auto px-4 py-8">
+        <HeroCard
+          label={`Escorts ${location ? "in " + location : ""}`}
+          initial_location={location || ""}
+          initial_gender={gender || ""}
+        />
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-          {couples.map((couple) => (
+          {escorts?.map((escort) => (
             <EscortCard
-              key={couple.id}
-              id={couple.id}
-              name={couple.username}
-              age={couple.age}
-              location={couple.location_name}
-              measurements={couple.size}
-              price={couple.price}
-              image={couple.profile_picture || getRandomImage()}
-              availability={couple.availability}
-              isVerified={couple.is_verified}
-              isVip={couple.is_vip}
+              key={escort.id}
+              id={escort.id}
+              name={escort.username}
+              age={escort.age}
+              location={escort.location_name}
+              measurements={escort.size}
+              price={escort.price}
+              image={escort.profile_picture}
+              availability={escort.availability}
+              isVerified={escort.is_verified}
+              isVip={escort.is_vip}
               isOnline={false}
             />
           ))}
         </div>
-      </main>
+      </div>
     </div>
   );
 }
