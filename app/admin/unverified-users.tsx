@@ -35,14 +35,6 @@ export function UnverifiedUsers({ users: initialUsers }: UnverifiedUsersProps) {
   >(null);
   const [users, setUsers] = useState<User[]>(initialUsers);
 
-  // Log user data for debugging
-  useEffect(() => {
-    console.log("Users Data:", users);
-    users.forEach((user) => {
-      console.log(`User ${user.username}: documents = `, user.age_proofs);
-    });
-  }, [users]);
-
   const filteredUsers = users.filter(
     (user) =>
       user.username.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -88,8 +80,6 @@ export function UnverifiedUsers({ users: initialUsers }: UnverifiedUsersProps) {
       setUsers((prevUsers) => prevUsers.filter((user) => user.id !== userId)); // Filter out the deleted user
       setIsLoading(false);
       setIsDialogOpen(false); // Close dialog after successful deletion
-
-      console.log("User deleted successfully!");
     } catch (error) {
       console.error("Deletion failed:", error);
       setIsLoading(false);
@@ -237,4 +227,3 @@ export function UnverifiedUsers({ users: initialUsers }: UnverifiedUsersProps) {
     </div>
   );
 }
-

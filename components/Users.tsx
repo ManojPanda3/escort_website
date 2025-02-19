@@ -2,7 +2,7 @@
 import { useEffect, useState } from "react";
 import { CategoryTabs } from "./category-tabs.tsx";
 import { Database } from "@/lib/database.types";
-import { EscortCard } from "./user_card.tsx";
+import { EscortCard } from "./escort-card.tsx";
 import Link from "next/link";
 
 const categories_default = [
@@ -68,14 +68,18 @@ const UsersCard = ({
               prefetch={false}
             >
               <EscortCard
+                key={user.id}
                 name={user.name || user.username}
                 age={user.age}
+                // price={user.price}
+                image={user.profile_picture}
+                // || "/placeholder.svg?height=600&width=400"}
                 location={user.location_name}
                 measurements={user.dress_size}
-                image={user.profile_picture}
                 isVerified={user.is_verified}
-                isVip={user.current_offer != null}
+                isVip={user.current_offer !== null}
                 availability={user.availability}
+                isOnline={user.is_available}
               />
             </Link>
           ))}

@@ -40,7 +40,6 @@ export default function EmailVerification(
       type: "signup",
       email: email,
     });
-    console.log(emailResend);
   };
 
   const handleVerify = async () => {
@@ -93,4 +92,3 @@ export default function EmailVerification(
     </div>
   );
 }
-

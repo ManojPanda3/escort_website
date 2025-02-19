@@ -9,7 +9,6 @@ import { supabaseAdmin } from "@/lib/supabase";
 export async function POST(request: NextRequest) {
   try {
     const { fileName, fileType, userId } = await request.json();
-    console.log("Singed Url: ", process.env.R2_BUCKET_NAME!);
 
     if (!supabaseAdmin) throw new Error("Admin supabase not found");
 
@@ -41,7 +40,6 @@ export async function POST(request: NextRequest) {
 
     const signedUrl = await getSignedUrl(S3, command, { expiresIn: 3600 });
     const publicUrl = process.env.R2_PUBLIC_URL || "";
-    console.log(publicUrl, signedUrl);
 
     return NextResponse.json({
       message: "The signed url is generated successfully",

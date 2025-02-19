@@ -418,7 +418,7 @@ export type Database = {
           services: Database["public"]["Enums"]["service_type"][] | null
           total_media: number | null
           traveling_location: string | null
-          user_type: string | null
+          user_type: Database["public"]["Enums"]["user type"] | null
           username: string
         }
         Insert: {
@@ -454,7 +454,7 @@ export type Database = {
           services?: Database["public"]["Enums"]["service_type"][] | null
           total_media?: number | null
           traveling_location?: string | null
-          user_type?: string | null
+          user_type?: Database["public"]["Enums"]["user type"] | null
           username: string
         }
         Update: {
@@ -490,7 +490,7 @@ export type Database = {
           services?: Database["public"]["Enums"]["service_type"][] | null
           total_media?: number | null
           traveling_location?: string | null
-          user_type?: string | null
+          user_type?: Database["public"]["Enums"]["user type"] | null
           username?: string
         }
         Relationships: [
@@ -615,6 +615,7 @@ export type Database = {
         | "Strap on - on me"
         | "Strap on - on you"
         | "Travel Companion"
+      "user type": "general" | "bdsm" | "escort" | "couple"
     }
     CompositeTypes: {
       [_ in never]: never

@@ -52,7 +52,6 @@ export default function UserDetailsForm(
       setError(signUpError);
       return { error: signUpError };
     }
-    console.log("Signup successful, verification email sent. ", authData);
     updateFormData({ userId: authData.id });
     setIsLoading(false);
     onNext();

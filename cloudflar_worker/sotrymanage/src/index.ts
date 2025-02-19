@@ -15,7 +15,6 @@ export default {
 	async fetch(request, env, ctx): Promise<Response> {
 		const url = new URL(request.url);
 		const params = new URLSearchParams(url.search);
-		console.log(params.getAll("id"));
 		return new Response("Hello World!");
 	},
 };

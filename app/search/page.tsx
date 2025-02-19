@@ -1,6 +1,6 @@
 import { createServerComponentClient } from "@supabase/auth-helpers-nextjs";
 import { cookies } from "next/headers";
-import { EscortCard } from "@/components/escort-card";
+import { EscortCard } from "@/components/user_card";
 import { redirect } from "next/navigation";
 
 export default async function SearchPage(
@@ -19,19 +19,15 @@ export default async function SearchPage(
   // Fixed query logic
   let query = supabase
     .from("users")
-    .select("*");
-  // .ilike('username', `%${searchQuery}%`)
-  // .order('username', { ascending: true })
+    .select("*")
+    .ilike("username", `%${searchQuery}%`)
+    .order("username", { ascending: true });
 
-  // // Handle search type filtering
-  // if (searchType && searchType !== 'all') {
-  //   query = query.eq('user_type', searchType);
-  // } else {
-  //   query = query.neq('user_type', 'general');
-  // }
+  if (searchType && searchType !== "all") {
+    query = query.eq("user_type", searchType);
+  }
 
-  const { data: searchResults, error } = await query;
-  // .limit(20)
+  const { data: searchResults, error } = await query.limit(20);
 
   if (error) {
     console.error("Search error:", error);
@@ -44,19 +40,21 @@ export default async function SearchPage(
           Search Results for "{searchQuery}"
         </h1>
         <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-          {searchResults && searchResults.map((escort) => (
+          {searchResults && searchResults.map((user) => (
             <EscortCard
-              key={escort.id}
-              name={escort.username}
-              age={escort.age}
-              location={escort.location}
-              measurements={escort.size}
-              price={escort.price}
-              image={escort.pic || "/placeholder.svg?height=600&width=400"}
-              availability={escort.availability}
-              isVerified={escort.is_verified}
-              isVip={escort.is_vip}
-              isOnline={false}
+              key={user.id}
+              id={user.id}
+              name={user.name || user.username}
+              age={user.age}
+              // price={user.price}
+              image={user.profile_picture}
+              // "/placeholder.svg?height=600&width=400"}
+              location={user.location_name}
+              measurements={user.dress_size}
+              isVerified={user.is_verified}
+              isVip={user.current_offer !== null}
+              availability={user.availability}
+              isOnline={user.is_available}
             />
           ))}
         </div>

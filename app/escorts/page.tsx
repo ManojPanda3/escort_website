@@ -12,7 +12,7 @@ import { FaqAllNighters } from "@/components/Faq02";
 import { AboutSection } from "@/components/about-section";
 import { StoriesContainer } from "@/components/sotry-container";
 import getRandomImage from "@/lib/randomImage";
-import Escorts from "../../components/Escorts.tsx";
+import Users from "@/components/Users.tsx";
 import { Database } from "@/lib/database.types";
 
 type Escort = Database["public"]["Tables"]["users"]["Row"];
@@ -164,4 +164,3 @@ export default async function EscortsPage(
     </div>
   );
 }
-

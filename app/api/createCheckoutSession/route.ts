@@ -12,7 +12,6 @@ export async function POST(req: NextRequest) {
   try {
     const supabase = await createServerComponentClient({ cookies });
     const { data: { user: user } } = await supabase.auth.getUser();
-    console.log(user);
     const { offer_id, priceId }: {
       offer_id: string;
       priceId: string;
@@ -96,7 +95,6 @@ export async function POST(req: NextRequest) {
         error: transaction_error,
       }, { status: 500 });
     }
-    console.log(session);
 
     return NextResponse.json({ sessionId: session.id }); // Explicitly return the success response.
   } catch (error) {

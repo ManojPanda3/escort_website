@@ -28,7 +28,6 @@ const PaymentButton = ({ stripePriceId, offer_id }: PaymentButtonProps) => {
       const { sessionId } = await response.json();
       // onsucess of the payment
       const stripe = await stripePromise;
-      console.log(stripe);
 
       if (stripe) {
         await stripe.redirectToCheckout({ sessionId });

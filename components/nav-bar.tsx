@@ -2,15 +2,13 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { LogOut, Menu, Search, User } from "lucide-react";
-import { AnimatePresence, motion } from "framer-motion";
+import { LogOut, Menu, User } from "lucide-react";
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
 import {
@@ -22,22 +20,15 @@ import {
 } from "@/components/ui/sheet";
 import { useRouter } from "next/navigation";
 import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
-import Image from "next/image";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { useUserData } from "@/lib/useUserData";
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
 import locations from "@/public/location.json";
-import { LoadingSpinner } from "./ui/loading.tsx";
+import { useUserData } from "@/lib/useUserData";
+import { SearchBar } from "./search-bar"; // Import the new component
+import { Search } from "lucide-react";
 
 interface User {
   id: string;
@@ -45,71 +36,12 @@ interface User {
   avatar: string;
 }
 
-export function NavBar() {
-  const { user: cachedUser, clearCache, refetch } = useUserData();
-  const user = cachedUser
-    ? {
-      id: cachedUser.id,
-      username: cachedUser.username || cachedUser.name || "",
-      avatar: cachedUser.profile_picture || "/placeholder.svg",
-    }
-    : null;
+export function NavBar({ userId }: { userId: string }) {
+  const { clearCache, refetch } = useUserData();
 
   const router = useRouter();
   const supabase = createClientComponentClient();
   const [isSearchOpen, setIsSearchOpen] = useState(false);
-  const [searchQuery, setSearchQuery] = useState("");
-  const [searchType, setSearchType] = useState("all");
-  const [suggestions, setSuggestions] = useState<User[]>([]);
-  const [loading, setLoading] = useState(false); //loading State
-
-  //Simulated Search (replace with actual API call)
-  const fetchSearchResults = async (query: string, type: string) => {
-    setLoading(true);
-    try {
-      // Simulate an API call with a delay
-      await new Promise((resolve) => setTimeout(resolve, 500));
-
-      //Example results (replace with real data from your backend)
-      const results: User[] = query.trim() === ""
-        ? [] // Return empty array if the query is empty
-        : [
-          {
-            id: "1",
-            username: `result1_for_${query}`,
-            avatar: "/placeholder.svg",
-          },
-          {
-            id: "2",
-            username: `result2_for_${query}`,
-            avatar: "/placeholder.svg",
-          },
-        ].filter((res) => type === "all" || res.username.includes(type)); // basic type filtering
-
-      setSuggestions(results);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    if (searchQuery.trim() !== "") {
-      fetchSearchResults(searchQuery, searchType);
-    } else {
-      setSuggestions([]); // Clear suggestions when query is empty
-    }
-  }, [searchQuery, searchType]);
-
-  const handleSearch = () => {
-    if (searchQuery.trim()) {
-      router.push(
-        `/search?q=${encodeURIComponent(searchQuery)}&type=${searchType}`,
-      );
-      setIsSearchOpen(false);
-      setSearchQuery("");
-      setSuggestions([]);
-    }
-  };
 
   useEffect(() => {
     const { data: authListener } = supabase.auth.onAuthStateChange(
@@ -235,7 +167,7 @@ export function NavBar() {
             </Button>
 
             {/* User (Popover for options) */}
-            {user
+            {userId
               ? (
                 <Popover>
                   <PopoverTrigger asChild>
@@ -306,7 +238,7 @@ export function NavBar() {
                   >
                     PREMIUM
                   </Link>
-                  {user
+                  {userId
                     ? (
                       <button
                         className="block py-2 text-sm font-semibold text-red-600 hover:text-red-300 transition-colors"
@@ -338,87 +270,16 @@ export function NavBar() {
           </div>
         </div>
       </div>
-      {/* Search Popup (Dialog) */}
-      <AnimatePresence>
-        {isSearchOpen && (
-          <Dialog open={isSearchOpen} onOpenChange={setIsSearchOpen}>
-            <DialogContent className="sm:max-w-[425px]">
-              <DialogHeader>
-                <DialogTitle>Search</DialogTitle>
-              </DialogHeader>
-              <div className="grid gap-4 py-4">
-                <div className="flex items-center space-x-2">
-                  <Input
-                    type="text"
-                    placeholder="Search..."
-                    value={searchQuery}
-                    onChange={(e) =>
-                      setSearchQuery(e.target.value)}
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter") {
-                        handleSearch();
-                      }
-                    }}
-                    aria-label="Search query"
-                  />
-                  <Select
-                    value={searchType}
-                    onValueChange={(value) => {
-                      setSearchType(value);
-                    }}
-                  >
-                    <SelectTrigger
-                      className="w-[180px]"
-                      aria-label="Search type"
-                    >
-                      <SelectValue placeholder="Search type" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">All</SelectItem>
-                      <SelectItem value="escort">Escort</SelectItem>
-                      <SelectItem value="bdsm">BDSM</SelectItem>
-                      <SelectItem value="couples">Couples</SelectItem>
-                    </SelectContent>
-                  </Select>
-                  <Button onClick={handleSearch} aria-label="Search">
-                    Search
-                  </Button>
-                </div>
-                <div className="space-y-2">
-                  {loading ? <LoadingSpinner /> : suggestions.length > 0
-                    ? (
-                      suggestions.map((user) => (
-                        <motion.div
-                          key={user.id}
-                          initial={{ opacity: 0, y: -10 }}
-                          animate={{ opacity: 1, y: 0 }}
-                          exit={{ opacity: 0, y: 10 }}
-                          className="flex items-center space-x-2 p-2 rounded-md hover:bg-gray-100 dark:hover:bg-gray-800 cursor-pointer"
-                          onClick={() => {
-                            setSearchQuery(user.username); // Set input to clicked username
-                            handleSearch(); // Perform the search
-                          }}
-                          role="button"
-                          aria-label={`Search result for ${user.username}`}
-                        >
-                          <Image
-                            src={user.avatar}
-                            alt={`${user.username}'s avatar`}
-                            width={32}
-                            height={32}
-                            className="rounded-full"
-                          />
-                          <span>{user.username}</span>
-                        </motion.div>
-                      ))
-                    )
-                    : <p>No results found.</p>}
-                </div>
-              </div>
-            </DialogContent>
-          </Dialog>
-        )}
-      </AnimatePresence>
+
+      {/* Conditionally render the SearchBar as a Dialog */}
+      <Dialog open={isSearchOpen} onOpenChange={setIsSearchOpen}>
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle>Search</DialogTitle>
+          </DialogHeader>
+          <SearchBar isOpen={isSearchOpen} setIsOpen={setIsSearchOpen} />
+        </DialogContent>
+      </Dialog>
     </nav>
   );
 }
@@ -436,3 +297,4 @@ const LoginBtn = ({ className }: { className?: string }) => {
     </Button>
   );
 };
+

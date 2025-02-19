@@ -120,8 +120,7 @@ export default function SignUpPage() {
       | "general"
       | "escort"
       | "bdsm"
-      | "couple"
-      | "content creator", // Added type
+      | "couple",
     age: "",
     agreeToTerms: false,
     gender: "" as "male" | "female" | "other",
@@ -433,7 +432,6 @@ export default function SignUpPage() {
                 <SelectItem value="escort">Escort</SelectItem>
                 <SelectItem value="bdsm">BDSM</SelectItem>
                 <SelectItem value="couple">Couple</SelectItem>
-                <SelectItem value="content creator">Content Creator</SelectItem>
               </SelectContent>
             </Select>
           </div>

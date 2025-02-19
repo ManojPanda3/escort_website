@@ -1,24 +1,24 @@
-"use client"
+"use client";
 
-import Image from "next/image"
-import { Badge } from "@/components/ui/badge"
-import { Card } from "@/components/ui/card"
-import { Calendar, MapPin, Shield, Star } from "lucide-react"
-import { RatingComponent } from "@/components/rating-component"
+import Image from "next/image";
+import { Badge } from "@/components/ui/badge";
+import { Card } from "@/components/ui/card";
+import { Calendar, MapPin, Shield, Star } from "lucide-react";
+import getRandomImage from "../lib/randomImage.ts";
+// import { RatingComponent } from "@/components/rating-component";
 
 interface EscortCardProps {
-  id: string
-  name: string
-  age: number
-  location: string
-  measurements: string
-  price: string
-  image: string
-  availability: string
-  isVerified?: boolean
-  isVip?: boolean
-  isOnline?: boolean
-  rating?: number
+  id: string;
+  name: string;
+  age: number;
+  location: string;
+  measurements: string;
+  price: string;
+  image: string;
+  availability: string;
+  isVerified?: boolean;
+  isVip?: boolean;
+  isOnline?: boolean;
 }
 
 export function EscortCard({
@@ -33,13 +33,12 @@ export function EscortCard({
   isVerified = false,
   isVip = false,
   isOnline = false,
-  rating,
 }: EscortCardProps) {
   return (
     <Card className="group relative overflow-hidden rounded-xl bg-black/40 backdrop-blur-sm transition-transform duration-300 hover:scale-[1.02]">
       <div className="aspect-[3/4] relative">
         <Image
-          src={image || "/placeholder.svg"}
+          src={image || getRandomImage()}
           alt={name}
           fill
           className="object-cover transition-all duration-500 group-hover:scale-105"
@@ -55,7 +54,9 @@ export function EscortCard({
 
         {/* Status Badges */}
         <div className="absolute right-3 top-3 flex flex-col gap-2">
-          {isOnline && <div className="h-3 w-3 rounded-full bg-green-500 ring-4 ring-green-500/20" />}
+          {isOnline && (
+            <div className="h-3 w-3 rounded-full bg-green-500 ring-4 ring-green-500/20" />
+          )}
           {isVerified && (
             <Badge className="bg-blue-500/90 hover:bg-blue-500">
               <Shield className="mr-1 h-3 w-3" />
@@ -86,10 +87,10 @@ export function EscortCard({
               <MapPin className="h-3 w-3" />
               {location}
             </div>
-            <RatingComponent escortId={id} initialRating={rating} />
+            {/* <RatingComponent escortId={id} initialRating={rating} /> */}
           </div>
         </div>
       </div>
     </Card>
-  )
+  );
 }

@@ -39,7 +39,6 @@ export function StoryGroup(
   const nextStory = () => {
     if (currentStoryIndex < stories.length - 1) {
       setCurrentStoryIndex(currentStoryIndex + 1);
-      console.log(currentStoryIndex);
     } else {
       closeViewer();
     }

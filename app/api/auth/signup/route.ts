@@ -8,7 +8,6 @@ export async function POST(request: NextRequest) {
     if (!supabaseAdmin) {
       throw new Error("Admin supabase not found");
     }
-    console.log("Incoming request body:", await request.clone().formData());
     const formData = await request.formData();
     const email = formData.get("email") as string;
     const username = formData.get("username") as string;
@@ -78,4 +77,3 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ message }, { status: 500 });
   }
 }
-
