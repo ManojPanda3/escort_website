@@ -1,56 +1,60 @@
 "use client";
-import { useEffect, useRef, useState } from "react";
-import { motion, useAnimation } from "framer-motion";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useTheme } from "next-themes";
 
+const FPS = 15;
+
 export const MouseGlow = () => {
-  const glowRef = useRef<HTMLDivElement>(null);
-  const controls = useAnimation();
   const { theme } = useTheme();
   const [mounted, setMounted] = useState(false);
+  const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
+  const throttleTimeout = useRef<number | null>(null); // Use useRef for timeout
 
-  // Set mounted to true after the component mounts to prevent hydration issues
+  const throttledSetMousePosition = useCallback(
+    (newPosition: { x: number; y: number }) => { // useCallback for throttled function
+      if (!throttleTimeout.current) {
+        setMousePosition(newPosition);
+        throttleTimeout.current = window.setTimeout(() => {
+          throttleTimeout.current = null;
+        }, 1e3 / FPS);
+      }
+    },
+    [],
+  );
+
+  const handleMouseMove = useCallback((e: MouseEvent) => {
+    throttledSetMousePosition({ x: e.clientX, y: e.clientY }); // Use throttled version
+  }, [throttledSetMousePosition]); // Dependency array includes throttledSetMousePosition
+
   useEffect(() => {
     setMounted(true);
-  }, []);
 
-  // Mouse move effect that will only work after the component has mounted
-  useEffect(() => {
-    if (!mounted) return; // Prevents mouse move effect logic until mounted
-
-    const handleMouseMove = (e: MouseEvent) => {
-      if (!glowRef.current) return;
-
-      const { clientX: x, clientY: y } = e;
-
-      controls.start({
-        x: x - 60, // Offset to center the glow
-        y: y - 60,
-        transition: { type: "spring", stiffness: 100, damping: 15 },
-      });
-    };
-
-    document.addEventListener("mousemove", handleMouseMove);
+    if (mounted) {
+      document.addEventListener("mousemove", handleMouseMove, {
+        passive: true,
+      }); // Add passive listener
+    }
 
     return () => {
       document.removeEventListener("mousemove", handleMouseMove);
     };
-  }, [mounted, controls]); // Runs after mounted state is true
+  }, [mounted, handleMouseMove]); // Dependency array includes handleMouseMove
 
-  // Avoid rendering the component on the server side (before mounting)
   if (!mounted) return null;
 
   return (
-    <motion.div
-      ref={glowRef}
-      animate={controls}
-      className={`fixed top-0 left-0 w-[120px] h-[120px] rounded-full pointer-events-none blur-2xl
-        ${
-        theme === "dark"
-          ? "bg-gradient-to-r from-pink-500 via-purple-500 to-indigo-500 opacity-40 mix-blend-lighten"
-          : "bg-gradient-to-r from-yellow-300 via-orange-500 to-red-500 opacity-20 mix-blend-multiply"
-      }`}
+    <div
+      style={{
+        position: "fixed",
+        top: 0,
+        left: 0,
+        width: "100vw",
+        height: "100vh",
+        pointerEvents: "none",
+        willChange: "transform",
+        background:
+          `radial-gradient(circle at ${mousePosition.x}px ${mousePosition.y}px, rgba(255, 215, 0, 0.15), transparent 50%)`,
+      }}
     />
   );
 };
-

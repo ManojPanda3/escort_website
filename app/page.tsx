@@ -1,20 +1,18 @@
 import { Hero } from "@/components/hero";
 import { FeaturedEscorts } from "@/components/featured-escorts";
-import { CategoryTabs } from "@/components/category-tabs";
-import { EscortCard } from "@/components/escort-card";
 import FaqAllNighters from "@/components/Faq02";
 import { AboutSection } from "@/components/about-section";
 import { MouseGlow } from "@/components/mouse-glow";
 import { createServerComponentClient } from "@supabase/auth-helpers-nextjs";
 import { cookies } from "next/headers";
-import Link from "next/link";
 import { Metadata } from "next";
 import { Suspense } from "react";
 import { ScrollToTop } from "@/components/scroll_to_top";
 import { RoyalBackground } from "@/components/royal-background";
 import { StoriesContainer } from "../components/sotry-container.tsx";
 import getRandomImage from "../lib/randomImage.ts";
-// Metadata for SEO
+import UsersCard from "../components/Users.tsx";
+
 export const metadata: Metadata = {
   title: "Find Your Perfect Companion | Premium Escort Directory",
   description:
@@ -133,37 +131,9 @@ export default async function Page() {
                 </div>
               </section>
             </Suspense>
-
-            <Suspense
-              fallback={<div className="animate-pulse h-16 bg-gray-200 mb-8" />}
-            >
-              <section aria-label="Categories" className="mb-8">
-                <CategoryTabs />
-              </section>
-            </Suspense>
-
-            <section aria-label="Escort Listings">
-              <div className="grid  gap-6 grid-cols-2  lg:grid-cols-3 xl:grid-cols-4">
-                {users.map((user) => (
-                  <Link
-                    key={user.id}
-                    href={`/profile/${user.id}`}
-                    prefetch={false}
-                  >
-                    <EscortCard
-                      name={user.name || user.username}
-                      age={user.age}
-                      location={user.location_name}
-                      measurements={user.dress_size}
-                      image={user.profile_picture}
-                      isVerified={user.is_verified}
-                      isVip={user.current_offer != null}
-                      availability={user.availability}
-                    />
-                  </Link>
-                ))}
-              </div>
-            </section>
+            <UsersCard
+              users={users}
+            />
           </div>
 
           <AboutSection />

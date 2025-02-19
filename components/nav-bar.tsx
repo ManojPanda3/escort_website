@@ -37,6 +37,7 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import locations from "@/public/location.json";
+import { LoadingSpinner } from "./ui/loading.tsx";
 
 interface User {
   id: string;
@@ -214,12 +215,12 @@ export function NavBar() {
             {/* Premium Button */}
             <Link
               href="/premium"
-              className="hidden sm:block text-sm font-semibold bg-gradient-to-r from-amber-400 to-amber-600 text-black px-4 py-2 rounded-full animate-pulse hover:animate-none transition-all duration-300 hover:from-amber-500 hover:to-amber-700"
+              className="hidden sm:block text-sm font-semibold bg-gradient-to-r from-amber-400 to-amber-600 text-black px-4 py-2 rounded-full transition-transform duration-200 hover:scale-105 hover:animate-none hover:from-amber-500 hover:to-amber-700"
               aria-label="Upgrade to premium"
+              style={{ transformOrigin: "center" }} // Ensure scaling from the center
             >
               PREMIUM
             </Link>
-
             <ThemeToggle />
 
             {/* Search Button (Opens Dialog) */}
@@ -384,7 +385,7 @@ export function NavBar() {
                   </Button>
                 </div>
                 <div className="space-y-2">
-                  {loading ? <p>Loading...</p> : suggestions.length > 0
+                  {loading ? <LoadingSpinner /> : suggestions.length > 0
                     ? (
                       suggestions.map((user) => (
                         <motion.div

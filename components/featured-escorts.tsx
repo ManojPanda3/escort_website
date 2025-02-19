@@ -22,12 +22,6 @@ const rankColors = {
   month: "from-amber-400 to-orange-500",
 };
 
-const rankEmojis = {
-  week: "🌟",
-  day: "🌞",
-  month: "👑",
-};
-
 function FeaturedEscort(
   { username, profile_picture, age, location_name, price, rank }:
     FeaturedEscortProps,
@@ -144,26 +138,6 @@ function FeaturedEscort(
 }
 
 export function FeaturedEscorts({ users }: { users: FeaturedEscortProps[] }) {
-  const [currentIndex, setCurrentIndex] = useState(0);
-
-  const nextEscort = () => {
-    setCurrentIndex((prevIndex) => (prevIndex + 1) % users.length);
-  };
-
-  const prevEscort = () => {
-    setCurrentIndex((prevIndex) =>
-      (prevIndex - 1 + users.length) % users.length
-    );
-  };
-
-  useEffect(() => {
-    const interval = setInterval(() => {
-      nextEscort();
-    }, 5000);
-
-    return () => clearInterval(interval);
-  }, [users.length]);
-
   return (
     <section className="container mx-auto px-4 py-12">
       <h2 className="text-4xl font-extrabold text-center mb-12 bg-gradient-to-r from-amber-200 to-yellow-400 bg-clip-text text-transparent font-playfair-display">

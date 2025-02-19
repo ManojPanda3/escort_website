@@ -47,23 +47,20 @@ export type Database = {
       bookmarks: {
         Row: {
           created_at: string
-          id: number
+          id: string
           owner: string | null
-          title: string | null
           to: string | null
         }
         Insert: {
           created_at?: string
-          id?: number
+          id?: string
           owner?: string | null
-          title?: string | null
           to?: string | null
         }
         Update: {
           created_at?: string
-          id?: number
+          id?: string
           owner?: string | null
-          title?: string | null
           to?: string | null
         }
         Relationships: [
@@ -350,7 +347,8 @@ export type Database = {
           offer_id: string | null
           owner: string | null
           price: string | null
-          status: boolean | null
+          session_id: string | null
+          status: Database["public"]["Enums"]["payment status"] | null
           stripe_price_id: string | null
           username: string | null
         }
@@ -360,7 +358,8 @@ export type Database = {
           offer_id?: string | null
           owner?: string | null
           price?: string | null
-          status?: boolean | null
+          session_id?: string | null
+          status?: Database["public"]["Enums"]["payment status"] | null
           stripe_price_id?: string | null
           username?: string | null
         }
@@ -370,7 +369,8 @@ export type Database = {
           offer_id?: string | null
           owner?: string | null
           price?: string | null
-          status?: boolean | null
+          session_id?: string | null
+          status?: Database["public"]["Enums"]["payment status"] | null
           stripe_price_id?: string | null
           username?: string | null
         }
@@ -391,6 +391,7 @@ export type Database = {
           availability: string | null
           body_type: string | null
           bookmark: string[] | null
+          categories: Database["public"]["Enums"]["escort_category"][] | null
           cover_image: string | null
           created_at: string | null
           current_offer: string | null
@@ -404,6 +405,7 @@ export type Database = {
           interested_services:
             | Database["public"]["Enums"]["service_type"][]
             | null
+          is_available: boolean | null
           is_traveling: boolean | null
           is_verified: boolean | null
           location: string | null
@@ -425,6 +427,7 @@ export type Database = {
           availability?: string | null
           body_type?: string | null
           bookmark?: string[] | null
+          categories?: Database["public"]["Enums"]["escort_category"][] | null
           cover_image?: string | null
           created_at?: string | null
           current_offer?: string | null
@@ -438,6 +441,7 @@ export type Database = {
           interested_services?:
             | Database["public"]["Enums"]["service_type"][]
             | null
+          is_available?: boolean | null
           is_traveling?: boolean | null
           is_verified?: boolean | null
           location?: string | null
@@ -459,6 +463,7 @@ export type Database = {
           availability?: string | null
           body_type?: string | null
           bookmark?: string[] | null
+          categories?: Database["public"]["Enums"]["escort_category"][] | null
           cover_image?: string | null
           created_at?: string | null
           current_offer?: string | null
@@ -472,6 +477,7 @@ export type Database = {
           interested_services?:
             | Database["public"]["Enums"]["service_type"][]
             | null
+          is_available?: boolean | null
           is_traveling?: boolean | null
           is_verified?: boolean | null
           location?: string | null
@@ -544,6 +550,7 @@ export type Database = {
         | "Fly Me To You"
         | "Doubles Profiles"
       gender_type: "male" | "female" | "trans" | "binary"
+      "payment status": "pending" | "failed" | "success"
       service_type:
         | "Affectionate cuddling"
         | "Affectionate kissing"

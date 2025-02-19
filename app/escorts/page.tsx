@@ -12,6 +12,10 @@ import { FaqAllNighters } from "@/components/Faq02";
 import { AboutSection } from "@/components/about-section";
 import { StoriesContainer } from "@/components/sotry-container";
 import getRandomImage from "@/lib/randomImage";
+import Escorts from "../../components/Escorts.tsx";
+import { Database } from "@/lib/database.types";
+
+type Escort = Database["public"]["Tables"]["users"]["Row"];
 // Function to fetch stories
 async function fetchStories(supabase, userIds: string[]) {
   const { data, error } = await supabase
@@ -49,14 +53,22 @@ export default async function EscortsPage(
     query = query.eq("gender", gender);
   }
 
-  const { data: escorts, error } = await query;
+  const { data: escorts, error }: {
+    data: Escort[];
+    error: unknown;
+  } = await query;
 
   if (error) {
     console.error("Error fetching escorts:", error);
     return <div>Error loading escorts. Please try again later.</div>;
   }
 
-  const stories = await fetchStories(supabase, escorts.map(({ id }) => { return id }));
+  const stories = await fetchStories(
+    supabase,
+    escorts.map(({ id }) => {
+      return id;
+    }),
+  );
 
   return (
     <div className="relative min-h-screen bg-gradient-to-b from-background via-background/80 to-background dark:from-black dark:via-gray-900 dark:to-black">
@@ -66,7 +78,9 @@ export default async function EscortsPage(
       <div className="relative z-10">
         <main>
           {/* Hero Section */}
-          <Suspense fallback={<div className="animate-pulse h-96 bg-gray-200" />}>
+          <Suspense
+            fallback={<div className="animate-pulse h-96 bg-gray-200" />}
+          >
             <HeroCard
               label={`Escorts ${location ? "in " + location : ""}`}
               initial_location={location || ""}
@@ -94,6 +108,9 @@ export default async function EscortsPage(
               }))}
             />
           </section>
+          <Escorts
+            escorts={escorts}
+          />
 
           {/* Categories Section */}
           <section className="container mx-auto px-4 py-8">
@@ -128,7 +145,6 @@ export default async function EscortsPage(
             </div>
           </section>
 
-
           {/* FAQ Section */}
           <section className="container mx-auto px-4 py-8">
             <h2 className="text-3xl font-bold text-center mb-6 bg-gradient-to-r from-amber-200 to-yellow-400 bg-clip-text text-transparent">
@@ -148,3 +164,4 @@ export default async function EscortsPage(
     </div>
   );
 }
+
