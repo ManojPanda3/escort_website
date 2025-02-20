@@ -118,7 +118,7 @@ export default async function Page() {
                     : (
                       <div className="relative w-full h-56">
                         <img
-                          src={getRandomImage()}
+                          src={"/placeholder.svg"}
                           alt="No stories available"
                           loading="lazy"
                           className="w-full h-full object-cover rounded-lg"

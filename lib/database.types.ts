@@ -133,7 +133,7 @@ export type Database = {
       }
       offers: {
         Row: {
-          billing_cycle: string | null
+          billing_cycle: Database["public"]["Enums"]["payment_type"] | null
           created_at: string | null
           features: string[]
           id: string
@@ -145,7 +145,7 @@ export type Database = {
           type: string
         }
         Insert: {
-          billing_cycle?: string | null
+          billing_cycle?: Database["public"]["Enums"]["payment_type"] | null
           created_at?: string | null
           features?: string[]
           id?: string
@@ -157,7 +157,7 @@ export type Database = {
           type: string
         }
         Update: {
-          billing_cycle?: string | null
+          billing_cycle?: Database["public"]["Enums"]["payment_type"] | null
           created_at?: string | null
           features?: string[]
           id?: string
@@ -343,6 +343,7 @@ export type Database = {
       transactions: {
         Row: {
           created_at: string | null
+          expired_at: string | null
           id: string
           offer_id: string | null
           owner: string | null
@@ -354,6 +355,7 @@ export type Database = {
         }
         Insert: {
           created_at?: string | null
+          expired_at?: string | null
           id?: string
           offer_id?: string | null
           owner?: string | null
@@ -365,6 +367,7 @@ export type Database = {
         }
         Update: {
           created_at?: string | null
+          expired_at?: string | null
           id?: string
           offer_id?: string | null
           owner?: string | null
@@ -408,6 +411,7 @@ export type Database = {
           is_available: boolean | null
           is_traveling: boolean | null
           is_verified: boolean | null
+          is_vip: boolean | null
           location: string | null
           location_name: string | null
           name: string | null
@@ -444,6 +448,7 @@ export type Database = {
           is_available?: boolean | null
           is_traveling?: boolean | null
           is_verified?: boolean | null
+          is_vip?: boolean | null
           location?: string | null
           location_name?: string | null
           name?: string | null
@@ -480,6 +485,7 @@ export type Database = {
           is_available?: boolean | null
           is_traveling?: boolean | null
           is_verified?: boolean | null
+          is_vip?: boolean | null
           location?: string | null
           location_name?: string | null
           name?: string | null
@@ -551,6 +557,7 @@ export type Database = {
         | "Doubles Profiles"
       gender_type: "male" | "female" | "trans" | "binary"
       "payment status": "pending" | "failed" | "success"
+      payment_type: "weekly" | "yearly" | "monthly"
       service_type:
         | "Affectionate cuddling"
         | "Affectionate kissing"

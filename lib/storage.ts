@@ -78,23 +78,17 @@ export async function deleteFromStorage(fileUrl: string, userId: string) {
       headers: {
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({ fileName, userId }),
+      body: JSON.stringify({ fileName, userId }), //Keep sending userId, even if unused in API, for consistency
     });
 
     if (!res.ok) {
-      throw new Error("Failed to delete file");
+      const errorData = await res.json(); // Get error details, if any.
+      throw new Error(
+        `Failed to delete file: ${errorData.error || "Unknown error"}`,
+      );
     }
 
-    const { url } = await res.json();
-
-    const deleteRes = await fetch(url, {
-      method: "DELETE",
-    });
-
-    if (!deleteRes.ok) {
-      throw new Error("Failed to execute delete");
-    }
-
+    // The API call itself performs the deletion; no need for a second fetch.
     return {
       success: true,
     };
@@ -105,4 +99,3 @@ export async function deleteFromStorage(fileUrl: string, userId: string) {
     };
   }
 }
-

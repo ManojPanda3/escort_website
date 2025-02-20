@@ -18,6 +18,7 @@ import {
   Phone,
   Ruler,
   Star,
+  User2, // New icon for "About" section
 } from "lucide-react";
 import getRandomImage from "@/lib/randomImage";
 import { Database } from "@/lib/database.types";
@@ -80,6 +81,7 @@ export function ProfileHeader({ profile, bookmarks }: ProfileHeaderProps) {
                       </Badge>
                     )}
                   </h1>
+                  {/* Short About (Truncated) - Moved here below the name */}
                   <p
                     className="text-muted-foreground truncate"
                     title={profile?.about || ""}
@@ -94,8 +96,10 @@ export function ProfileHeader({ profile, bookmarks }: ProfileHeaderProps) {
                     size="sm"
                     onClick={() => setOpen(true)}
                   >
-                    <Bookmark className="h-4 w-4 mr-2" />
-                    View Bookmarks
+                    <Bookmark className="h-4 w-4" />
+                    <p className="ml-2 hidden absolute -top-10 md:block md:static">
+                      View Bookmarks
+                    </p>
                   </Button>
                   <Link href="/profile/edit">
                     <Button variant="outline" size="sm">
@@ -209,6 +213,19 @@ export function ProfileHeader({ profile, bookmarks }: ProfileHeaderProps) {
                   </div>
                 )}
               </div>
+
+              {/* About Section (Full) */}
+              {profile?.about && (
+                <div className="mt-6">
+                  <div className="flex items-center text-muted-foreground">
+                    <User2 className="h-4 w-4 mr-1" />
+                    About
+                  </div>
+                  <p className="text-sm whitespace-pre-line">
+                    {profile.about}
+                  </p>
+                </div>
+              )}
             </div>
           </div>
         </div>
@@ -217,4 +234,3 @@ export function ProfileHeader({ profile, bookmarks }: ProfileHeaderProps) {
     </>
   );
 }
-

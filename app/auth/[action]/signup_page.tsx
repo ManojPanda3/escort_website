@@ -229,42 +229,44 @@ export default function SignUpPage() {
     setFormData((prev) => ({ ...prev, [name]: checked }));
   };
 
+
   const handleAuth = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
     setError("");
+    let userIdForCleanup: string | null = null;
 
     if (!formData.agreeToTerms) {
       setError("You must agree to the terms and conditions");
       setIsLoading(false);
       return;
     }
-
-    const { data: userData, error: userError } = await supabase
-      .from("users")
-      .select("*")
-      .or(`email.eq.${formData.email},username.eq.${formData.username}`);
-
-    if (userData?.length) {
-      setError(
-        userData[0].email === formData.email
-          ? "Email already exists"
-          : "Username already exists",
-      );
-      setIsLoading(false);
-      return;
-    }
-
-    const { email, password, username, userType, age, gender } = formData;
-
     try {
+      const { data: userData, error: userError } = await supabase
+        .from("users")
+        .select("*")
+        .or(`email.eq.${formData.email},username.eq.${formData.username}`);
+
+      if (userData?.length) {
+        setError(
+          userData[0].email === formData.email
+            ? "Email already exists"
+            : "Username already exists",
+        );
+        setIsLoading(false);
+        return;
+      }
+
+      const { email, password, username, userType, age, gender } = formData;
+
+
       const { data: authData, error: signUpError } = await supabase.auth
         .signUp({
           email,
           password,
           options: {
             data: { username, type: userType },
-            redirectTo: `${window.location.origin}/api/auth/verify`, // Redirect to verification route
+            redirectTo: `${window.location.origin}/api/auth/verify`,
           },
         });
 
@@ -280,6 +282,8 @@ export default function SignUpPage() {
         setIsLoading(false);
         return;
       }
+
+      userIdForCleanup = userId;
 
       const profileFormData = new FormData();
       Object.entries(formData).forEach(([key, value]) => {
@@ -298,12 +302,15 @@ export default function SignUpPage() {
         body: profileFormData,
       });
 
-      if (!profileResponse.ok) {
-        const errorData = await profileResponse.json();
-        setError(errorData.message || "Failed to create user profile");
+      const profileData = await profileResponse.json(); // Get JSON data *before* checking status
+
+      if (profileResponse.status !== 200 || !profileData.success) { // Use status code and .success
+        setError(profileData.message || "Failed to create user profile");
         setIsLoading(false);
         return;
       }
+
+
 
       if (userType !== "general" && ageProofFile1 && ageProofFile2) {
         const [upload1, upload2] = await Promise.all([
@@ -315,7 +322,7 @@ export default function SignUpPage() {
           throw new Error(upload1.error || upload2.error);
         }
 
-        await fetch("/api/ageProofUpload", {
+        const ageProofResponse = await fetch("/api/ageProofUpload", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
@@ -325,9 +332,16 @@ export default function SignUpPage() {
             userId,
           }),
         });
+         const ageProofData = await ageProofResponse.json();
+
+        if (ageProofResponse.status !== 200 || !ageProofData.success) {
+            setError(ageProofData.message || "Failed to upload age proof");
+            setIsLoading(false);
+            return;
+        }
       }
 
-      setIsConfirmationOpen(true); // Show confirmation dialog
+      setIsConfirmationOpen(true);
     } catch (err: any) {
       setError(err.message);
     } finally {

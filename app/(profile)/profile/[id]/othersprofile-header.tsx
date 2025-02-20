@@ -22,6 +22,7 @@ import { Button } from "@/components/ui/button";
 import { useCallback, useEffect, useState } from "react";
 import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
 import { Database } from "@/lib/database.types";
+import { Loader2 } from "lucide-react";
 
 interface ProfileHeaderProps {
   profile: any;
@@ -86,6 +87,12 @@ export function ProfileHeader({ profile }: ProfileHeaderProps) {
       setIsLoadingBookmark(false);
     }
   };
+  // Early return if current user or profile is not defined
+  if (!currentUser || !profile) {
+    return null; // Or a loading state, or a placeholder
+  }
+  // Check if the *current* user is a "general" user.
+  const isCurrentUserGeneral = currentUser.user_type === "general";
 
   return (
     <Card className="relative overflow-hidden bg-black/40 backdrop-blur-sm mb-8">
@@ -144,29 +151,15 @@ export function ProfileHeader({ profile }: ProfileHeaderProps) {
                 </div>
 
                 {/* Bookmark Button */}
-                {currentUser && currentUser.id !== profile.id && (
+                {!isCurrentUserGeneral && currentUser.id !== profile.id && (
                   <Button
                     onClick={handleBookmark}
                     disabled={isLoadingBookmark}
                     variant={isBookmarked ? "default" : "secondary"}
                   >
                     {isLoadingBookmark
-                      ? (
-                        "Loading..."
-                      )
-                      : isBookmarked
-                      ? (
-                        <>
-                          <Bookmark className="h-4 w-4 mr-2" />
-                          Bookmarked
-                        </>
-                      )
-                      : (
-                        <>
-                          <Bookmark className="h-4 w-4 mr-2" />
-                          Bookmark
-                        </>
-                      )}
+                      ? <Loader2 className="h-4 w-4 animate-spin" />
+                      : <BookMark isBookmarked={isBookmarked} />}
                   </Button>
                 )}
               </div>
@@ -273,3 +266,11 @@ export function ProfileHeader({ profile }: ProfileHeaderProps) {
     </Card>
   );
 }
+const BookMark = ({ isBookmarked }) => (
+  <>
+    <Bookmark className="h-4 w-4" />
+    <p className="ml-2 hidden absolute -top-10 md:block md:static">
+      {isBookmarked ? "Bookmarked" : "Bookmark"}
+    </p>
+  </>
+);

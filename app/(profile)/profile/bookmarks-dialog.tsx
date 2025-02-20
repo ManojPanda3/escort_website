@@ -75,38 +75,42 @@ export function BookmarksDialog(
         {isLoading
           ? <p>Loading...</p>
           : bookmarkedUsers.length === 0
-          ? <p>You haven't bookmarked anyone yet.</p>
-          : (
-            <div className="space-y-4">
-              {bookmarkedUsers.map((user) => (
-                <div
-                  key={user.id}
-                  className="flex items-center justify-between border-b pb-4"
-                >
-                  <Link
-                    href={`/profile/${user.id}`}
-                    className="flex items-center gap-4"
-                    onClick={() => setOpen(false)}
+            ? <p>You haven't bookmarked anyone yet.</p>
+            : (
+              <div className="space-y-4">
+                {bookmarkedUsers.map((user) => (
+                  <div
+                    key={user.id}
+                    className="flex items-center justify-between border-b pb-4"
                   >
-                    <div className="relative h-10 w-10">
-                      <Image
-                        src={user.profile_picture || "/placeholder-image.jpg"} // Provide a placeholder
-                        alt={user.name || "User"}
-                        fill
-                        className="object-cover rounded-full"
-                      />
-                    </div>
-                    <span className="font-medium">
-                      {user.name || user.username || "User"}
-                    </span>
-                  </Link>
-                  {/* Add more user details here as needed */}
-                </div>
-              ))}
-            </div>
-          )}
+                    <Link
+                      href={`/profile/${user.id}`}
+                      className="flex items-center gap-4"
+                      onClick={() => setOpen(false)}
+                    >
+                      <div className="relative h-10 w-10">
+                        <Image
+                          src={user.profile_picture || "/placeholder-image.jpg"} // Provide a placeholder
+                          alt={user.name || "User"}
+                          fill
+                          className="object-cover rounded-full"
+                        />
+                      </div>
+                      <span className="font-medium">
+                        {user.name || user.username || "User"}
+                      </span>
+                    </Link>
+                    {/* Add more user details here as needed */}
+                  </div>
+                ))}
+              </div>
+            )}
         <DialogClose asChild>
-          <Button type="button" variant={"secondary"}>Close</Button>
+          {/* Responsive Button: Icon only on small screens, text + icon on larger screens */}
+          <Button type="button" variant={"secondary"}>
+            <Bookmark className="h-4 w-4 sm:mr-2" /> {/* Icon always visible */}
+            <span className="hidden sm:inline">Close</span> {/* Text hidden on small, visible on medium+ */}
+          </Button>
         </DialogClose>
       </DialogContent>
     </Dialog>

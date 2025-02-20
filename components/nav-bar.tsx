@@ -29,6 +29,8 @@ import locations from "@/public/location.json";
 import { useUserData } from "@/lib/useUserData";
 import { SearchBar } from "./search-bar"; // Import the new component
 import { Search } from "lucide-react";
+import { Loader2 } from "lucide-react"; // Import the loader icon
+
 
 interface User {
   id: string;
@@ -38,14 +40,21 @@ interface User {
 
 export function NavBar({ userId }: { userId: string }) {
   const { clearCache, refetch } = useUserData();
+  const [isUserExist, setIsUserExist] = useState(!!userId); // Initialize based on initial userId
+  const [isLoggingOut, setIsLoggingOut] = useState(false); // New state for loading
 
   const router = useRouter();
   const supabase = createClientComponentClient();
   const [isSearchOpen, setIsSearchOpen] = useState(false);
 
   useEffect(() => {
+    // Initial check (in case userId changes before onAuthStateChange fires)
+    setIsUserExist(!!userId);
+
     const { data: authListener } = supabase.auth.onAuthStateChange(
       (event, session) => {
+        // Update isUserExist based on the session
+        setIsUserExist(!!session?.user);
         if (session?.user) {
           refetch();
         }
@@ -54,15 +63,25 @@ export function NavBar({ userId }: { userId: string }) {
     return () => {
       authListener.subscription.unsubscribe();
     };
-  }, [supabase]);
+  }, [supabase, userId, refetch]); // Include refetch in dependency array
 
   const handleLogout = async () => {
-    await supabase.auth.signOut();
-    clearCache();
-    router.push("/");
+    setIsLoggingOut(true); // Set loading state to true
+    try {
+      await supabase.auth.signOut();
+      clearCache();
+      setIsUserExist(false); // Update isUserExist on logout
+      router.push("/");
+    } catch (error) {
+      console.error("Error during logout:", error);
+      // Optionally show an error message to the user.
+    } finally {
+      setIsLoggingOut(false); // Reset loading state
+    }
   };
 
-  const cities = locations ||
+  const cities =
+    locations ||
     [
       "AUSTRALIA",
       "SYDNEY",
@@ -167,42 +186,43 @@ export function NavBar({ userId }: { userId: string }) {
             </Button>
 
             {/* User (Popover for options) */}
-            {userId
-              ? (
-                <Popover>
-                  <PopoverTrigger asChild>
+            {isUserExist ? (
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button variant="ghost" size="icon" aria-label="User options">
+                    <User className="h-5 w-5" />
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0">
+                  <div className="flex flex-col">
                     <Button
                       variant="ghost"
-                      size="icon"
-                      aria-label="User options"
+                      className="justify-start"
+                      onClick={() => router.push("/profile")}
+                      aria-label="Go to profile"
                     >
-                      <User className="h-5 w-5" />
+                      Profile
                     </Button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-auto p-0">
-                    <div className="flex flex-col">
-                      <Button
-                        variant="ghost"
-                        className="justify-start"
-                        onClick={() => router.push("/profile")}
-                        aria-label="Go to profile"
-                      >
-                        Profile
-                      </Button>
-                      <Button
-                        variant="ghost" // Use destructive variant for red color
-                        className="justify-start group"
-                        onClick={handleLogout}
-                        aria-label="Log out"
-                      >
+                    <Button
+                      variant="ghost" // Use destructive variant for red color
+                      className="justify-start group"
+                      onClick={handleLogout}
+                      aria-label="Log out"
+                      disabled={isLoggingOut} // Disable the button while logging out
+                    >
+                      {isLoggingOut ? (
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      ) : (
                         <LogOut className="mr-2 h-4 w-4 text-red-500 group-hover:text-red-600" />
-                        Log Out
-                      </Button>
-                    </div>
-                  </PopoverContent>
-                </Popover>
-              )
-              : <LoginBtn />}
+                      )}
+                      Log Out
+                    </Button>
+                  </div>
+                </PopoverContent>
+              </Popover>
+            ) : (
+              <LoginBtn />
+            )}
 
             {/* Mobile Menu */}
             <Sheet>
@@ -238,16 +258,22 @@ export function NavBar({ userId }: { userId: string }) {
                   >
                     PREMIUM
                   </Link>
-                  {userId
-                    ? (
-                      <button
+                  {isUserExist ? (
+                     <button
                         className="block py-2 text-sm font-semibold text-red-600 hover:text-red-300 transition-colors"
                         onClick={handleLogout}
+                        disabled={isLoggingOut}
                       >
-                        <LogOut />
+                        {isLoggingOut ? (
+                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        ) : (
+                          <LogOut className="mr-2 h-4 w-4" />
+                        )}
+                        Log Out
                       </button>
-                    )
-                    : <LoginBtn className="rounded-sm" />}
+                    ) : (
+                    <LoginBtn className="rounded-sm" />
+                  )}
 
                   <div className="pt-4 border-t">
                     <p className="text-sm font-medium mb-2">Popular Cities</p>
@@ -288,8 +314,10 @@ const LoginBtn = ({ className }: { className?: string }) => {
   const router = useRouter();
   return (
     <Button
-      className={"bg-primary hover:bg-primary/80 font-bold py-2 px-4 rounded-full transition duration-300 text-black " +
-        className}
+      className={
+        "bg-primary hover:bg-primary/80 font-bold py-2 px-4 rounded-full transition duration-300 text-black " +
+        className
+      }
       onClick={() => router?.push("/auth/login")}
     >
       <User className="h-5 w-5 mr-2" />
@@ -297,4 +325,3 @@ const LoginBtn = ({ className }: { className?: string }) => {
     </Button>
   );
 };
-

@@ -1,7 +1,7 @@
 // app/api/auth/signup/route.ts
 import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase";
-import type { Database } from "@/types/supabase"; // Import the Database type
+import type { Database } from "@/types/supabase";
 
 export async function POST(request: NextRequest) {
   try {
@@ -19,26 +19,32 @@ export async function POST(request: NextRequest) {
 
     if (userType !== "general" && (!age || parseInt(age) < 18)) {
       return NextResponse.json(
-        { message: "Must be 18 or older to register." },
+        { message: "Must be 18 or older to register.", success: false }, // Added success: false
         { status: 400 },
       );
     }
     if (!userId || userId.trim() === "") {
       console.error("Missing userId from form data");
-      return NextResponse.json({ message: "Missing user ID." }, {
-        status: 400,
-      });
+      return NextResponse.json(
+        { message: "Missing user ID.", success: false },
+        { // Added success: false
+          status: 400,
+        },
+      );
     }
     const uuidRegex =
       /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
     if (!uuidRegex.test(userId)) {
       console.error("Invalid userId format:", userId);
-      return NextResponse.json({ message: "Invalid user ID format." }, {
+      return NextResponse.json({
+        message: "Invalid user ID format.",
+        success: false,
+      }, { // Added success: false
         status: 400,
       });
     }
 
-    const userDataToInsert: Database["public"]["Tables"]["users"]["Insert"] = { // Use TablesInsert
+    const userDataToInsert: Database["public"]["Tables"]["users"]["Insert"] = {
       id: userId,
       username,
       email,
@@ -62,7 +68,10 @@ export async function POST(request: NextRequest) {
 
     if (userInsertError) {
       console.error("Supabase user insert error:", userInsertError);
-      return NextResponse.json({ message: userInsertError.message }, {
+      return NextResponse.json({
+        message: userInsertError.message,
+        success: false,
+      }, { // Added success: false
         status: 400,
       });
     }
@@ -70,10 +79,12 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({
       message: "Signup successful! Please check your email for verification.",
       userId: insertedUser.id,
-    });
+      success: true, // Added success: true
+    }, { status: 200 }); // Added status: 200 for success
   } catch (error: any) {
     console.error("Signup API error:", error);
     const message = error?.message || "Internal Server Error";
-    return NextResponse.json({ message }, { status: 500 });
+    return NextResponse.json({ message, success: false }, { status: 500 }); // Added success: false
   }
 }
+

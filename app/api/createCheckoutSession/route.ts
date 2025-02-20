@@ -79,6 +79,16 @@ export async function POST(req: NextRequest) {
         status: 500,
       });
     }
+    let expired_at: Date | undefined;
+    const now = new Date();
+    if (offer_details.billing_cycle === "monthly") {
+      expired_at = new Date(now.setMonth(now.getMonth() + 1));
+    } else if (offer_details.billing_cycle === "yearly") {
+      expired_at = new Date(now.setFullYear(now.getFullYear() + 1));
+    } else { // Assuming weekly is the default if neither monthly nor yearly
+      expired_at = new Date(now.setDate(now.getDate() + 7));
+    }
+
     const { user: transaction_user, error: transaction_error } =
       await supabaseAdmin.from("transactions")
         .insert([{
@@ -89,6 +99,7 @@ export async function POST(req: NextRequest) {
           status: "pending",
           stripe_price_id: priceId,
           session_id: session.id,
+          expired_at,
         }]);
     if (transaction_error) {
       return NextResponse.json({

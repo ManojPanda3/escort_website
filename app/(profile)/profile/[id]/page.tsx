@@ -1,20 +1,36 @@
 import { createServerComponentClient } from "@supabase/auth-helpers-nextjs";
 import { cookies } from "next/headers";
-import { redirect } from "next/navigation";
+import { notFound, redirect } from "next/navigation"; // Import notFound
 import { ProfileHeader } from "./othersprofile-header";
 import { ProfileTabs } from "./othersprofile-tabs";
+import { StoriesContainer } from "@/components/sotry-container";
 
+async function fetchStories(supabase, userId: string) {
+  const { data, error } = await supabase
+    .from("story")
+    .select("id, isvideo, owner, title, url, thumbnail, likes")
+    .eq("owner", userId);
+
+  if (error) {
+    console.error("Error fetching stories:", error);
+    throw error;
+  }
+
+  return data;
+}
 // Create cached version of data fetching
+//
 const getProfileData = async (supabase: any, id: string) => {
   const [
     { data: profile, error: profileError },
     { data: pictures, error: picturesError },
     { data: rates, error: ratesError },
     { data: testimonials, error: testimonialsError },
+    { data: stories, error: storiesError },
   ] = await Promise.all([
     supabase
       .from("users")
-      .select("*")
+      .select("*") // Select all columns, including user_type
       .eq("id", id)
       .single(),
     supabase
@@ -36,12 +52,14 @@ const getProfileData = async (supabase: any, id: string) => {
         )
         `)
       .eq("to", id),
+    fetchStories(supabase, id),
   ]);
   const errors = [
     profileError,
     picturesError,
     ratesError,
     testimonialsError,
+    storiesError,
   ];
   if (errors.some((error) => error !== null)) {
     const errorMessage = errors.map((error) => {
@@ -51,13 +69,18 @@ const getProfileData = async (supabase: any, id: string) => {
     }).join(", ");
     console.error("Failed to fetch profile data\nerrors are:\t" + errorMessage);
   }
-  if (profile == null) return;
+  if (profile == null) {
+    // Important: If no profile is found, use notFound()
+    notFound();
+    return; // TS needs this
+  }
 
   return {
     profile,
     pictures: pictures || [],
     rates: rates || [],
     testimonials: testimonials || [],
+    stories: stories || [],
   };
 };
 
@@ -69,43 +92,67 @@ export default async function UserProfilePage(
   const params = await props.params;
   const id = params.id;
   const supabase = createServerComponentClient({ cookies });
-  const user = await (async () => {
-    try {
-      const { data: { user }, error } = await supabase.auth.getUser();
-      if (error) throw Error(JSON.stringify(error));
-      const { data: currentUser, error: currentUserError } = await supabase
-        .from("users").select("id,profile_picture,username").eq("id", user.id)
-        .single();
-      if (currentUserError) throw Error(JSON.stringify(currentUserError));
-    } catch (error) {
-      console.error(error);
-      return null;
-    }
-  })();
+  const { data: { user: authUser }, error: authError } = await supabase.auth
+    .getUser();
+
+  if (authError) {
+    console.error("Authentication error:", authError);
+    redirect("/auth/login"); // Redirect to login if not authenticated
+    return null; // TypeScript needs this
+  }
+
+  const currentUser = authUser
+    ? (await supabase.from("users").select("id,profile_picture,username").eq(
+      "id",
+      authUser.id,
+    ).single()).data
+    : null;
 
   const userData = await getProfileData(supabase, id);
-  if (userData == null) {
-    return (
-      <div className="min-h-screen bg-gradient-to-b from-black via-gray-900 to-black text-center">
-        <div className="container mx-auto px-4 py-8">
-          <h1 className="text-3xl font-bold mb-6 text-white">
-            Search Results for userid "{id}"
-          </h1>
-        </div>
-      </div>
-    );
-  }
+
+  // Check if user is "general" *after* fetching the data
+  const isGeneralUser = userData.profile.user_type === "general";
+  const stories = userData.stories;
 
   return (
     <main className="container mx-auto px-4 py-8">
       <ProfileHeader profile={userData.profile} />
-      <ProfileTabs
-        pictures={userData.pictures}
-        rates={userData.rates}
-        testimonials={userData.testimonials}
-        user={userData.profile}
-        currentUser={user}
-      />
+      <section
+        aria-label="User Stories"
+        className="mb-8 overflow-x-auto"
+      >
+        <div className="flex gap-4 pb-2">
+          {stories.length > 0
+            ? (
+              <StoriesContainer
+                users={userData.profile.map((user) => ({ ...user, stories }))}
+                currentUserId={currentUser?.id}
+              />
+            )
+            : (
+              <div className="relative w-full h-56">
+                <img
+                  src={"/placeholder.svg"}
+                  alt="No stories available"
+                  loading="lazy"
+                  className="w-full h-full object-cover rounded-lg"
+                />
+                <div className="absolute top-0 left-0 w-full h-full flex items-center justify-center text-white text-3xl font-bold bg-black/50">
+                  All-Nighter
+                </div>
+              </div>
+            )}
+        </div>
+      </section>
+      {!isGeneralUser && (
+        <ProfileTabs
+          pictures={userData.pictures}
+          rates={userData.rates}
+          testimonials={userData.testimonials}
+          user={userData.profile}
+          currentUser={currentUser}
+        />
+      )}
     </main>
   );
 }

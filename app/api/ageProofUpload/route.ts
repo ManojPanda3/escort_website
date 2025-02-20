@@ -57,7 +57,7 @@ export async function POST(request: NextRequest) {
     if (error) throw error
 
     return NextResponse.json(
-      { message: 'Age proof uploaded successfully' },
+      { message: 'Age proof uploaded successfully',success:true,status:200 },
       { status: 200 }
     )
 

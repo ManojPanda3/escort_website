@@ -108,7 +108,7 @@ export default async function EscortsPage(
               }))}
             />
           </section>
-          <Escorts
+          <Users
             escorts={escorts}
           />
 
