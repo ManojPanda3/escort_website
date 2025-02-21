@@ -45,8 +45,7 @@ export default async function EscortsPage(
     location.trim() !== "" &&
     location.toLocaleLowerCase() !== "all locations"
   ) {
-    query = query.or(
-      `service_provided.contains(.${JSON.stringify([location])}),location.eq(.${location})`);
+    query = query.eq("location_name", location);
   }
   if (
     gender && gender.trim() !== "" && gender.toLocaleLowerCase() !== "viewall"

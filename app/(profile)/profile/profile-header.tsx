@@ -81,13 +81,14 @@ export function ProfileHeader({ profile, bookmarks }: ProfileHeaderProps) {
                       </Badge>
                     )}
                   </h1>
-                  {/* Short About (Truncated) - Moved here below the name */}
-                  <p
-                    className="text-muted-foreground truncate"
-                    title={profile?.about || ""}
-                  >
-                    {profile?.about}
-                  </p>
+                  {profile?.about &&
+                    <p
+                      className="text-muted-foreground truncate"
+                      title={profile?.about || ""}
+                    >
+                      {profile?.about}
+                    </p>
+                  }
                 </div>
 
                 <div className="flex gap-2">
