@@ -27,11 +27,14 @@ export default async function PaymentSuccessPage({
 }) {
   const supabase = createServerComponentClient({ cookies });
   const session_id = (await searchParams).session_id;
-  const { data: { session } } = await supabase.auth.getSession();
+  const {
+    data: { session },
+  } = await supabase.auth.getSession();
 
   if (!session) {
     redirect("/auth/login");
   }
+  const userId = session.user.id;
 
   try {
     // 1. Retrieve the Stripe Checkout Session
@@ -69,13 +72,58 @@ export default async function PaymentSuccessPage({
       );
     }
 
+    // 3.5. Retrieve Offer details
+    const { data: offer, error: offerError } = await supabaseAdmin
+      .from("offers")
+      .select("isvip_included")
+      .eq("id", transaction.offer_id)
+      .single();
+
+    if (offerError) {
+      console.error("Error fetching offer details:", offerError);
+      return <OnerrorComponent error="Unable to fetch offer details" />;
+    }
+
+    if (!offer) {
+      console.error("Offer not found for ID:", transaction.offer_id);
+      return <OnerrorComponent error="Offer details not found" />;
+    }
+
+    // 3.7. Retrieve current user data (NEW)
+    const { data: currentUser, error: userError } = await supabaseAdmin
+      .from("users")
+      .select("is_vip")
+      .eq("id", transaction.owner)
+      .single();
+
+    if (userError) {
+      console.error("Error fetching current user data:", userError);
+      return <OnerrorComponent error="Unable to fetch user details" />;
+    }
+
+    if (!currentUser) {
+      console.error("User not found for ID:", transaction.owner);
+      return <OnerrorComponent error="User details not found" />;
+    }
+
+
     // 4. Update the database ONLY if Stripe confirms success
-    const update_transaction = supabase.from("transactions").update({
-      status: "success",
-    }).eq("session_id", session_id); // Ensure you're updating the correct transaction
-    const update_user = supabaseAdmin.from("users").update({
-      current_offer: transaction.offer_id,
-    }).eq("id", transaction.owner); // Match user ID to the 'owner' in transactions
+    const update_transaction = supabase
+      .from("transactions")
+      .update({
+        status: "success",
+      })
+      .eq("session_id", session_id); // Ensure you're updating the correct transaction
+
+    // Update user, including is_vip based on the offer (MODIFIED)
+    const update_user = supabaseAdmin
+      .from("users")
+      .update({
+        current_offer: transaction.offer_id,
+        is_vip: currentUser.is_vip || offer.isvip_included === true, // OR logic
+      })
+      .eq("id", transaction.owner); // Match user ID to the 'owner' in transactions
+
 
     const [
       { error: update_transaction_error },
@@ -129,4 +177,3 @@ export default async function PaymentSuccessPage({
     );
   }
 }
-

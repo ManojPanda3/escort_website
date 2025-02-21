@@ -51,7 +51,7 @@ export default async function TransPage(
                 "/placeholder.svg?height=600&width=400"}
               availability={user.availability}
               isVerified={user.is_verified}
-              isVip={user.curretn_offer != null}
+              isVip={user.is_vip}
               isOnline={false}
             />
           ))}

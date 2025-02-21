@@ -26,8 +26,6 @@ import { useState, useEffect } from "react"
 export default function AdminPages({ userStats, transactionStats, totalUsers, totalTransactions, totalEarnings, ageProof, offers, locations }) {
 
   const [activeTab, setActiveTab] = useState('transactions')
-  const [isLocationDialogOpen, setIsLocationDialogOpen] = useState(false)
-  const [newLocation, setNewLocation] = useState('')
   const [[page, direction], setPage] = useState([0, 0]);
 
 
@@ -61,28 +59,12 @@ export default function AdminPages({ userStats, transactionStats, totalUsers, to
     }
   };
 
-  const tabIndex = { transactions: 0, packages: 1, users: 2, locations: 3 };
+  const tabIndex = { transactions: 0, packages: 1, users: 2 };
 
   const paginate = (newDirection: number) => {
     setPage([page + newDirection, newDirection]);
   };
 
-  const handleAddLocation = async () => {
-    try {
-      const { data, error } = await supabase
-        .from('locations')
-        .insert({ name: newLocation })
-
-      if (error) throw error
-
-      setNewLocation('')
-      setIsLocationDialogOpen(false)
-      // Optionally, refresh the locations list or show a success message
-    } catch (error) {
-      console.error('Error adding location:', error)
-      // Optionally, show an error message to the user
-    }
-  }
 
 
   return (
@@ -176,7 +158,6 @@ export default function AdminPages({ userStats, transactionStats, totalUsers, to
             <TabsTrigger value="transactions">Transactions</TabsTrigger>
             <TabsTrigger value="packages">Pricing Packages</TabsTrigger>
             <TabsTrigger value="users">Unverified Users</TabsTrigger>
-            <TabsTrigger value="locations">Locations</TabsTrigger>
           </TabsList>
 
           <AnimatePresence initial={false} custom={direction}>
@@ -245,19 +226,6 @@ export default function AdminPages({ userStats, transactionStats, totalUsers, to
                     </CardHeader>
                     <CardContent>
                       <UnverifiedUsers users={ageProof} />
-                    </CardContent>
-                  </Card>
-                </TabsContent>
-              )}
-              {activeTab === 'locations' && (
-                <TabsContent value="locations">
-                  <Card>
-                    <CardHeader>
-                      <CardTitle>Manage Locations</CardTitle>
-                      <CardDescription>Add or remove locations for escorts</CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                      <LocationManagement locations_fetched={locations} />
                     </CardContent>
                   </Card>
                 </TabsContent>

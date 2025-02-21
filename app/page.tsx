@@ -9,7 +9,7 @@ import { Metadata } from "next";
 import { Suspense } from "react";
 import { ScrollToTop } from "@/components/scroll_to_top";
 import { RoyalBackground } from "@/components/royal-background";
-import { StoriesContainer } from "../components/sotry-container.tsx";
+import { StoriesContainer } from "../components/story-container.tsx";
 import getRandomImage from "../lib/randomImage.ts";
 import UsersCard from "../components/Users.tsx";
 

@@ -52,7 +52,7 @@ export default async function SearchPage(
               location={user.location_name}
               measurements={user.dress_size}
               isVerified={user.is_verified}
-              isVip={user.current_offer !== null}
+              isVip={user.is_vip}
               availability={user.availability}
               isOnline={user.is_available}
             />

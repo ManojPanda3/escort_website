@@ -4,15 +4,30 @@ import { NextRequest, NextResponse } from 'next/server'
 
 export async function POST(request: NextRequest) {
   const supabase = createRouteHandlerClient({ cookies })
-  
+
   const { data: { session } } = await supabase.auth.getSession()
   if (!session) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
+  const { data: user, error: userError } = await supabase
+    .from("users")
+    .select("id,current_offer,user_type")
+    .eq("id", session.user.id)
+    .single();
+
+  if (userError) return NextResponse.json({ error: "Error while fetching user data", success: false, status: 500 }, { status: 500 })
+
+  if (user.current_offer == null || user.user_type === "general") {
+    return NextResponse.json({
+      error: "Unauthorized! U can't upload services " + (user.current_offer ? "without offer" : "as generatl user"),
+      success: false,
+      status: 401
+    }, { status: 401 });
+  }
 
   const { service } = await request.json()
 
-  const { data:{id},error } = await supabase
+  const { data: { id }, error } = await supabase
     .from('services')
     .insert({
       owner: session.user.id,
@@ -20,10 +35,10 @@ export async function POST(request: NextRequest) {
     }).select().single()
 
   if (error) {
-    return NextResponse.json({ error: error.message }, { status: 400 })
+    return NextResponse.json({ error: error.message, success: false, status: 400 }, { status: 400 })
   }
 
-  return NextResponse.json({ success: true, id: id })
+  return NextResponse.json({ success: true, id: id, status: 200 })
 }
 
 export async function DELETE(request: NextRequest) {

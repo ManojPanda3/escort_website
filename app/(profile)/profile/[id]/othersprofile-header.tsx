@@ -133,7 +133,7 @@ export function ProfileHeader({ profile }: ProfileHeaderProps) {
                     >
                       {profile?.name || profile?.username}
                     </span>
-                    {profile?.current_offer !== null && (
+                    {profile?.is_vip && (
                       <Badge variant="secondary">
                         <Crown className="h-4 w-4 mr-1" />
                         VIP

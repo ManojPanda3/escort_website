@@ -51,7 +51,7 @@ export default async function BDSMPage(
               image={user.profile_picture || getRandomImage()}
               availability={user.availability}
               isVerified={user.is_verified}
-              isVip={user.current_offer != null}
+              isVip={user.is_vip}
               isOnline={false}
             />
           ))}

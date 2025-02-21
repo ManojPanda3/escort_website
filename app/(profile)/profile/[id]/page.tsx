@@ -3,7 +3,7 @@ import { cookies } from "next/headers";
 import { notFound, redirect } from "next/navigation"; // Import notFound
 import { ProfileHeader } from "./othersprofile-header";
 import { ProfileTabs } from "./othersprofile-tabs";
-import { StoriesContainer } from "@/components/sotry-container";
+import { StoriesContainer } from "@/components/story-container";
 
 async function fetchStories(supabase, userId: string) {
   const { data, error } = await supabase

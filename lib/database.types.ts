@@ -137,6 +137,7 @@ export type Database = {
           created_at: string | null
           features: string[]
           id: string
+          isvip_included: boolean | null
           max_media: number | null
           max_places: number | null
           price: string
@@ -149,6 +150,7 @@ export type Database = {
           created_at?: string | null
           features?: string[]
           id?: string
+          isvip_included?: boolean | null
           max_media?: number | null
           max_places?: number | null
           price: string
@@ -161,6 +163,7 @@ export type Database = {
           created_at?: string | null
           features?: string[]
           id?: string
+          isvip_included?: boolean | null
           max_media?: number | null
           max_places?: number | null
           price?: string

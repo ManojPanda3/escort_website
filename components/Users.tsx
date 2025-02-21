@@ -22,7 +22,8 @@ const UsersCard = ({
   const [selectedCategory, setSelectedCategory] = useState<string>(
     categories_default[0],
   );
-  const [selectedUsers, setSelectedUsers] = useState<Users[]>(users);
+  const [selectedUsers, setSelectedUsers] = useState<Users[]>(users || []); // Initialize as empty array
+
   useEffect(() => {
     // filter the escort
     const filtered_user: Users[] = users.filter((e) => {
@@ -36,16 +37,24 @@ const UsersCard = ({
         case categories_default[3]:
           return e.is_verified;
         case categories_default[4]:
-          return e.availability;
+          return e.availability; // Assuming availability is a boolean
         default:
           console.error(
             "Unknown Category selected , may be the category was not registered",
           );
+          return false; // Default to not showing the user on unknown category
       }
     });
     // save the filtered escort
     setSelectedUsers(filtered_user);
   }, [selectedCategory, users]);
+
+
+  // Render a loading state or message if users is empty or still loading
+  if (!users || users.length === 0) {
+    return <div className="text-center py-8">Loading users...</div>;
+  }
+
   return (
     <>
       <section className="container mx-auto px-4 py-8">
@@ -71,19 +80,20 @@ const UsersCard = ({
                 key={user.id}
                 name={user.name || user.username}
                 age={user.age}
-                // price={user.price}
                 image={user.profile_picture}
-                // || "/placeholder.svg?height=600&width=400"}
                 location={user.location_name}
                 measurements={user.dress_size}
-                isVerified={user.is_verified}
-                isVip={user.current_offer !== null}
+                isVerified={user.is_vip}
+                isVip={user.is_vip}
                 availability={user.availability}
                 isOnline={user.is_available}
               />
             </Link>
           ))}
         </div>
+        {selectedUsers.length === 0 && (
+          <div className="text-center col-span-full">No users found for this category.</div>
+        )}
       </section>
     </>
   );

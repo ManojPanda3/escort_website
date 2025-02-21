@@ -63,6 +63,11 @@
     font-family: 'Playfair Display', serif;
   }
 }
+@layer components {
+  .badge-premium {
+      @apply bg-yellow-500 text-white; /* Example: Gold background, white text */
+    }
+}
 
 .golden-gradient {
   background: linear-gradient(to right, #FFD700, #FFA500);

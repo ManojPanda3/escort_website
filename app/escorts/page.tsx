@@ -8,12 +8,12 @@ import { ScrollToTop } from "@/components/scroll_to_top";
 import { Suspense } from "react";
 import { CategoryTabs } from "@/components/category-tabs";
 import { FeaturedEscorts } from "@/components/featured-escorts";
-import { FaqAllNighters } from "@/components/Faq02";
 import { AboutSection } from "@/components/about-section";
-import { StoriesContainer } from "@/components/sotry-container";
+import { StoriesContainer } from "@/components/story-container";
 import getRandomImage from "@/lib/randomImage";
 import Users from "@/components/Users.tsx";
 import { Database } from "@/lib/database.types";
+import FaqAllNighters from "@/components/Faq02";
 
 type Escort = Database["public"]["Tables"]["users"]["Row"];
 // Function to fetch stories
@@ -45,7 +45,8 @@ export default async function EscortsPage(
     location.trim() !== "" &&
     location.toLocaleLowerCase() !== "all locations"
   ) {
-    query = query.eq("location_name", location);
+    query = query.or(
+      `service_provided.contains(.${JSON.stringify([location])}),location.eq(.${location})`);
   }
   if (
     gender && gender.trim() !== "" && gender.toLocaleLowerCase() !== "viewall"
@@ -90,9 +91,6 @@ export default async function EscortsPage(
 
           {/* Featured Escorts Section */}
           <section className="container mx-auto px-4 py-8">
-            <h2 className="text-3xl font-bold text-center mb-6 bg-gradient-to-r from-amber-200 to-yellow-400 bg-clip-text text-transparent">
-              Featured Escorts
-            </h2>
             <FeaturedEscorts users={escorts.slice(0, 4)} />
           </section>
 
@@ -105,52 +103,14 @@ export default async function EscortsPage(
               users={escorts.map((escort) => ({
                 ...escort,
                 stories: stories?.filter((story) => story.owner === escort.id),
-              }))}
+              }))
+              }
             />
           </section>
           <Users
-            escorts={escorts}
+            users={escorts}
           />
-
-          {/* Categories Section */}
-          <section className="container mx-auto px-4 py-8">
-            <h2 className="text-3xl font-bold text-center mb-6 bg-gradient-to-r from-amber-200 to-yellow-400 bg-clip-text text-transparent">
-              Browse by Category
-            </h2>
-            <CategoryTabs />
-          </section>
-
-          {/* Escort Listings Section */}
-          <section className="container mx-auto px-4 py-8">
-            <h2 className="text-3xl font-bold text-center mb-6 bg-gradient-to-r from-amber-200 to-yellow-400 bg-clip-text text-transparent">
-              {location ? `Escorts in ${location}` : "All Escorts"}
-            </h2>
-            <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-              {escorts.map((escort) => (
-                <EscortCard
-                  key={escort.id}
-                  id={escort.id}
-                  name={escort.username}
-                  age={escort.age}
-                  location={escort.location_name}
-                  measurements={escort.size}
-                  price={escort.price}
-                  image={escort.profile_picture}
-                  availability={escort.availability}
-                  isVerified={escort.is_verified}
-                  isVip={escort.is_vip}
-                  isOnline={false}
-                />
-              ))}
-            </div>
-          </section>
-
-          {/* FAQ Section */}
-          <section className="container mx-auto px-4 py-8">
-            <h2 className="text-3xl font-bold text-center mb-6 bg-gradient-to-r from-amber-200 to-yellow-400 bg-clip-text text-transparent">
-              Frequently Asked Questions
-            </h2>
-          </section>
+          <FaqAllNighters />
 
           {/* About Section */}
           <section className="container mx-auto px-4 py-8">
