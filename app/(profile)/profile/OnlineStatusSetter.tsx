@@ -17,6 +17,7 @@ import { ClockIcon } from "lucide-react";
 import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
 import { useToast } from "@/components/ui/use-toast";
 import { useUserData } from "@/lib/useUserData";
+import isUserOnline from "@/components/isUserOnline";
 
 interface OnlineStatusSetterProps { }
 
@@ -27,7 +28,7 @@ export function OnlineStatusSetter({ }: OnlineStatusSetterProps) {
     hour: "0",
     minute: "0",
   });
-  const [isOnline, setIsOnline] = useState(false);
+  const [isOnline, setIsOnline] = useState(isUserOnline(user?.availability, user?.availability_exp));
   const supabase = createClientComponentClient();
   const { toast } = useToast();
 
@@ -110,10 +111,6 @@ export function OnlineStatusSetter({ }: OnlineStatusSetterProps) {
       });
     }
   };
-
-  useEffect(() => {
-    setIsOnline(!!user?.is_available);
-  }, [user]);
 
   return (
     <Dialog open={onlineDialogOpen} onOpenChange={setOnlineDialogOpen}>

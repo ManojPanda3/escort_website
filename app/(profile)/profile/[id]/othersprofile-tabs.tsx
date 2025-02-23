@@ -28,6 +28,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/components/ui/use-toast";
 import { Toaster } from "@/components/ui/toaster";
 import getRandomImage from "../../../../lib/randomImage.ts";
+import { useUserData } from "@/lib/useUserData";
 
 interface ProfileTabsProps {
   pictures: any[];
@@ -35,7 +36,6 @@ interface ProfileTabsProps {
   testimonials: any[];
   ownerId: string;
   user: any;
-  currentUser: any;
 }
 
 interface Testimonial {
@@ -53,11 +53,11 @@ export function ProfileTabs({
   pictures,
   rates,
   testimonials: initialTestimonials, // Renamed for clarity
-  currentUser,
   user,
 }: ProfileTabsProps) {
   const [comment, setComment] = useState<string>("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const { user: currentUser } = useUserData();
   const [error, setError] = useState<string>("");
   const [testimonials, setTestimonials] = useState<Testimonial[]>(
     initialTestimonials,
@@ -232,7 +232,7 @@ export function ProfileTabs({
 
         <TabsContent value="testimonials">
           <div className="space-y-4">
-            {ownerId && ownerId !== userId && (
+            {userId && ownerId && ownerId !== userId && (
               <Dialog>
                 <DialogTrigger asChild>
                   <Button className="w-full">

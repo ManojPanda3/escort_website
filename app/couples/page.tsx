@@ -53,7 +53,7 @@ export default async function EscortsPage(
         <div className="px-2">
           <UserWrapper
             users={escorts}
-            userType={"escorts"}
+            userType={"escort"}
             location={location}
             gender={gender}
           />

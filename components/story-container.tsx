@@ -2,6 +2,7 @@
 
 import getRandomImage from "@/lib/randomImage";
 import { StoryGroup } from "./story-group";
+import { useUserData } from "@/lib/useUserData";
 
 interface Story {
   id: string;
@@ -22,12 +23,13 @@ interface User {
 }
 interface StoriesContainerProps {
   users: User[];
-  currentUserId: string;
 }
 
 export function StoriesContainer(
-  { users, currentUserId }: StoriesContainerProps,
+  { users }: StoriesContainerProps,
 ) {
+  const { user: currentUser } = useUserData();
+  const currentUserId = currentUserId?.id
   return (
     <div className="flex space-x-4 p-4 overflow-x-auto">
       {users.map((user) => {

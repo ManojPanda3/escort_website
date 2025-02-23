@@ -87,12 +87,7 @@ export function ProfileHeader({ profile }: ProfileHeaderProps) {
       setIsLoadingBookmark(false);
     }
   };
-  // Early return if current user or profile is not defined
-  if (!currentUser || !profile) {
-    return null; // Or a loading state, or a placeholder
-  }
   // Check if the *current* user is a "general" user.
-  const isCurrentUserGeneral = currentUser.user_type === "general";
 
   return (
     <Card className="relative overflow-hidden bg-black/40 backdrop-blur-sm mb-8">
@@ -151,7 +146,7 @@ export function ProfileHeader({ profile }: ProfileHeaderProps) {
                 </div>
 
                 {/* Bookmark Button */}
-                {!isCurrentUserGeneral && currentUser.id !== profile.id && (
+                {currentUser && currentUser.id !== profile.id && (
                   <Button
                     onClick={handleBookmark}
                     disabled={isLoadingBookmark}

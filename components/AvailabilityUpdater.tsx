@@ -81,15 +81,16 @@ export function AvailabilityUpdater() {
             : parseInt(selectedTime.hour);
 
       combinedDate.setHours(hour, parseInt(selectedTime.minute), 0, 0);
+      const newDate = new Date(combinedDate);
+      newDate.setHours(combinedDate.getHours() + 8);
 
       const availabilityString = combinedDate.toISOString();
       const { error: updateUserError } = await supabase
         .from("users")
         .update({
           availability: availabilityString,
+          availability_exp: newDate.toISOString(),
           location_name: selectedLocation,
-          location: selectedLocation,
-          is_available: true,
         })
         .eq("id", user?.id);
 

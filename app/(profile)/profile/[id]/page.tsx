@@ -1,26 +1,20 @@
-import { createServerComponentClient } from "@supabase/auth-helpers-nextjs";
-import { cookies } from "next/headers";
 import { notFound, redirect } from "next/navigation"; // Import notFound
 import { ProfileHeader } from "./othersprofile-header";
 import { ProfileTabs } from "./othersprofile-tabs";
 import { StoriesContainer } from "@/components/story-container";
+import { supabase } from "@/lib/supabase";
 
-async function fetchStories(supabase, userId: string) {
-  const { data, error } = await supabase
+async function fetchStories(userId: string) {
+  const fetchData = await supabase
     .from("story")
     .select("id, isvideo, owner, title, url, thumbnail, likes")
     .eq("owner", userId);
 
-  if (error) {
-    console.error("Error fetching stories:", error);
-    throw error;
-  }
-
-  return data;
+  return fetchData;
 }
 // Create cached version of data fetching
 //
-const getProfileData = async (supabase: any, id: string) => {
+const getProfileData = async (id: string) => {
   const [
     { data: profile, error: profileError },
     { data: pictures, error: picturesError },
@@ -52,7 +46,7 @@ const getProfileData = async (supabase: any, id: string) => {
         )
         `)
       .eq("to", id),
-    fetchStories(supabase, id),
+    fetchStories(id),
   ]);
   const errors = [
     profileError,
@@ -70,9 +64,8 @@ const getProfileData = async (supabase: any, id: string) => {
     console.error("Failed to fetch profile data\nerrors are:\t" + errorMessage);
   }
   if (profile == null) {
-    // Important: If no profile is found, use notFound()
     notFound();
-    return; // TS needs this
+    return;
   }
 
   return {
@@ -91,42 +84,23 @@ export default async function UserProfilePage(
 ) {
   const params = await props.params;
   const id = params.id;
-  const supabase = createServerComponentClient({ cookies });
-  const { data: { user: authUser }, error: authError } = await supabase.auth
-    .getUser();
+  const userData = await getProfileData(id);
 
-  if (authError) {
-    console.error("Authentication error:", authError);
-    redirect("/auth/login"); // Redirect to login if not authenticated
-    return null; // TypeScript needs this
-  }
-
-  const currentUser = authUser
-    ? (await supabase.from("users").select("id,profile_picture,username").eq(
-      "id",
-      authUser.id,
-    ).single()).data
-    : null;
-
-  const userData = await getProfileData(supabase, id);
-
-  // Check if user is "general" *after* fetching the data
-  const isGeneralUser = userData.profile.user_type === "general";
-  const stories = userData.stories;
+  const isGeneralUser = userData?.profile.user_type === "general";
+  const stories = userData?.stories;
 
   return (
     <main className="container mx-auto px-4 py-8">
-      <ProfileHeader profile={userData.profile} />
+      <ProfileHeader profile={userData?.profile} />
       <section
         aria-label="User Stories"
         className="mb-8 overflow-x-auto"
       >
         <div className="flex gap-4 pb-2">
-          {stories.length > 0
+          {stories && stories.length > 0
             ? (
               <StoriesContainer
-                users={userData.profile.map((user) => ({ ...user, stories }))}
-                currentUserId={currentUser?.id}
+                users={userData?.profile.map((user) => ({ ...user, stories }))}
               />
             )
             : (
@@ -146,11 +120,10 @@ export default async function UserProfilePage(
       </section>
       {!isGeneralUser && (
         <ProfileTabs
-          pictures={userData.pictures}
-          rates={userData.rates}
-          testimonials={userData.testimonials}
-          user={userData.profile}
-          currentUser={currentUser}
+          pictures={userData?.pictures}
+          rates={userData?.rates}
+          testimonials={userData?.testimonials}
+          user={userData?.profile}
         />
       )}
     </main>

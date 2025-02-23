@@ -12,7 +12,7 @@ export default function CategoriesPage() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {categories.map((category) => (
             <Link
-              href={`/escorts?category=${encodeURIComponent(category)}`}
+              href={`/search?categories=${encodeURIComponent(category)}`}
               key={category}
             >
               <Button

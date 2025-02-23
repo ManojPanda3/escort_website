@@ -27,7 +27,7 @@ export function StoryUploadButton() {
   // -- get thumbnail from video
   // -- upload the video to the server
   // -- or incase of image upload the image to the server 
-  //
+  // 
   const { user, stories } = useUserData()
   const [isOpen, setIsOpen] = useState(false);
   const [isVideo, setIsVideo] = useState(false);
@@ -75,9 +75,6 @@ export function StoryUploadButton() {
     }
   };
 
-
-
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!file) {
@@ -110,10 +107,7 @@ export function StoryUploadButton() {
     setFile(null);
     setThumbnailURL(null);
     setFileError(null);
-
   };
-
-
 
   // Image Optimization Function (to WebP, 720p)
   const optimizeImage = (file: File): Promise<File> => {

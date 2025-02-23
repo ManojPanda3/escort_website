@@ -17,13 +17,13 @@ export default async function BDSMPage(
 
   if (
     location && location.trim() !== "" &&
-    location.toLocaleLowerCase() === "all locations"
+    location.toLocaleLowerCase() !== "all locations"
   ) {
     query = query.eq("location_name", location);
   }
 
   if (
-    gender && gender.trim() !== "" && gender.toLocaleLowerCase() === "viewall"
+    gender && gender.trim() !== "" && gender.toLocaleLowerCase() !== "viewall"
   ) {
     query = query.eq("gender", gender);
   }
@@ -42,7 +42,10 @@ export default async function BDSMPage(
   return (
     <div className="min-h-screen bg-gradient-to-b from-background via-background/80 to-background dark:from-black dark:via-gray-900 dark:to-black">
       <main className="container mx-auto px-4 py-8">
-        <HeroCard label="BDSM" />
+        <HeroCard
+          initial_gender={gender || ""}
+          initial_location={location || ""} label="BDSM"
+        />
         <div className="px-2">
           <UserWrapper
             users={bdsm}

@@ -278,35 +278,35 @@ export type Database = {
       story_likes: {
         Row: {
           created_at: string
-          id: number
+          id: string
           post: string | null
           user: string | null
         }
         Insert: {
           created_at?: string
-          id?: number
+          id?: string
           post?: string | null
           user?: string | null
         }
         Update: {
           created_at?: string
-          id?: number
+          id?: string
           post?: string | null
           user?: string | null
         }
         Relationships: [
           {
-            foreignKeyName: "likes_user_fkey"
-            columns: ["user"]
-            isOneToOne: false
-            referencedRelation: "users"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "stroy_likes_post_fkey"
+            foreignKeyName: "story_likes_post_fkey"
             columns: ["post"]
             isOneToOne: false
             referencedRelation: "story"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "story_likes_user_fkey"
+            columns: ["user"]
+            isOneToOne: false
+            referencedRelation: "users"
             referencedColumns: ["id"]
           },
         ]
@@ -395,6 +395,7 @@ export type Database = {
           about: string | null
           age: number | null
           availability: string | null
+          availability_exp: string | null
           body_type: string | null
           bookmark: string[] | null
           categories: Database["public"]["Enums"]["escort_category"][] | null
@@ -408,14 +409,9 @@ export type Database = {
           hair_color: string | null
           height: number | null
           id: string
-          interested_services:
-            | Database["public"]["Enums"]["service_type"][]
-            | null
-          is_available: boolean | null
           is_traveling: boolean | null
           is_verified: boolean | null
           is_vip: boolean | null
-          location: string | null
           location_name: string | null
           name: string | null
           phone_number: string | null
@@ -424,7 +420,6 @@ export type Database = {
           ratings: number
           services: Database["public"]["Enums"]["service_type"][] | null
           total_media: number | null
-          traveling_location: string | null
           user_type: Database["public"]["Enums"]["user type"] | null
           username: string
         }
@@ -432,6 +427,7 @@ export type Database = {
           about?: string | null
           age?: number | null
           availability?: string | null
+          availability_exp?: string | null
           body_type?: string | null
           bookmark?: string[] | null
           categories?: Database["public"]["Enums"]["escort_category"][] | null
@@ -445,14 +441,9 @@ export type Database = {
           hair_color?: string | null
           height?: number | null
           id: string
-          interested_services?:
-            | Database["public"]["Enums"]["service_type"][]
-            | null
-          is_available?: boolean | null
           is_traveling?: boolean | null
           is_verified?: boolean | null
           is_vip?: boolean | null
-          location?: string | null
           location_name?: string | null
           name?: string | null
           phone_number?: string | null
@@ -461,7 +452,6 @@ export type Database = {
           ratings?: number
           services?: Database["public"]["Enums"]["service_type"][] | null
           total_media?: number | null
-          traveling_location?: string | null
           user_type?: Database["public"]["Enums"]["user type"] | null
           username: string
         }
@@ -469,6 +459,7 @@ export type Database = {
           about?: string | null
           age?: number | null
           availability?: string | null
+          availability_exp?: string | null
           body_type?: string | null
           bookmark?: string[] | null
           categories?: Database["public"]["Enums"]["escort_category"][] | null
@@ -482,14 +473,9 @@ export type Database = {
           hair_color?: string | null
           height?: number | null
           id?: string
-          interested_services?:
-            | Database["public"]["Enums"]["service_type"][]
-            | null
-          is_available?: boolean | null
           is_traveling?: boolean | null
           is_verified?: boolean | null
           is_vip?: boolean | null
-          location?: string | null
           location_name?: string | null
           name?: string | null
           phone_number?: string | null
@@ -498,7 +484,6 @@ export type Database = {
           ratings?: number
           services?: Database["public"]["Enums"]["service_type"][] | null
           total_media?: number | null
-          traveling_location?: string | null
           user_type?: Database["public"]["Enums"]["user type"] | null
           username?: string
         }
@@ -508,13 +493,6 @@ export type Database = {
             columns: ["current_offer"]
             isOneToOne: false
             referencedRelation: "offers"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "users_location_fkey"
-            columns: ["location"]
-            isOneToOne: false
-            referencedRelation: "locations"
             referencedColumns: ["id"]
           },
         ]

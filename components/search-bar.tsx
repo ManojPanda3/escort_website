@@ -37,7 +37,7 @@ const queryDelay: number = 500; // Reduced delay for better responsiveness
 
 // Cached function for fetching search results
 const fetchSearchResultsCached = cache(
-  async (query: string, type: string): Promise<User[]> => {
+  async (query: string, type: string, suggestions: User[], setSuggestions): Promise<User[]> => {
     try {
       let supabase_query = supabase.from("users").select(
         "id,username,profile_picture",
@@ -46,17 +46,21 @@ const fetchSearchResultsCached = cache(
       if (type != "all") {
         supabase_query = supabase_query.eq("user_type", type);
       }
+      const existingIds = suggestions.map((user) => user.id);
+      supabase_query = supabase_query
+        .not("id", "in",
+          `(${existingIds.join(',')})`
+        )
+        .limit(5);
       const { data: results, error } = await supabase_query;
 
       if (error) {
         console.error("Supabase error:", error);
-        return [];
       } else {
-        return results as User[];
+        setSuggestions([...suggestions, ...results]);
       }
     } catch (error) {
       console.error("Error fetching search results:", error);
-      return [];
     }
   },
 );
@@ -84,11 +88,12 @@ export const SearchBar: React.FC<SearchBarProps> = ({ isOpen, setIsOpen }) => {
       if (debouncedSearchQuery.trim() !== "") {
         setLoading(true);
         try {
-          const results = await fetchSearchResultsCached(
+          await fetchSearchResultsCached(
             debouncedSearchQuery,
             searchType,
+            suggestions,
+            setSuggestions
           );
-          setSuggestions(results);
         } finally {
           setLoading(false);
         }
@@ -114,6 +119,7 @@ export const SearchBar: React.FC<SearchBarProps> = ({ isOpen, setIsOpen }) => {
 
   const handleSuggestionClick = useCallback((userId: string) => {
     setLoading(true); // Show loading before navigating
+    setIsOpen(false)
     router.push(`/profile/${userId}`);
   }, [router]); // Include router in the dependency array
 

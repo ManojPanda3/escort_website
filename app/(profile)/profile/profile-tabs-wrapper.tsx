@@ -21,10 +21,6 @@ export function ProfileTabsWrapper({ userId }: ProfileTabsWrapperProps) {
     refetch,
   } = useUserData();
 
-  useEffect(() => {
-    refetch();
-  }, []);
-
   if (isLoading) {
     return <div>Loading...</div>; // Or your LoadingSpinner
   }

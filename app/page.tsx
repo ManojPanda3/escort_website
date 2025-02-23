@@ -113,7 +113,6 @@ export default async function Page() {
                     ? (
                       <StoriesContainer
                         users={users.map((user) => ({ ...user, stories }))}
-                        currentUserId={currentUser?.id}
                       />
                     )
                     : (

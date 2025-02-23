@@ -6,6 +6,7 @@ import { Database } from "@/lib/database.types";
 import { EscortCard } from "./escort-card.tsx";
 import Link from "next/link";
 import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
+import { LoadingSpinner } from "./ui/loading";
 
 const categories_default = [
   "All",
@@ -17,6 +18,7 @@ const categories_default = [
 
 type Users = Database["public"]["Tables"]["users"]["Row"];
 type UserType = Database["public"]["Enums"]["user type"];
+type Categories = Database["public"]["Enums"]["escort_category"];
 
 interface UsersCardProps {
   users: Users[];
@@ -28,6 +30,8 @@ interface UserWrapperProps {
   userType?: UserType | null;
   location?: string | null;
   gender?: string | null;
+  searchQuery?: string | null;
+  categories?: Categories[];
 }
 
 export const UserWrapper = ({
@@ -35,6 +39,8 @@ export const UserWrapper = ({
   userType,
   location,
   gender,
+  searchQuery,
+  categories,
 }: UserWrapperProps) => {
   const supabase = createClientComponentClient();
   const [usersData, setUsersData] = useState<Users[]>(users);
@@ -70,13 +76,26 @@ export const UserWrapper = ({
         query = query.eq("gender", gender);
       }
 
+      if (
+        searchQuery &&
+        searchQuery.trim() !== ""
+      ) {
+        query = query
+          .ilike("username", `%${searchQuery}%`)
+      }
+
+      if (categories && categories.length !== 0) {
+        query = query.contains("categories", categories);
+      }
+
       const existingIds = usersData.map((e) => e.id);
       query = query.not("id", "in", `(${existingIds.join(',')})`);
       query = query
         .order("ratings", { ascending: false })
-        .order("created_at", { ascending: false });
+        .order("created_at", { ascending: false })
+        .limit(20);
 
-      const { data: escorts, error } = await query.limit(20);
+      const { data: escorts, error } = await query;
 
       if (error) {
         console.error("Error while fetching users\n Error:", error);
@@ -97,12 +116,11 @@ export const UserWrapper = ({
   return (
     <>
       <UsersCard users={usersData} onScroll={onScroll} />
-      {loadingMore && (
-        <div className="text-center py-4">Loading more users...</div>
-      )}
-      {!hasMore && !loadingMore && (
-        <div className="text-center py-4">No more users to load.</div>
-      )}
+      {
+        loadingMore && (
+          <LoadingSpinner />
+        )
+      }
     </>
   );
 };
@@ -115,7 +133,7 @@ const UsersCard = ({ users, onScroll }: UsersCardProps) => {
   const containerRef = useRef<HTMLDivElement>(null); // Ref for the container
 
   useEffect(() => {
-    const filtered_user: Users[] = users.filter((e) => {
+    const filtered_user: Users[] = users?.filter((e) => {
       switch (selectedCategory) {
         case categories_default[0]:
           return true;
@@ -166,7 +184,7 @@ const UsersCard = ({ users, onScroll }: UsersCardProps) => {
   }, [handleScroll]);
 
   if (!users || users.length === 0) {
-    return <div className="text-center py-8">Loading users...</div>;
+    return;
   }
 
   return (
@@ -188,7 +206,7 @@ const UsersCard = ({ users, onScroll }: UsersCardProps) => {
           ref={containerRef}
           className="grid justify-evenly gap-4 grid-cols-2 lg:grid-cols-3 xl:grid-cols-4"
         >
-          {selectedUsers.map((user) => (
+          {selectedUsers?.map((user) => (
             <Link key={user.id} href={`/profile/${user.id}`} prefetch={false}>
               <EscortCard
                 key={user.id}
@@ -200,7 +218,7 @@ const UsersCard = ({ users, onScroll }: UsersCardProps) => {
                 isVerified={user.is_verified}
                 isVip={user.is_vip}
                 availability={user.availability}
-                isOnline={user.is_available}
+                availability_exp={user.availability_exp}
               />
             </Link>
           ))}

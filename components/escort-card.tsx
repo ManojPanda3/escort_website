@@ -5,19 +5,21 @@ import { Card } from "@/components/ui/card";
 import { Calendar, MapPin, Phone, Shield, Star } from "lucide-react";
 import { motion } from "framer-motion";
 import getRandomImage from "../lib/randomImage.ts";
+import { useRef, useState } from "react";
+import isUserOnline from "./isUserOnline";
 
 interface EscortCardProps {
   name: string;
-  age: number;
-  location: string;
-  measurements: string;
-  price: string;
-  image: string;
-  phone: string;
-  availability: string;
+  age: number | null;
+  location: string | null;
+  measurements: string | null;
+  price: string | null;
+  image: string | null;
+  phone: string | null;
+  availability: string | null;
+  availability_exp: string | null;
   isVerified?: boolean;
   isVip?: boolean;
-  isOnline?: boolean;
 }
 
 function getDate() {
@@ -38,10 +40,11 @@ export function EscortCard({
   image,
   phone,
   availability,
+  availability_exp,
   isVerified = true,
   isVip = false,
-  isOnline = true,
 }: EscortCardProps) {
+  const isOnline = useRef<boolean>(isUserOnline(availability, availability_exp));
   return (
     <motion.div
       whileHover={{ scale: 1.05 }}
@@ -83,7 +86,7 @@ export function EscortCard({
 
           {/* Status Badges */}
           <div className="absolute right-3 top-3 flex flex-col gap-2">
-            {isOnline && (
+            {isOnline.current && (
               <div className="h-3 w-3 rounded-full bg-green-500 ring-4 ring-green-500/20" />
             )}
             {isVerified && (
@@ -103,6 +106,10 @@ export function EscortCard({
           {/* Info Overlay - Bottom */}
           <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black via-black/80 to-transparent p-4 text-white">
             <div className="transform space-y-2 transition-transform duration-300 group-hover:translate-y-[-8px]">
+              <div className="flex items-center gap-1 text-sm text-amber-200">
+                <MapPin className="h-3 w-3" />
+                {name}
+              </div>
               <div className="flex items-center gap-2 text-sm text-amber-200">
                 <span>{age} years</span>
                 <span>•</span>

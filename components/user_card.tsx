@@ -16,9 +16,10 @@ interface EscortCardProps {
   price: string;
   image: string;
   availability: string;
-  isVerified?: boolean;
-  isVip?: boolean;
-  isOnline?: boolean;
+  availability_exp = { user.availability_exp }
+isVerified ?: boolean;
+isVip ?: boolean;
+isOnline ?: boolean;
 }
 
 export function EscortCard({

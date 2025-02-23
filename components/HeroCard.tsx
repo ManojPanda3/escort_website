@@ -17,6 +17,7 @@ const HeroCard = (
   }: {
     label: string;
     initial_location: string;
+    initial_gender: string;
   },
 ) => {
   const [location, setLocation] = useState(initial_location);
