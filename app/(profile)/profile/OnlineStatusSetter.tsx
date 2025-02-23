@@ -28,9 +28,12 @@ export function OnlineStatusSetter({ }: OnlineStatusSetterProps) {
     hour: "0",
     minute: "0",
   });
-  const [isOnline, setIsOnline] = useState(isUserOnline(user?.availability, user?.availability_exp));
+  const [isOnline, setIsOnline] = useState(false);
   const supabase = createClientComponentClient();
   const { toast } = useToast();
+  useEffect(() => {
+    setIsOnline(isUserOnline(user?.availability, user?.availability_exp));
+  }, [user])
 
   const handleHourChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     let newHour = parseInt(e.target.value);
@@ -81,14 +84,18 @@ export function OnlineStatusSetter({ }: OnlineStatusSetterProps) {
 
     console.log(`User will be online for: ${durationMilliseconds} milliseconds`);
     setOnlineDialogOpen(false);
+    console.log("Updating availability...");
+    console.log(
+      new Date().toISOString(),
+      futureAvailability.toISOString()
+    )
 
     try {
       const { error } = await supabase
         .from("users")
         .update({
-          available: new Date().toISOString(), // "available" instead of "availability"
+          availability: new Date().toISOString(), // "available" instead of "availability"
           availability_exp: futureAvailability.toISOString(),
-          is_available: true,
         })
         .eq("id", userId);
 

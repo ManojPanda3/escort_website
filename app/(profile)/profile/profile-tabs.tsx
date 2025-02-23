@@ -27,6 +27,7 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { LoadingSpinner } from "@/components/ui/loading";
 import { deleteFromStorage } from "@/lib/storage";
 import { Database } from "@/lib/database.types"; // Import Supabase types
+import { supabase } from "@/lib/supabase";
 
 type User = Database["public"]["Tables"]["users"]["Row"];
 type Picture = Database["public"]["Tables"]["pictures"]["Row"];
@@ -130,9 +131,8 @@ export function ProfileTabs({
       await refetch(); // Invalidate cache after change
       toast({
         title: "Success",
-        description: `${
-          type.charAt(0).toUpperCase() + type.slice(1)
-        } deleted successfully`,
+        description: `${type.charAt(0).toUpperCase() + type.slice(1)
+          } deleted successfully`,
       });
       setIsLoading(false);
     } catch (error) {
@@ -367,15 +367,11 @@ export function ProfileTabs({
           if (newService) {
             // Add the new service to the user's services array in the database
             const updatedServices = [...services, newService.service]; //newService contains service object {id:string, service:string}.
-            const response = await fetch(`/api/profile/updateUser`, {
-              method: "PATCH",
-              body: JSON.stringify({ services: updatedServices }),
-              headers: {
-                "Content-Type": "application/json",
-              },
-            });
+            const { error } = supabase.from("users").update({
+              service: updatedServices
+            }).eq("id", userId);
 
-            if (!response.ok) {
+            if (error) {
               setError("Failed to update services.");
               return; // Early return on error
             }

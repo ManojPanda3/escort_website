@@ -119,7 +119,7 @@ export function NavBar({ userId }: { userId: string }) {
         {cities.map((city) => (
           <Link
             key={city}
-            href={`/escorts?location=${city.toLowerCase()}`}
+            href={`/search?location=${city.toLowerCase()}`}
             className="hover:text-primary transition-colors"
             aria-label={`View escorts in ${city}`}
           >
@@ -259,19 +259,19 @@ export function NavBar({ userId }: { userId: string }) {
                     PREMIUM
                   </Link>
                   {isUserExist ? (
-                     <button
-                        className="block py-2 text-sm font-semibold text-red-600 hover:text-red-300 transition-colors"
-                        onClick={handleLogout}
-                        disabled={isLoggingOut}
-                      >
-                        {isLoggingOut ? (
-                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                        ) : (
-                          <LogOut className="mr-2 h-4 w-4" />
-                        )}
-                        Log Out
-                      </button>
-                    ) : (
+                    <button
+                      className="flex py-2 text-sm font-semibold text-red-600 hover:text-red-300 transition-colors "
+                      onClick={handleLogout}
+                      disabled={isLoggingOut}
+                    >
+                      {isLoggingOut ? (
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      ) : (
+                        <LogOut className="mr-2 h-4 w-4" />
+                      )}
+                      Log Out
+                    </button>
+                  ) : (
                     <LoginBtn className="rounded-sm" />
                   )}
 

@@ -5,7 +5,7 @@ import { Card } from "@/components/ui/card";
 import { Calendar, MapPin, Phone, Shield, Star } from "lucide-react";
 import { motion } from "framer-motion";
 import getRandomImage from "../lib/randomImage.ts";
-import { useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import isUserOnline from "./isUserOnline";
 
 interface EscortCardProps {
@@ -44,7 +44,14 @@ export function EscortCard({
   isVerified = true,
   isVip = false,
 }: EscortCardProps) {
-  const isOnline = useRef<boolean>(isUserOnline(availability, availability_exp));
+  const [isOnline, setisOnline] = useState<boolean>(false);
+
+  useEffect(() => {
+    const t_isOnline = isUserOnline(availability, availability_exp)
+    console.log(t_isOnline);
+    setisOnline(t_isOnline);
+  }, []);
+
   return (
     <motion.div
       whileHover={{ scale: 1.05 }}
@@ -86,7 +93,7 @@ export function EscortCard({
 
           {/* Status Badges */}
           <div className="absolute right-3 top-3 flex flex-col gap-2">
-            {isOnline.current && (
+            {isOnline && (
               <div className="h-3 w-3 rounded-full bg-green-500 ring-4 ring-green-500/20" />
             )}
             {isVerified && (

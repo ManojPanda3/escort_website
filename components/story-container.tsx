@@ -29,7 +29,7 @@ export function StoriesContainer(
   { users }: StoriesContainerProps,
 ) {
   const { user: currentUser } = useUserData();
-  const currentUserId = currentUserId?.id
+  const currentUserId = currentUser?.id
   return (
     <div className="flex space-x-4 p-4 overflow-x-auto">
       {users.map((user) => {

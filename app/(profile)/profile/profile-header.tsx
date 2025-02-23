@@ -86,14 +86,6 @@ export function ProfileHeader({ profile, bookmarks }: ProfileHeaderProps) {
                       </Badge>
                     )}
                   </h1>
-                  {profile?.about && (
-                    <p
-                      className="text-muted-foreground truncate"
-                      title={profile?.about || ""}
-                    >
-                      {profile?.about}
-                    </p>
-                  )}
                 </div>
 
                 <div className="flex gap-2">
@@ -109,8 +101,10 @@ export function ProfileHeader({ profile, bookmarks }: ProfileHeaderProps) {
                   </Button>
                   <Link href="/profile/edit">
                     <Button variant="outline" size="sm">
-                      <Edit className="h-4 w-4 mr-2" />
-                      Edit Profile
+                      <Edit className="h-4 w-4" />
+                      <p className="ml-2 hidden absolute -top-10 md:block md:static">
+                        Edit Profile
+                      </p>
                     </Button>
                   </Link>
 

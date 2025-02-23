@@ -3,6 +3,7 @@ import { StoryViewer } from "@/components/story-viewer";
 import { createServerComponentClient } from "@supabase/auth-helpers-nextjs";
 import { cookies } from "next/headers";
 import getRandomImage from "@/lib/randomImage";
+import StoryWrapper from "@/app/(profile)/profile/story-wrapper";
 
 export default async function SharedStoryPage(
   props: { params: Promise<{ id: string }> },
@@ -12,30 +13,31 @@ export default async function SharedStoryPage(
 
   const { data: story } = await supabase
     .from("story")
-    .select("id, isvideo, owner, title, url, thumbnail, likes")
+    .select("id, isvideo, owner:users(username,name,profile_picture), title, url, thumbnail, likes")
     .eq("id", params.id)
     .single();
   if (!story) {
     notFound();
   }
-  const { data: owner } = await supabase.from("users")
-    .select("username,name,profile_picture")
-    .eq("id", story.owner)
-    .single();
   const { data: { user } } = await supabase.auth.getUser();
+  const owner = story.owner;
   if (!owner) notFound();
+  let isLiked: boolean = false;
+  if (user) {
+    const { data: story_liked } = await supabase
+      .from("story_likes")
+      .select("id")
+      .eq("post", story.id)
+      .eq("user", user?.id)
+      .single();
+    isLiked = !!story_liked;
+  }
 
   return (
     <div className="flex items-center justify-center min-h-screen bg-gray-900">
-      <StoryViewer
-        id={story?.id}
-        url={story?.url || getRandomImage()}
-        title={story?.title}
-        isVideo={story?.isvideo}
-        userId={user?.id}
-        likes={story?.likes}
-        ownerAvatar={owner?.profile_picture || getRandomImage()}
-        ownerName={owner.name || owner.username}
+      <StoryWrapper
+        story={story}
+        isLiked={isLiked}
       />
     </div>
   );

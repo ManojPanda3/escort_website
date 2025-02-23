@@ -19,7 +19,7 @@ interface StoryViewerProps {
   title: string;
   isVideo?: boolean;
   onClose: () => void;
-  userId: string;
+  userId: string | null;
   ownerAvatar: string;
   likes: number;
   liked: boolean;
@@ -40,7 +40,6 @@ export function StoryViewer({
   onClose,
   likes,
   liked,
-  userId,
   ownerAvatar,
   ownerName,
   totalStories = 1,

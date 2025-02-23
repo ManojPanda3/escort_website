@@ -15,7 +15,7 @@ interface Story {
 }
 
 interface StoryGroupProps {
-  userId: string;
+  userId: string | null | undefined;
   ownerAvatar: string;
   ownerName: string;
   stories: Story[];
@@ -31,20 +31,23 @@ export function StoryGroup(
 
   useEffect(() => {
     if (!userId) return;
+    const postId = stories.map(({ id }) => id)
     supabase
       .from("story_likes")
       .select("post")
       .eq("user", userId)
-      .in("post", stories.map(({ id }) => id)).then(({ data, error }) => {
+      .in("post", postId)
+      .then(({ data, error }) => {
         if (error) {
           console.error("Error while reading story_likes")
         } else {
           setStoriesLiked((n) => {
+            const newState = [...n];
             for (let i = 0; i < stories.length; i++) {
               const isLiked = !!data.find(n => n.post === stories[i].id);
-              n[i] = isLiked;
+              newState[i] = isLiked;
             }
-            return n;
+            return newState;
           })
         }
       })
@@ -54,13 +57,9 @@ export function StoryGroup(
     if (!userId) return;
     const newLikedState = !isLikedStories[currentStoryIndex];
     setStoriesLiked(n => {
-      n[currentStoryIndex] = newLikedState;
-      return n;
-    });
-    setLikeCounts((n) => {
-      const prev = n[currentStoryIndex];
-      n[currentStoryIndex] = newLikedState ? prev + 1 : prev - 1
-      return n;
+      const newState = [...n];
+      newState[currentStoryIndex] = newLikedState;
+      return newState;
     });
     const id = stories[currentStoryIndex].id;
     if (newLikedState) {
@@ -71,8 +70,16 @@ export function StoryGroup(
         userId,
       );
     }
+    const prev = likeCounts[currentStoryIndex]
+    const supabaseResponse = await supabase.from("story").update({
+      likes: newLikedState ? prev + 1 : prev - 1
+    }).eq("id", id);
+    setLikeCounts((n) => {
+      const newState = [...n]
+      newState[currentStoryIndex] = newLikedState ? prev + 1 : prev - 1
+      return newState;
+    });
 
-    await supabase.from("story").update({ likes: likeCounts[currentStoryIndex] }).eq("id", id);
   };
 
   const openViewer = () => {

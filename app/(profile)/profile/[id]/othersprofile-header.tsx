@@ -15,6 +15,7 @@ import {
   Phone,
   Ruler,
   Star,
+  User2,
 } from "lucide-react";
 import getRandomImage from "@/lib/randomImage";
 import { useUserData } from "@/lib/useUserData";
@@ -135,14 +136,6 @@ export function ProfileHeader({ profile }: ProfileHeaderProps) {
                       </Badge>
                     )}
                   </h1>
-                  {profile?.about && ( // Conditionally render the about section
-                    <p
-                      className="text-muted-foreground truncate"
-                      title={profile.about}
-                    >
-                      {profile.about}
-                    </p>
-                  )}
                 </div>
 
                 {/* Bookmark Button */}
@@ -255,6 +248,18 @@ export function ProfileHeader({ profile }: ProfileHeaderProps) {
                 </div>
               )}
             </div>
+            {/* About Section (Full) */}
+            {profile?.about && (
+              <div className="mt-6">
+                <div className="flex items-center text-muted-foreground">
+                  <User2 className="h-4 w-4 mr-1" />
+                  About
+                </div>
+                <p className="text-sm whitespace-pre-line">
+                  {profile.about}
+                </p>
+              </div>
+            )}
           </div>
         </div>
       </div>

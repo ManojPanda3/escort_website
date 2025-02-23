@@ -52,6 +52,7 @@ export function EditProfileForm() {
   const [isCategoryOpen, setIsCategoryOpen] = useState<boolean>(false);
   const [isServicesOpen, setIsServicesOpen] = useState<boolean>(false); //for service selector
   const [place_of_services, setPlaceOfServices] = useState<string[]>(profile?.place_of_services || []);
+  const [isPlaceOfServiceUpdated, setIsPlaceOfServiceUpdated] = useState<boolean>(false);
 
   const [formData, setFormData] = useState({
     name: profile?.name || "",
@@ -224,8 +225,6 @@ export function EditProfileForm() {
         submissionData.cover_image = s3Path;
       }
 
-
-
       const { error: updateError } = await supabase.from("users").update(submissionData).eq("id", profile?.id);
 
       if (updateError) {
@@ -233,30 +232,37 @@ export function EditProfileForm() {
       }
 
 
-      const placeOfServiceResponse = await fetch("/api/profile/addPlaceOfService/", {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ place_of_services }),
-      });
+      if (isPlaceOfServiceUpdated) {
+        const placeOfServiceResponse = await fetch("/api/profile/addPlaceOfService/", {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ place_of_services }),
+        });
+        if (!placeOfServiceResponse.ok) {
+          const errorData = await placeOfServiceResponse.json();
+          // Prioritize the 'message' from the API response, fallback to generic error.
+          const errorMessage = errorData.message || `Error updating place of service: ${placeOfServiceResponse.status} ${placeOfServiceResponse.statusText}\n redirecting to the premium page`;
+          setTimeout(() => router.push("/premium"), 1200);
+          throw new Error(errorMessage);
+        }
 
-      if (!placeOfServiceResponse.ok) {
-        const errorData = await placeOfServiceResponse.json();
-        // Prioritize the 'message' from the API response, fallback to generic error.
-        const errorMessage = errorData.message || `Error updating place of service: ${placeOfServiceResponse.status} ${placeOfServiceResponse.statusText}\n redirecting to the premium page`;
-        router.push("/premium")
-        throw new Error(errorMessage);
-      }
-
-      //if the response ok then its success
-      const data = await placeOfServiceResponse.json()
-      if (data.success) {
+        //if the response ok then its success
+        const data = await placeOfServiceResponse.json()
+        if (data.success) {
+          toast({
+            title: "Success",
+            description: "Profile updated successfully.", //use message from api if available
+          });
+        }
+      } else {
         toast({
           title: "Success",
-          description: data.message || "Profile updated successfully.", //use message from api if available
+          description: "Profile updated successfully.", //use message from api if available
         });
       }
+
 
 
       router.refresh();
@@ -630,6 +636,7 @@ export function EditProfileForm() {
                       onValueChange={(value) => {
                         if (!place_of_services.includes(value)) {
                           setPlaceOfServices((prev: string[]) => [...prev, value]);
+                          setIsPlaceOfServiceUpdated(true)
                         }
                       }}
                       required

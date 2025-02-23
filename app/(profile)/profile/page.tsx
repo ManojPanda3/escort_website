@@ -10,6 +10,7 @@ import { StoryUploadButton } from "./story-upload-button";
 import { Database } from "@/lib/database.types";
 import { ProfileHeaderWrapper } from "./profile-header-wrapper.tsx";
 import { AvailabilityUpdater } from "@/components/AvailabilityUpdater"; // Import
+import StoryWrapper from "./story-wrapper";
 
 export default async function ProfilePage() {
   const supabase = createServerComponentClient<Database>({ cookies });
@@ -72,12 +73,7 @@ export default async function ProfilePage() {
           <AvailabilityUpdater />
         </div>
       )}
-
-      {!isGeneralUser && (
-        <div className="mb-6">
-          <StoryUploadButton />
-        </div>
-      )}
+      <StoryWrapper />
 
       {!isGeneralUser && <ProfileTabsWrapper userId={userId} />}
     </main>

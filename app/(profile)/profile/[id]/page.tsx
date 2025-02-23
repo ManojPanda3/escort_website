@@ -87,7 +87,7 @@ export default async function UserProfilePage(
   const userData = await getProfileData(id);
 
   const isGeneralUser = userData?.profile.user_type === "general";
-  const stories = userData?.stories;
+  const stories = { ...userData?.profile, stories: userData?.stories };
 
   return (
     <main className="container mx-auto px-4 py-8">
@@ -97,10 +97,10 @@ export default async function UserProfilePage(
         className="mb-8 overflow-x-auto"
       >
         <div className="flex gap-4 pb-2">
-          {stories && stories.length > 0
+          {stories.stories && stories.stories.length > 0
             ? (
               <StoriesContainer
-                users={userData?.profile.map((user) => ({ ...user, stories }))}
+                users={[stories]}
               />
             )
             : (

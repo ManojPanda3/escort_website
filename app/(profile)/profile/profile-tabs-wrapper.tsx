@@ -11,8 +11,8 @@ interface ProfileTabsWrapperProps {
 
 export function ProfileTabsWrapper({ userId }: ProfileTabsWrapperProps) {
   const {
+    user,
     pictures,
-    services,
     rates,
     testimonials,
     stories,
@@ -20,6 +20,7 @@ export function ProfileTabsWrapper({ userId }: ProfileTabsWrapperProps) {
     error,
     refetch,
   } = useUserData();
+  const services = user?.services;
 
   if (isLoading) {
     return <div>Loading...</div>; // Or your LoadingSpinner

@@ -30,7 +30,7 @@ async function fetchUsers(supabase) {
   const { data, error } = await supabase
     .from("users")
     .select(
-      "id, name,username, age, location_name, availability,dress_size, profile_picture, is_verified,current_offer",
+      "id, name,username, age, location_name, availability,availability_exp,dress_size, profile_picture, is_verified,current_offer",
     )
     .neq("user_type", "general")
     .order("ratings", { ascending: false })
@@ -112,7 +112,18 @@ export default async function Page() {
                   {stories.length > 0
                     ? (
                       <StoriesContainer
-                        users={users.map((user) => ({ ...user, stories }))}
+                        users={
+                          users.map(
+                            (user) => (
+                              {
+                                ...user,
+                                stories: stories?.filter(
+                                  ({ owner }) => owner === user.id
+                                ),
+                              }
+                            )
+                          )
+                        }
                       />
                     )
                     : (
