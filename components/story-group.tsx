@@ -1,17 +1,17 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { StoryCircle } from "./story-circle";
 import { StoryViewer } from "./story-viewer";
 import getRandomImage from "@/lib/randomImage";
+import { supabase } from "@/lib/supabase";
 
 interface Story {
   id: string;
   url: string;
   thumbnail: string;
   title: string;
-  isVideo?: boolean;
-  likes: number;
+  isVideo?: boolean; likes: number;
 }
 
 interface StoryGroupProps {
@@ -26,6 +26,54 @@ export function StoryGroup(
 ) {
   const [currentStoryIndex, setCurrentStoryIndex] = useState(0);
   const [isViewerOpen, setIsViewerOpen] = useState(false);
+  const [isLikedStories, setStoriesLiked] = useState<boolean[]>(stories.map(() => false))
+  const [likeCounts, setLikeCounts] = useState(stories.map(n => n.likes));
+
+  useEffect(() => {
+    if (!userId) return;
+    supabase
+      .from("story_likes")
+      .select("post")
+      .eq("user", userId)
+      .in("post", stories.map(({ id }) => id)).then(({ data, error }) => {
+        if (error) {
+          console.error("Error while reading story_likes")
+        } else {
+          setStoriesLiked((n) => {
+            for (let i = 0; i < stories.length; i++) {
+              const isLiked = !!data.find(n => n.post === stories[i].id);
+              n[i] = isLiked;
+            }
+            return n;
+          })
+        }
+      })
+  }, [stories, userId]);
+
+  const handleLike = async () => {
+    if (!userId) return;
+    const newLikedState = !isLikedStories[currentStoryIndex];
+    setStoriesLiked(n => {
+      n[currentStoryIndex] = newLikedState;
+      return n;
+    });
+    setLikeCounts((n) => {
+      const prev = n[currentStoryIndex];
+      n[currentStoryIndex] = newLikedState ? prev + 1 : prev - 1
+      return n;
+    });
+    const id = stories[currentStoryIndex].id;
+    if (newLikedState) {
+      await supabase.from("story_likes").insert([{ post: id, user: userId }]);
+    } else {
+      await supabase.from("story_likes").delete().eq("post", id).eq(
+        "user",
+        userId,
+      );
+    }
+
+    await supabase.from("story").update({ likes: likeCounts[currentStoryIndex] }).eq("id", id);
+  };
 
   const openViewer = () => {
     setCurrentStoryIndex(0);
@@ -72,13 +120,15 @@ export function StoryGroup(
           isVideo={stories[currentStoryIndex].isVideo}
           onClose={closeViewer}
           userId={userId}
-          likes={stories[currentStoryIndex].likes}
+          likes={likeCounts[currentStoryIndex]}
+          liked={isLikedStories[currentStoryIndex]}
           ownerAvatar={ownerAvatar}
           ownerName={ownerName}
           onNext={nextStory}
           onPrevious={previousStory}
           totalStories={stories.length}
           currentIndex={currentStoryIndex}
+          handleLike={handleLike}
         />
       )}
     </>

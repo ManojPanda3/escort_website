@@ -11,7 +11,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { useRouter } from "next/navigation";
 import { Loader2 } from "lucide-react";
-import { InterestSelector } from "@/components/interest-selector";
+import { Selector } from "@/components/selector";
 import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
 
 interface AddServiceModalProps {
@@ -54,7 +54,7 @@ export function AddServiceModal(
     try {
       const { data, error } = await supabase.from("user").update({
         services: selectedServices,
-      }).eq("id", user.id);
+      }).eq("id", userId);
       onClose();
     } catch (error) {
       console.error("Error adding services:", error);
@@ -75,12 +75,12 @@ export function AddServiceModal(
           <DialogTitle>Add New Services</DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
-          <InterestSelector
+          <Selector
             isOpen={true}
             onClose={onClose}
-            selectedInterests={selectedServices}
+            selected={selectedServices}
             onSave={handleSaveInterests}
-            availableInterests={availableServices}
+            available={availableServices}
             title="Select Services"
           />
           <Button

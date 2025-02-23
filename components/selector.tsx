@@ -10,20 +10,21 @@ import {
 } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
-import availableInterests from "@/public/services.json";
 
-interface InterestSelectorProps {
+interface SelectorProps {
   isOpen: boolean;
   onClose: () => void;
-  selectedInterests: string[];
+  selected: string[];
   onSave: (interests: string[]) => void;
+  available: string[];
+  title: stirng;
 }
 
-export function InterestSelector(
-  { isOpen, onClose, selectedInterests, onSave }: InterestSelectorProps,
+export function Selector(
+  { isOpen, onClose, selected, onSave, available, title }: SelectorProps,
 ) {
   const [localSelected, setLocalSelected] = useState<string[]>(
-    selectedInterests,
+    selected,
   );
 
   const toggleInterest = (interest: string) => {
@@ -45,13 +46,12 @@ export function InterestSelector(
       <DialogContent className="sm:max-w-[700px] bg-gray-900 border-gray-800">
         <DialogHeader>
           <DialogTitle className="text-lg font-semibold text-white">
-            What are you into?
+            {title}
           </DialogTitle>
         </DialogHeader>
-        {/* Responsive grid and scrollable container with styled scrollbar */}
         <div className="max-h-[400px] overflow-y-auto pr-2 scrollbar-thin scrollbar-thumb-rounded scrollbar-track-transparent scrollbar-thumb-primary">
           <div className="grid sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2 py-4">
-            {availableInterests.map((interest) => (
+            {available.map((interest) => (
               <Badge
                 key={interest}
                 variant="outline"

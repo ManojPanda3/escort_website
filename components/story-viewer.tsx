@@ -22,11 +22,13 @@ interface StoryViewerProps {
   userId: string;
   ownerAvatar: string;
   likes: number;
+  liked: boolean;
   ownerName: string;
   totalStories: number;
   currentIndex: number;
   onNext: () => unknown;
   onPrevious: () => unknown;
+  handleLike: () => unknown;
 }
 
 const default_time: number = 10;
@@ -37,15 +39,16 @@ export function StoryViewer({
   isVideo,
   onClose,
   likes,
+  liked,
   userId,
   ownerAvatar,
   ownerName,
   totalStories = 1,
   currentIndex = 0,
-  onNext = () => {},
-  onPrevious = () => {},
+  handleLike,
+  onNext = () => { },
+  onPrevious = () => { },
 }: StoryViewerProps) {
-  const [liked, setLiked] = useState(false);
   const [isShareOpen, setIsShareOpen] = useState(false);
   const [likeCount, setLikeCount] = useState(likes);
   const [progress, setProgress] = useState(2);
@@ -66,42 +69,7 @@ export function StoryViewer({
     };
   }, [progress, onNext]); // Add onNext to dependency array
 
-  useEffect(() => {
-    if (!userId) return;
-    supabase
-      .from("story_likes")
-      .select("user,id")
-      .eq("user", userId)
-      .eq("post", id)
-      .single()
-      .then(({ data, error }) => {
-        if (error) {
-          console.error(error);
-        } else {
-          const isLiked = data && data.id ? true : false;
-          setLiked(isLiked);
-        }
-      });
-  }, [id, userId]);
 
-  const handleLike = async () => {
-    if (!userId) return;
-    const newLikedState = !liked;
-    setLiked(newLikedState);
-
-    setLikeCount((prev) => (newLikedState ? prev + 1 : prev - 1));
-    if (newLikedState) {
-      await supabase.from("story_likes").insert([{ post: id, user: userId }]);
-    } else {
-      await supabase.from("story_likes").delete().eq("post", id).eq(
-        "user",
-        userId,
-      );
-    }
-
-    //removed await
-    supabase.from("story").update({ likes: likeCount }).eq("id", id);
-  };
 
   const handleClick = (event: React.MouseEvent<HTMLDivElement>) => {
     if (containerRef.current) {
@@ -180,11 +148,10 @@ export function StoryViewer({
           <div className="absolute bottom-4 left-4 right-4 flex justify-between items-center">
             <Button variant="ghost" size="icon" onClick={handleLike}>
               <Heart
-                className={`h-6 w-6 ${
-                  liked ? "text-red-500 fill-red-500" : "text-white"
-                }`}
+                className={`h-6 w-6 ${liked ? "text-red-500 fill-red-500" : "text-white"
+                  }`}
               />
-              <span className="ml-2 text-white">{likeCount}</span>
+              <span className="ml-2 text-white">{likes}</span>
             </Button>
             <Popover open={isShareOpen} onOpenChange={setIsShareOpen}>
               <PopoverTrigger asChild>

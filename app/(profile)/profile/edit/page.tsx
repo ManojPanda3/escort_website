@@ -1,47 +1,26 @@
-// app/profile/edit/page.tsx
+import { Suspense } from "react"
+import { EditProfileForm } from "./edit-profile-form"
+import { LoadingSpinner } from "@/components/ui/loading";
 import { createServerComponentClient } from "@supabase/auth-helpers-nextjs";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
-import { EditProfileForm } from "./edit-profile-form";
-import { SubscriptionPlans } from "./subscription-plans";
-import { Success } from "@/components/ui/success";
-import { Database } from "@/lib/database.types";
-import { LoadingSpinner } from "@/components/ui/loading";
 
 export default async function EditProfilePage() {
-  const supabase = createServerComponentClient<Database>({ cookies });
-  const { data: { user } } = await supabase.auth.getUser();
-
-  if (!user) {
+  const supabase = createServerComponentClient({ cookies })
+  const { data: { session } } = await supabase.auth.getSession();
+  if (!session?.user.id) {
     redirect("/auth/login");
-  }
-  const { data: profile, error } = await supabase
-    .from("users")
-    .select("*")
-    .eq("id", user.id)
-    .single();
-  if (profile == null) redirect("/auth/login");
-  if (error) {
-    return (
-      <div className="flex justify-center items-center h-screen">
-        <p>Error: {error.message}</p>
-      </div>
-    );
-  }
-  if (!profile) {
-    return (
-      <div className="flex justify-center items-center h-screen">
-        <LoadingSpinner />
-      </div>
-    );
   }
   return (
     <main className="container mx-auto px-4 py-8">
-      <div className="max-w-4xl mx-auto space-y-8">
-        <EditProfileForm profile={profile} />
-        <SubscriptionPlans currentPlan={profile?.current_plan} />
-      </div>
+      <h1 className="text-3xl font-bold mb-6 text-center bg-gradient-to-r from-amber-200 to-yellow-400 bg-clip-text text-transparent">
+        Edit Your Profile
+      </h1>
+      <Suspense fallback={<LoadingSpinner />}>
+        <EditProfileForm />
+      </Suspense >
     </main>
-  );
+  )
 }
+
 

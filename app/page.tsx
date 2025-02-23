@@ -1,3 +1,4 @@
+//page
 import { Hero } from "@/components/hero";
 import { FeaturedEscorts } from "@/components/featured-escorts";
 import FaqAllNighters from "@/components/Faq02";
@@ -10,8 +11,7 @@ import { Suspense } from "react";
 import { ScrollToTop } from "@/components/scroll_to_top";
 import { RoyalBackground } from "@/components/royal-background";
 import { StoriesContainer } from "../components/story-container.tsx";
-import getRandomImage from "../lib/randomImage.ts";
-import UsersCard from "../components/Users.tsx";
+import UsersCard, { UserWrapper } from "../components/Users.tsx";
 
 export const metadata: Metadata = {
   title: "Find Your Perfect Companion | Premium Escort Directory",
@@ -34,6 +34,7 @@ async function fetchUsers(supabase) {
     )
     .neq("user_type", "general")
     .order("ratings", { ascending: false })
+    .order("created_at", { ascending: false })
     .limit(20);
 
   if (error) {
@@ -131,7 +132,7 @@ export default async function Page() {
                 </div>
               </section>
             </Suspense>
-            <UsersCard
+            <UserWrapper
               users={users}
             />
           </div>

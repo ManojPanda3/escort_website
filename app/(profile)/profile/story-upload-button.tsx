@@ -1,8 +1,7 @@
 "use client";
 
-import type React from "react";
-import { useRef, useState } from "react";
-import { Loader2, Pause, Play, Plus } from "lucide-react";
+import React, { useState } from "react";
+import { Loader2, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -12,7 +11,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Slider } from "@/components/ui/slider";
+import { useUserData } from "@/lib/useUserData";
 
 interface Story {
   url: string;
@@ -21,169 +20,80 @@ interface Story {
   thumbnail?: string | null;
 }
 
-interface StoryUploadButtonProps {
-  userId: string;
-  stories?: Story[];
-  onUpload?: (file: File, thumbnail: File) => Promise<void>;
-}
 
-export function StoryUploadButton(
-  { userId, stories = [], onUpload }: StoryUploadButtonProps,
-) {
+export function StoryUploadButton() {
+  // TODO: make this workable
+  // -- adding an way to compress the video 
+  // -- get thumbnail from video
+  // -- upload the video to the server
+  // -- or incase of image upload the image to the server 
+  //
+  const { user, stories } = useUserData()
   const [isOpen, setIsOpen] = useState(false);
+  const [isVideo, setIsVideo] = useState(false);
   const [title, setTitle] = useState("");
   const [file, setFile] = useState<File | null>(null);
   const [isUploading, setIsUploading] = useState(false);
-  const [isProcessing, setIsProcessing] = useState(false);
-  const [stories_state, setStories] = useState<Story[]>(stories);
-  const [thumbnail, setThumbnail] = useState<File | null>(null);
   const [thumbnailURL, setThumbnailURL] = useState<string | null>(null);
   const [fileError, setFileError] = useState<string | null>(null);
-  const [videoURL, setVideoURL] = useState<string | null>(null);
-  const [isPlaying, setIsPlaying] = useState(false);
-  const [duration, setDuration] = useState(0);
-  const [trimRange, setTrimRange] = useState([0, 100]);
-  const videoRef = useRef<HTMLVideoElement>(null);
+  const [stories_state, setStories] = useState<Story[]>(stories);
 
-  const handleVideoTimeUpdate = () => {
-    if (
-      videoRef.current &&
-      videoRef.current.currentTime >= (duration * trimRange[1]) / 100
-    ) {
-      videoRef.current.currentTime = (duration * trimRange[0]) / 100;
-    }
+
+
+  const onUpload = async () => {
+    // Your existing upload logic will be integrated within handleSubmit
   };
 
-  const togglePlayPause = () => {
-    if (videoRef.current) {
-      if (isPlaying) {
-        videoRef.current.pause();
-      } else {
-        videoRef.current.currentTime = (duration * trimRange[0]) / 100;
-        videoRef.current.play();
-      }
-      setIsPlaying(!isPlaying);
-    }
-  };
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    setFileError(null);
-    setFile(null);
-    setThumbnail(null);
-    setThumbnailURL(null);
-    setVideoURL(null);
     const selectedFile = e.target.files?.[0];
-
     if (!selectedFile) return;
 
-    const isVideo = selectedFile.type.startsWith("video/");
-    const isImage = selectedFile.type.startsWith("image/");
-
-    if (!isVideo && !isImage) {
-      setFileError("Invalid file type. Only videos and images are allowed.");
-      return;
-    }
-
+    setFileError(null); // Reset error on new file selection
     setFile(selectedFile);
-    setIsProcessing(true);
 
+    if (selectedFile.type.startsWith("video/")) {
+      console.log("Video Not Allowed");
+      setIsVideo(true);
+      setThumbnailURL(null); // Clear thumbnail if video is selected.
+      return; // Stop processing if it's a video
+    } else {
+      console.log("Image are allowed");
+    }
+
+    // Image Optimization for non-video files:
     try {
-      if (isVideo) {
-        const url = URL.createObjectURL(selectedFile);
-        setVideoURL(url);
+      const optimizedImage = await optimizeImage(selectedFile);
+      setThumbnailURL(URL.createObjectURL(optimizedImage));
+      setFile(optimizedImage)  // Store for upload.
 
-        // Load video metadata
-        const video = document.createElement("video");
-        video.src = url;
-        await new Promise((resolve) => {
-          video.onloadedmetadata = () => {
-            setDuration(video.duration);
-            resolve(null);
-          };
-        });
 
-        const thumbnailFile = await generateVideoThumbnail(selectedFile);
-        setThumbnail(thumbnailFile);
-        setThumbnailURL(URL.createObjectURL(thumbnailFile));
-      } else {
-        const thumbnailFile = await optimizeImageForThumbnail(selectedFile);
-        setThumbnail(thumbnailFile);
-        setThumbnailURL(URL.createObjectURL(thumbnailFile));
-      }
-    } catch (error: any) {
-      console.error("Error processing file:", error);
-      setFileError(
-        "There was an error processing your file. Please try again.",
-      );
-    } finally {
-      setIsProcessing(false);
+    } catch (error) {
+      console.error("Error optimizing image:", error);
+      setFileError("Failed to process image.");
+      setThumbnailURL(null);
     }
   };
 
-  const generateVideoThumbnail = async (videoFile: File): Promise<File> => {
-    const video = document.createElement("video");
-    video.src = URL.createObjectURL(videoFile);
-    video.muted = true;
-    video.crossOrigin = "anonymous";
 
-    await new Promise((resolve) => {
-      video.onloadedmetadata = () => {
-        video.currentTime = video.duration * 0.1;
-        resolve(null);
-      };
-    });
 
-    await new Promise((resolve) => {
-      video.onseeked = resolve;
-    });
-
-    const canvas = document.createElement("canvas");
-    canvas.width = 426;
-    canvas.height = 240;
-    const ctx = canvas.getContext("2d")!;
-    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-
-    const blob = await new Promise<Blob>((resolve) => {
-      canvas.toBlob((blob) => resolve(blob!), "image/webp", 0.7);
-    });
-
-    video.remove();
-    return new File([blob], "thumbnail.webp", { type: "image/webp" });
-  };
-
-  const optimizeImageForThumbnail = async (imageFile: File): Promise<File> => {
-    const img = new Image();
-    const imageUrl = URL.createObjectURL(imageFile);
-
-    await new Promise((resolve) => {
-      img.onload = resolve;
-      img.src = imageUrl;
-    });
-
-    const canvas = document.createElement("canvas");
-    canvas.width = 426;
-    canvas.height = 240;
-    const ctx = canvas.getContext("2d")!;
-    ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-
-    const blob = await new Promise<Blob>((resolve) => {
-      canvas.toBlob((blob) => resolve(blob!), "image/webp", 0.7);
-    });
-
-    URL.revokeObjectURL(imageUrl);
-    return new File([blob], "thumbnail.webp", { type: "image/webp" });
-  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!file || !thumbnail) return;
+    if (!file) {
+      setFileError("Please select a file.");
+      return;
+    }
 
     setIsUploading(true);
 
     try {
-      if (onUpload) {
-        await onUpload(file, thumbnail);
-      }
+      // Placeholder for your actual upload logic
+      // You'll need to integrate your API calls or cloud storage upload here.
+
+      // Assuming onUpload() now takes the `file` and processes it.
+      //  await onUpload(file);
+      await new Promise((resolve) => setTimeout(resolve, 1000)); // Simulate upload
 
       setIsOpen(false);
       resetForm();
@@ -198,12 +108,62 @@ export function StoryUploadButton(
   const resetForm = () => {
     setTitle("");
     setFile(null);
-    setThumbnail(null);
     setThumbnailURL(null);
-    setVideoURL(null);
-    setTrimRange([0, 100]);
-    setIsPlaying(false);
+    setFileError(null);
+
   };
+
+
+
+  // Image Optimization Function (to WebP, 720p)
+  const optimizeImage = (file: File): Promise<File> => {
+    return new Promise((resolve, reject) => {
+      const img = new Image();
+      img.src = URL.createObjectURL(file);
+
+      img.onload = () => {
+        const canvas = document.createElement("canvas");
+        let width = img.width;
+        let height = img.height;
+        const MAX_HEIGHT = 720;
+
+        if (height > MAX_HEIGHT) {
+          width *= MAX_HEIGHT / height;
+          height = MAX_HEIGHT;
+        }
+
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext("2d");
+
+        if (!ctx) {
+          reject(new Error("Could not get canvas context"));
+          return;
+        }
+
+        ctx.drawImage(img, 0, 0, width, height);
+
+        canvas.toBlob(
+          (blob) => {
+            if (!blob) {
+              reject(new Error("Failed to create blob"));
+              return;
+            }
+            const optimizedFile = new File([blob], file.name.replace(/\.[^/.]+$/, ".webp"), {
+              type: "image/webp",
+              lastModified: Date.now(),
+            });
+            resolve(optimizedFile);
+          },
+          "image/webp",
+          0.7 // Quality, adjust as needed (0.0 - 1.0)
+        );
+      };
+
+      img.onerror = reject;
+    });
+  };
+
 
   return (
     <div>
@@ -255,86 +215,33 @@ export function StoryUploadButton(
                 type="file"
                 accept="video/*,image/*"
                 onChange={handleFileChange}
-                disabled={isProcessing || isUploading}
+                disabled={isUploading}
               />
               {fileError && (
                 <p className="text-destructive text-sm">{fileError}</p>
               )}
-              {isProcessing && (
-                <div className="flex items-center text-sm text-muted-foreground">
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Processing file...
-                </div>
-              )}
             </div>
-
-            {videoURL && (
-              <div className="space-y-4">
-                <div className="relative rounded-lg overflow-hidden">
-                  <video
-                    ref={videoRef}
-                    src={videoURL}
-                    className="w-full"
-                    onTimeUpdate={handleVideoTimeUpdate}
-                    onEnded={() => setIsPlaying(false)}
-                  />
-                  <Button
-                    type="button"
-                    size="icon"
-                    variant="secondary"
-                    className="absolute bottom-4 left-4"
-                    onClick={togglePlayPause}
-                  >
-                    {isPlaying
-                      ? <Pause className="h-4 w-4" />
-                      : <Play className="h-4 w-4" />}
-                  </Button>
-                </div>
-
-                <div className="space-y-2">
-                  <Label>Trim Video</Label>
-                  <Slider
-                    min={0}
-                    max={100}
-                    step={1}
-                    value={trimRange}
-                    onValueChange={setTrimRange}
-                  />
-                  <div className="flex justify-between text-sm text-muted-foreground">
-                    <span>{Math.round((duration * trimRange[0]) / 100)}s</span>
-                    <span>{Math.round((duration * trimRange[1]) / 100)}s</span>
-                  </div>
-                </div>
-              </div>
-            )}
 
             {thumbnailURL && (
               <div className="space-y-2">
                 <Label>Thumbnail</Label>
                 <img
-                  src={thumbnailURL || "/placeholder.svg"}
+                  src={thumbnailURL}
                   alt="Thumbnail"
                   className="max-h-40 w-auto rounded-lg"
                 />
               </div>
             )}
 
-            <Button
-              type="submit"
-              disabled={isUploading || isProcessing || !file ||
-                fileError !== null}
-              className="w-full"
-            >
-              {isUploading
-                ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Uploading...
-                  </>
-                )
-                : (
-                  "Upload Story"
-                )}
+            <Button type="submit" disabled={isUploading || !file || fileError !== null} className="w-full">
+              {isUploading ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Uploading...
+                </>
+              ) : (
+                "Upload Story"
+              )}
             </Button>
           </form>
         </DialogContent>
@@ -342,4 +249,3 @@ export function StoryUploadButton(
     </div>
   );
 }
-

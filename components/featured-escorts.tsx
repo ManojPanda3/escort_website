@@ -39,7 +39,7 @@ function FeaturedEscort(
       <Card className="w-full h-full bg-black/40 backdrop-blur-sm overflow-hidden">
         <div className="relative w-full h-full">
           <Image
-            src={profile_picture || getRandomImage()}
+            src={profile_picture || "/placeholder.svg"}
             alt={`Profile of ${username}`}
             fill
             className="object-cover"
@@ -59,7 +59,7 @@ function FeaturedEscort(
               ? (
                 <motion.div
                   className="absolute inset-0 flex flex-col justify-between bg-black/80 p-6"
-                  initial={{ opacity: 0 }}
+                  initial={{ opacity: 0.8 }}
                   animate={{ opacity: 1 }}
                   exit={{ opacity: 0 }}
                   transition={{ duration: 0.3 }}
@@ -105,7 +105,7 @@ function FeaturedEscort(
               : (
                 <motion.div
                   className="absolute inset-0 flex flex-col justify-end p-6"
-                  initial={{ opacity: 0 }}
+                  initial={{ opacity: 0.8 }}
                   animate={{ opacity: 1 }}
                   exit={{ opacity: 0 }}
                   transition={{ duration: 0.3 }}
@@ -148,12 +148,12 @@ export function FeaturedEscorts({ users }: { users: FeaturedEscortProps[] }) {
           <motion.div
             key={escort.username}
             className="transition-all duration-300"
-            initial={{ opacity: 0, scale: 0.9 }}
+            initial={{ opacity: 0.8, scale: 0.9 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ duration: 0.5 }}
           >
             <FeaturedEscort
-              profile_picture={escort.profile_picture || getRandomImage()}
+              profile_picture={escort.profile_picture}
               location_name={escort.location_name}
               username={escort.username}
               age={escort.age}

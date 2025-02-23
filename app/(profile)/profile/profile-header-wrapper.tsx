@@ -5,11 +5,8 @@ import { ProfileHeader } from "./profile-header";
 import { useUserData } from "@/lib/useUserData";
 import { LoadingSpinner } from "@/components/ui/loading";
 
-interface ProfileHeaderWrapperProps {
-  userId: string;
-}
 
-export function ProfileHeaderWrapper({ userId }: ProfileHeaderWrapperProps) {
+export function ProfileHeaderWrapper() {
   const { user, isLoading, error, bookmarks } = useUserData(); // Get bookmarks from useUserData
 
   if (isLoading) {

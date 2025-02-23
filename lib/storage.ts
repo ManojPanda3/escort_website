@@ -2,21 +2,18 @@
 
 export async function uploadToStorage(file: File, userId: string) {
   try {
-    const timestamp = new Date().getTime();
-    const fileName = `${userId}-${timestamp}-${file.name}`;
+    if (!file) {
+      throw new Error("No file provided."); // Check for missing file
+    }
 
-    // Read file content as base64
-    const fileContent = await new Promise<string>((resolve) => {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        const base64Content = reader.result as string;
-        // Remove data URL prefix to get just the base64 content
-        const base64Data = base64Content.split(",")[1];
-        resolve(base64Data);
-      };
-      reader.readAsDataURL(file);
-    });
+    if (!userId) {
+      throw new Error("User ID is required."); //check for userId
+    }
 
+    const timestamp = Date.now(); // Use Date.now() directly
+    const fileName = `user/${userId}/${timestamp}-${file.name}`; // Consistent naming with server.  Good!
+
+    // No need to convert to base64, fetch can handle the File object directly
     const signedUrlRes = await fetch("/api/storage/singedUrl", {
       method: "POST",
       headers: {
@@ -24,51 +21,51 @@ export async function uploadToStorage(file: File, userId: string) {
       },
       body: JSON.stringify({
         userId,
-        fileName,
+        fileName,  // Send the *full*, constructed filename
         fileType: file.type,
       }),
     });
 
     if (!signedUrlRes.ok) {
-      throw new Error("Failed to get signed URL");
+      const errorData = await signedUrlRes.json();
+      throw new Error(`Failed to get signed URL: ${errorData.error || 'Unknown error'}`);
     }
 
-    const data = await signedUrlRes.json();
-    const { url, publicUrl } = data;
+    const { url, publicUrl } = await signedUrlRes.json();
 
-    // Convert base64 back to binary
-    const binaryData = Buffer.from(fileContent, "base64");
 
     const uploadRes = await fetch(url, {
       method: "PUT",
-      body: binaryData,
-      headers: {
-        "Content-Type": file.type,
+      body: file, // Send the File object directly
+      headers: { // No Content-Type header needed when using a presigned URL, the server knows
+        // "Content-Type": file.type, // Removed, not necessary with presigned URLs
       },
     });
 
     if (!uploadRes.ok) {
-      throw new Error("Failed to upload file");
+      const errorData = await uploadRes.json(); //attempt to read response
+      throw new Error(`Failed to upload file: ${errorData.error || 'Unknown error with status ' + uploadRes.status}`);
     }
-    const fileUrl = publicUrl + "/" + fileName;
 
-    // Return the public URL where the file can be accessed
-    return {
-      success: true,
-      fileUrl,
-      userId,
-    };
+    // No need to append filename again, publicUrl is already complete
+    return { success: true, fileUrl: publicUrl, userId, error: '' };
+
   } catch (error: any) {
-    return {
-      success: false,
-      error: error.message,
-    };
+    console.error("Error in uploadToStorage:", error); // Log the error
+    return { success: false, fileUrl: "", userId, error: error.message || "An unknown error occurred" };
   }
 }
 
 export async function deleteFromStorage(fileUrl: string, userId: string) {
   try {
-    const fileName = fileUrl.split("/").pop();
+    if (!fileUrl) {
+      throw new Error("File URL is required.");
+    }
+
+    if (!userId) {
+      throw new Error("User ID is required.");
+    }
+    const fileName = fileUrl.split("/").pop(); // gets the file name
     if (!fileName) {
       throw new Error("Invalid file URL");
     }
@@ -78,24 +75,18 @@ export async function deleteFromStorage(fileUrl: string, userId: string) {
       headers: {
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({ fileName, userId }), //Keep sending userId, even if unused in API, for consistency
+      body: JSON.stringify({ fileName, userId }), //Keep sending userId
     });
 
     if (!res.ok) {
-      const errorData = await res.json(); // Get error details, if any.
-      throw new Error(
-        `Failed to delete file: ${errorData.error || "Unknown error"}`,
-      );
+      const errorData = await res.json(); // Get error details.
+      throw new Error(`Failed to delete file: ${errorData.error || 'Unknown error with status ' + res.status}`);
     }
 
-    // The API call itself performs the deletion; no need for a second fetch.
-    return {
-      success: true,
-    };
+    return { success: true, error: '' }; // Include error in success case too
+
   } catch (error: any) {
-    return {
-      success: false,
-      error: error.message,
-    };
+    console.error("Error in deleteFromStorage:", error); // Log the error
+    return { success: false, error: error.message || "An unknown error occurred" };
   }
 }

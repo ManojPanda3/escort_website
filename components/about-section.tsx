@@ -1,11 +1,11 @@
 export function AboutSection() {
   return (
-    <section className="bg-gray-900 text-gray-200 py-12 px-4">
+    <section className="bg-gray-900 text-gray-200 py-10 ">
       <div className="container mx-auto max-w-4xl">
         <h2 className="text-4xl font-playfair-display font-extrabold text-center mb-8 bg-gradient-to-r from-amber-200 to-yellow-400 bg-clip-text text-transparent">
           All Nighters — Australia's Premium Escort Directory
         </h2>
-        <p className="mb-6 text-lg leading-relaxed">
+        <p className="mb-6 text-lg leading-relaxed text-wrap">
           EVERYONE DESERVES AN UNFORGETTABLE EXPERIENCE.® All Nighters is a
           modern, premium adult services platform catering to discerning
           individuals looking for the best in elegance, sophistication, and

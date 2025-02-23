@@ -42,3 +42,5 @@ pnpm-debug.log*
 # Windows system files
 Thumbs.db
 .vercel
+cloudflar_worker
+*.bak

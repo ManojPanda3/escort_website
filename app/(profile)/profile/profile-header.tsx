@@ -1,4 +1,5 @@
 // --- app/profile/profile-header.tsx ---
+
 "use client";
 
 import Image from "next/image";
@@ -18,26 +19,30 @@ import {
   Phone,
   Ruler,
   Star,
-  User2, // New icon for "About" section
+  User2,
 } from "lucide-react";
 import getRandomImage from "@/lib/randomImage";
 import { Database } from "@/lib/database.types";
-import { useState } from "react";
-import { BookmarksDialog } from "./bookmarks-dialog"; // Import the new component
+import { useState } from "react";  // Remove useRef and useEffect
+import { BookmarksDialog } from "./bookmarks-dialog";
+import { OnlineStatusSetter } from "./OnlineStatusSetter"; // Import the new component
+
 
 type User = Database["public"]["Tables"]["users"]["Row"];
 
 interface ProfileHeaderProps {
   profile: User;
-  bookmarks: any[]; // Add bookmarks prop
+  bookmarks: any[];
 }
 
 export function ProfileHeader({ profile, bookmarks }: ProfileHeaderProps) {
   const [open, setOpen] = useState(false);
 
+
   return (
     <>
       <Card className="relative overflow-hidden bg-black/40 backdrop-blur-sm mb-8">
+        {/* ... (rest of your existing code, unchanged) ... */}
         {/* Cover Image */}
         <div className="h-48 relative">
           <Image
@@ -81,14 +86,14 @@ export function ProfileHeader({ profile, bookmarks }: ProfileHeaderProps) {
                       </Badge>
                     )}
                   </h1>
-                  {profile?.about &&
+                  {profile?.about && (
                     <p
                       className="text-muted-foreground truncate"
                       title={profile?.about || ""}
                     >
                       {profile?.about}
                     </p>
-                  }
+                  )}
                 </div>
 
                 <div className="flex gap-2">
@@ -108,9 +113,13 @@ export function ProfileHeader({ profile, bookmarks }: ProfileHeaderProps) {
                       Edit Profile
                     </Button>
                   </Link>
+
+                  {/* Use the OnlineStatusSetter component */}
+                  <OnlineStatusSetter />
                 </div>
               </div>
 
+              {/* ... (rest of your stats grids) ... */}
               {/* Stats Grid */}
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-6">
                 {profile?.location_name && (

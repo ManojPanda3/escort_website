@@ -79,8 +79,9 @@ export default function LoginPage() {
     setIsLoading(true);
     try {
       const { error } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: `${process.env.NEXT_PUBLIC_DOMAIN}/auth/update-password`, // IMPORTANT: Redirect URL
+        redirectTo: `${window.location.origin}/auth/update-password`,
       });
+      console.log(`${window.location.origin}/auth/update-password`)
       if (error) {
         setError(error.message);
       } else {

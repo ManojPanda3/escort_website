@@ -1,9 +1,11 @@
 "use client";
-import { useEffect, useState } from "react";
+
+import { useEffect, useState, useRef, useCallback } from "react";
 import { CategoryTabs } from "./category-tabs.tsx";
 import { Database } from "@/lib/database.types";
 import { EscortCard } from "./escort-card.tsx";
 import Link from "next/link";
+import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
 
 const categories_default = [
   "All",
@@ -14,43 +16,155 @@ const categories_default = [
 ] as const;
 
 type Users = Database["public"]["Tables"]["users"]["Row"];
-const UsersCard = ({
-  users,
-}: {
+type UserType = Database["public"]["Enums"]["user type"];
+
+interface UsersCardProps {
   users: Users[];
-}) => {
+  onScroll?: () => void; // Optional onScroll prop
+}
+
+interface UserWrapperProps {
+  users: Users[];
+  userType?: UserType | null;
+  location?: string | null;
+  gender?: string | null;
+}
+
+export const UserWrapper = ({
+  users,
+  userType,
+  location,
+  gender,
+}: UserWrapperProps) => {
+  const supabase = createClientComponentClient();
+  const [usersData, setUsersData] = useState<Users[]>(users);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [hasMore, setHasMore] = useState(true);
+
+  const onScroll = useCallback(async () => {
+    if (loadingMore || !hasMore) return;
+    setLoadingMore(true);
+
+    try {
+      let query = supabase.from("users").select("*");
+
+      if (
+        userType != null &&
+        userType.trim() !== "" &&
+        userType.toLocaleLowerCase() !== "all"
+      ) {
+        query = query.eq("user_type", "escort");
+      }
+      if (
+        location &&
+        location.trim() !== "" &&
+        location.toLocaleLowerCase() !== "all locations"
+      ) {
+        query = query.eq("location_name", location);
+      }
+      if (
+        gender &&
+        gender.trim() !== "" &&
+        gender.toLocaleLowerCase() !== "viewall"
+      ) {
+        query = query.eq("gender", gender);
+      }
+
+      const existingIds = usersData.map((e) => e.id);
+      query = query.not("id", "in", `(${existingIds.join(',')})`);
+      query = query
+        .order("ratings", { ascending: false })
+        .order("created_at", { ascending: false });
+
+      const { data: escorts, error } = await query.limit(20);
+
+      if (error) {
+        console.error("Error while fetching users\n Error:", error);
+      } else if (escorts) {
+        if (escorts.length === 0) {
+          setHasMore(false);
+        } else {
+          setUsersData((prevUsers) => [...prevUsers, ...escorts]);
+        }
+      }
+    } catch (err) {
+      console.error("An unexpected error occurred:", err);
+    } finally {
+      setLoadingMore(false);
+    }
+  }, [loadingMore, hasMore, userType, location, gender, usersData, supabase]);
+
+  return (
+    <>
+      <UsersCard users={usersData} onScroll={onScroll} />
+      {loadingMore && (
+        <div className="text-center py-4">Loading more users...</div>
+      )}
+      {!hasMore && !loadingMore && (
+        <div className="text-center py-4">No more users to load.</div>
+      )}
+    </>
+  );
+};
+
+const UsersCard = ({ users, onScroll }: UsersCardProps) => {
   const [selectedCategory, setSelectedCategory] = useState<string>(
     categories_default[0],
   );
-  const [selectedUsers, setSelectedUsers] = useState<Users[]>(users || []); // Initialize as empty array
+  const [selectedUsers, setSelectedUsers] = useState<Users[]>(users || []);
+  const containerRef = useRef<HTMLDivElement>(null); // Ref for the container
 
   useEffect(() => {
-    // filter the escort
     const filtered_user: Users[] = users.filter((e) => {
       switch (selectedCategory) {
         case categories_default[0]:
           return true;
         case categories_default[1]:
-          return isWithinLastMonth(e.created_at || (new Date()).toISOString());
+          return isWithinLastMonth(e.created_at || new Date().toISOString());
         case categories_default[2]:
           return e.current_offer !== null;
         case categories_default[3]:
           return e.is_verified;
         case categories_default[4]:
-          return e.availability; // Assuming availability is a boolean
+          return e.availability;
         default:
           console.error(
             "Unknown Category selected , may be the category was not registered",
           );
-          return false; // Default to not showing the user on unknown category
+          return false;
       }
     });
-    // save the filtered escort
     setSelectedUsers(filtered_user);
   }, [selectedCategory, users]);
 
+  const handleScroll = useCallback(() => {
+    if (!containerRef.current || !onScroll) {
+      return;
+    }
 
-  // Render a loading state or message if users is empty or still loading
+    const container = containerRef.current;
+    const containerBottom = container.getBoundingClientRect().bottom;
+    const scrollY = window.scrollY || window.pageYOffset;
+    const windowHeight = window.innerHeight;
+    const scrollBottom = scrollY + windowHeight;
+
+    const threshold = windowHeight * 0.1;
+
+    if (containerBottom - scrollBottom <= threshold) {
+      onScroll();
+    }
+  }, [onScroll]);
+
+
+
+  useEffect(() => {
+    window.addEventListener("scroll", handleScroll);
+
+    return () => {
+      window.removeEventListener("scroll", handleScroll);
+    };
+  }, [handleScroll]);
+
   if (!users || users.length === 0) {
     return <div className="text-center py-8">Loading users...</div>;
   }
@@ -69,13 +183,13 @@ const UsersCard = ({
       </section>
 
       <section aria-label="Escort Listings">
-        <div className="grid  gap-6 grid-cols-2  lg:grid-cols-3 xl:grid-cols-4">
+        {/* Remove overflow-auto and maxHeight */}
+        <div
+          ref={containerRef}
+          className="grid gap-6 grid-cols-2 lg:grid-cols-3 xl:grid-cols-4"
+        >
           {selectedUsers.map((user) => (
-            <Link
-              key={user.id}
-              href={`/profile/${user.id}`}
-              prefetch={false}
-            >
+            <Link key={user.id} href={`/profile/${user.id}`} prefetch={false}>
               <EscortCard
                 key={user.id}
                 name={user.name || user.username}
@@ -83,17 +197,19 @@ const UsersCard = ({
                 image={user.profile_picture}
                 location={user.location_name}
                 measurements={user.dress_size}
-                isVerified={user.is_vip}
+                isVerified={user.is_verified}
                 isVip={user.is_vip}
                 availability={user.availability}
                 isOnline={user.is_available}
               />
             </Link>
           ))}
+          {selectedUsers.length === 0 && (
+            <div className="text-center col-span-full">
+              No users found for this category.
+            </div>
+          )}
         </div>
-        {selectedUsers.length === 0 && (
-          <div className="text-center col-span-full">No users found for this category.</div>
-        )}
       </section>
     </>
   );
@@ -106,7 +222,7 @@ function isWithinLastMonth(dateString: string) {
 
     if (isNaN(pastDate.getTime())) {
       console.error("Invalid date string:", dateString);
-      return false; // Handle invalid date strings gracefully
+      return false;
     }
 
     const currentMonth = now.getMonth();
@@ -114,13 +230,12 @@ function isWithinLastMonth(dateString: string) {
     const pastDateMonth = pastDate.getMonth();
     const pastDateYear = pastDate.getFullYear();
 
-    // Check if the date is within the current month or the immediately preceding month
     if (currentYear === pastDateYear) {
-      return currentMonth === pastDateMonth ||
-        currentMonth - 1 === pastDateMonth;
+      return (
+        currentMonth === pastDateMonth || currentMonth - 1 === pastDateMonth
+      );
     } else if (currentYear - 1 === pastDateYear && currentMonth === 0) {
-      // Case when current month is January (0) and we check for December of last year
-      return pastDateMonth === 11; // 11 is December (0-indexed)
+      return pastDateMonth === 11;
     }
     return false;
   } catch (error) {
