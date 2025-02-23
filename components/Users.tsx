@@ -53,7 +53,7 @@ export const UserWrapper = ({
         userType.trim() !== "" &&
         userType.toLocaleLowerCase() !== "all"
       ) {
-        query = query.eq("user_type", "escort");
+        query = query.eq("user_type", userType);
       }
       if (
         location &&
@@ -186,7 +186,7 @@ const UsersCard = ({ users, onScroll }: UsersCardProps) => {
         {/* Remove overflow-auto and maxHeight */}
         <div
           ref={containerRef}
-          className="grid gap-6 grid-cols-2 lg:grid-cols-3 xl:grid-cols-4"
+          className="grid justify-evenly gap-4 grid-cols-2 lg:grid-cols-3 xl:grid-cols-4"
         >
           {selectedUsers.map((user) => (
             <Link key={user.id} href={`/profile/${user.id}`} prefetch={false}>

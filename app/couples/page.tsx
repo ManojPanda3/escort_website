@@ -2,6 +2,7 @@ import { EscortCard } from "@/components/escort-card";
 import { createServerComponentClient } from "@supabase/auth-helpers-nextjs";
 import { cookies } from "next/headers";
 import HeroCard from "@/components/HeroCard.tsx";
+import { UserWrapper } from "@/components/Users";
 
 export default async function EscortsPage(
   { searchParams }: { searchParams: { location?: string; gender?: string } },
@@ -28,6 +29,11 @@ export default async function EscortsPage(
   ) {
     query = query.eq("gender", gender);
   }
+  query = query
+    .order("ratings", { ascending: false })
+    .order("created_at", { ascending: false })
+    .limit(20)
+    ;
 
   const { data: escorts, error } = await query;
 
@@ -44,23 +50,13 @@ export default async function EscortsPage(
           initial_location={location || ""}
           initial_gender={gender || ""}
         />
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-          {escorts?.map((escort) => (
-            <EscortCard
-              key={escort.id}
-              id={escort.id}
-              name={escort.username}
-              age={escort.age}
-              location={escort.location_name}
-              measurements={escort.size}
-              price={escort.price}
-              image={escort.profile_picture}
-              availability={escort.availability}
-              isVerified={escort.is_verified}
-              isVip={escort.is_vip}
-              isOnline={false}
-            />
-          ))}
+        <div className="px-2">
+          <UserWrapper
+            users={escorts}
+            userType={"escorts"}
+            location={location}
+            gender={gender}
+          />
         </div>
       </div>
     </div>

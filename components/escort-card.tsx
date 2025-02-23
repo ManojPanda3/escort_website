@@ -122,6 +122,6 @@ export function EscortCard({
       </Card>
     </motion.div>
   );
-}
+};
 
 EscortCard.displayName = "EscortCard";

@@ -11,7 +11,7 @@ import { FeaturedEscorts } from "@/components/featured-escorts";
 import { AboutSection } from "@/components/about-section";
 import { StoriesContainer } from "@/components/story-container";
 import getRandomImage from "@/lib/randomImage";
-import Users from "@/components/Users.tsx";
+import Users, { UserWrapper } from "@/components/Users.tsx";
 import { Database } from "@/lib/database.types";
 import FaqAllNighters from "@/components/Faq02";
 
@@ -53,10 +53,14 @@ export default async function EscortsPage(
     query = query.eq("gender", gender);
   }
 
+  query = query
+    .order("ratings", { ascending: false })
+    .order("created_at", { ascending: false });
+
   const { data: escorts, error }: {
     data: Escort[];
     error: unknown;
-  } = await query;
+  } = await query.limit(20);
 
   if (error) {
     console.error("Error fetching escorts:", error);
@@ -90,7 +94,7 @@ export default async function EscortsPage(
 
           {/* Featured Escorts Section */}
           <section className="container mx-auto px-4 py-8">
-            <FeaturedEscorts users={escorts.slice(0, 4)} />
+            <FeaturedEscorts users={escorts.slice(0, 3)} />
           </section>
 
           {/* Stories Section */}
@@ -106,9 +110,14 @@ export default async function EscortsPage(
               }
             />
           </section>
-          <Users
-            users={escorts}
-          />
+          <div className="px-2">
+            <UserWrapper
+              users={escorts}
+              userType={"escort"}
+              location={location}
+              gender={gender}
+            />
+          </div>
           <FaqAllNighters />
 
           {/* About Section */}
