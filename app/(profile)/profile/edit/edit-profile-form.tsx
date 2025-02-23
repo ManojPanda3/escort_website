@@ -197,7 +197,6 @@ export function EditProfileForm() {
     setIsDialogOpen(false);
     setPhoneError("");
   }
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
@@ -234,12 +233,32 @@ export function EditProfileForm() {
       }
 
 
-      await fetch()
-
-      toast({
-        title: "Success",
-        description: "Profile updated successfully.",
+      const placeOfServiceResponse = await fetch("/api/profile/addPlaceOfService/", {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ place_of_services }),
       });
+
+      if (!placeOfServiceResponse.ok) {
+        const errorData = await placeOfServiceResponse.json();
+        // Prioritize the 'message' from the API response, fallback to generic error.
+        const errorMessage = errorData.message || `Error updating place of service: ${placeOfServiceResponse.status} ${placeOfServiceResponse.statusText}\n redirecting to the premium page`;
+        router.push("/premium")
+        throw new Error(errorMessage);
+      }
+
+      //if the response ok then its success
+      const data = await placeOfServiceResponse.json()
+      if (data.success) {
+        toast({
+          title: "Success",
+          description: data.message || "Profile updated successfully.", //use message from api if available
+        });
+      }
+
+
       router.refresh();
 
     } catch (error: any) {
@@ -260,8 +279,9 @@ export function EditProfileForm() {
     const s3_response = await uploadToStorage(file, profile.id);
 
     if (!s3_response.success) {
-      setError(`Failed to upload ${field}. ${s3_response.error}`);
+      setError(`Failed to upload ${field}. ${s3_response.error}, redirecting to premium page`);
       setIsDialogOpen(true); //open dialog on error
+      router.push("/premium")
       return null;
     }
     return s3_response.fileUrl;
@@ -609,10 +629,7 @@ export function EditProfileForm() {
                       placeholder="select place of service"
                       onValueChange={(value) => {
                         if (!place_of_services.includes(value)) {
-                          setPlaceOfServices((prev) => {
-                            const newServices = place_of_services.filter(services => !prev.includes(services));
-                            return [...prev, ...newServices];
-                          })
+                          setPlaceOfServices((prev: string[]) => [...prev, value]);
                         }
                       }}
                       required
@@ -630,7 +647,7 @@ export function EditProfileForm() {
                     </Select>
                   </div>
                   <div className="flex flex-wrap gap-2">
-                    {formData.place_of_services.map((place) => (
+                    {place_of_services.map((place) => (
                       <Badge key={place} variant="secondary">
                         {place}
                         <Button
@@ -638,7 +655,9 @@ export function EditProfileForm() {
                           size="sm"
                           type="button"
                           className="ml-2 h-4 w-4 p-0"
-                          onClick={() => handleArrayRemove("place_of_services", place)}
+                          onClick={() => {
+                            setPlaceOfServices((prev) => prev.filter((item) => item !== place));
+                          }}
                         >
                           <X className="h-3 w-3" />
                         </Button>
