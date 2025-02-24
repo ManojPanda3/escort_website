@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { Loader2, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -12,6 +12,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { useUserData } from "@/lib/useUserData";
+import VideoEditing from "@/components/VideoEditing";
 
 interface Story {
   url: string;
@@ -19,8 +20,6 @@ interface Story {
   isvideo?: boolean;
   thumbnail?: string | null;
 }
-
-
 export function StoryUploadButton() {
   // TODO: make this workable
   // -- adding an way to compress the video 
@@ -37,7 +36,6 @@ export function StoryUploadButton() {
   const [thumbnailURL, setThumbnailURL] = useState<string | null>(null);
   const [fileError, setFileError] = useState<string | null>(null);
   const [stories_state, setStories] = useState<Story[]>(stories);
-
 
 
   const onUpload = async () => {
@@ -159,9 +157,10 @@ export function StoryUploadButton() {
   };
 
 
+
   return (
     <div>
-      <div className="mb-8 overflow-x-auto">
+      <div className="mb-6 overflow-x-auto">
         <div className="flex gap-4">
           <Button
             onClick={() => setIsOpen(true)}
@@ -215,6 +214,12 @@ export function StoryUploadButton() {
                 <p className="text-destructive text-sm">{fileError}</p>
               )}
             </div>
+            {
+              file && isVideo && <VideoEditing
+                videoSrc={URL.createObjectURL(file)}
+                videoFile={file}
+              />
+            }
 
             {thumbnailURL && (
               <div className="space-y-2">

@@ -55,7 +55,7 @@ export function NavBar({ userId }: { userId: string }) {
       (event, session) => {
         // Update isUserExist based on the session
         setIsUserExist(!!session?.user);
-        if (session?.user) {
+        if (!isUserExist && session?.user) {
           refetch();
         }
       },

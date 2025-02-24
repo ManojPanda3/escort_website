@@ -27,7 +27,7 @@ interface UserData {
 }
 
 const CACHE_KEY = "userData";
-const CACHE_EXPIRY = 5 * 60 * 1000;
+const CACHE_EXPIRY = 30 * 60 * 1000; // 30min
 
 export function useUserData(): UserData {
   const supabase = createClientComponentClient<Database>(); // Move Supabase client initialization here
@@ -52,6 +52,7 @@ export function useUserData(): UserData {
 
   const fetchData = useCallback(async () => {
     setUserData((prev) => ({ ...prev, isLoading: true, error: null }));
+    console.log("Fetching Data ...")
 
     try {
       const {
@@ -156,9 +157,12 @@ export function useUserData(): UserData {
       } else {
         clearCache(); // Clear expired cache
       }
+    } else {
+      if (!userData.isLoading) {
+        fetchData();
+      }
     }
 
-    fetchData();
   }, [fetchData, clearCache]); // Include clearCache in dependency array
 
   return userData;

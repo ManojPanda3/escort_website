@@ -169,7 +169,7 @@ export function OnlineStatusSetter({ }: OnlineStatusSetterProps) {
                 try {
                   const { error } = await supabase
                     .from("users")
-                    .update({ is_available: false })
+                    .update({ availability: null, availability_exp: null })
                     .eq("id", user.id);
 
                   if (error) {

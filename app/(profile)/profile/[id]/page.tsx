@@ -96,7 +96,7 @@ export default async function UserProfilePage(
         aria-label="User Stories"
         className="mb-8 overflow-x-auto"
       >
-        <div className="flex gap-4 pb-2">
+        <div className="flex items-center gap-4 pb-2">
           {stories.stories && stories.stories.length > 0
             ? (
               <StoriesContainer
