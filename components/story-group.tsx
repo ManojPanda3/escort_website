@@ -11,7 +11,7 @@ interface Story {
   url: string;
   thumbnail: string;
   title: string;
-  isVideo?: boolean; likes: number;
+  isvideo?: boolean; likes: number;
 }
 
 interface StoryGroupProps {
@@ -112,7 +112,7 @@ export function StoryGroup(
         url={stories[0].url}
         thumbnail={stories[0].thumbnail || getRandomImage()}
         title={ownerName}
-        isVideo={stories[0].isVideo}
+        isVideo={stories[0].isvideo}
         userId={userId}
         likes={stories[0].likes}
         ownerAvatar={ownerAvatar}
@@ -124,7 +124,7 @@ export function StoryGroup(
           id={stories[currentStoryIndex].id}
           url={stories[currentStoryIndex].url}
           title={stories[currentStoryIndex].title}
-          isVideo={stories[currentStoryIndex].isVideo}
+          isVideo={stories[currentStoryIndex].isvideo}
           onClose={closeViewer}
           userId={userId}
           likes={likeCounts[currentStoryIndex]}

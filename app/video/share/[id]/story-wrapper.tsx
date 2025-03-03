@@ -1,10 +1,11 @@
+"use client"
 import { StoryViewer } from "@/components/story-viewer";
 import getRandomImage from "@/lib/randomImage";
 import { supabase } from "@/lib/supabase";
 import { useUserData } from "@/lib/useUserData";
 import { useState } from "react";
 
-function StoryWrapper({ story, isLiked }) {
+export default function StoryWrapper({ story, isLiked }) {
   const [liked, setLiked] = useState<boolean>(isLiked);
   const [likes, setLikes] = useState<number>(story?.likes);
   const { user } = useUserData();

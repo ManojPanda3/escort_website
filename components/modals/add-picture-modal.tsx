@@ -1,5 +1,7 @@
 "use client";
 
+import { AlertCircle } from "lucide-react";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { useState } from "react";
 import {
   Dialog,
@@ -19,20 +21,19 @@ interface AddPictureModalProps {
   isOpen: boolean;
   onClose: () => void;
   userId: string;
-  setError: (error: string) => void;
 }
 
 export function AddPictureModal({
   isOpen,
   onClose,
   userId,
-  setError,
 }: AddPictureModalProps) {
   const [loading, setLoading] = useState(false);
   const [title, setTitle] = useState("");
   const [isMain, setIsMain] = useState(false);
   const [file, setFile] = useState<File | null>(null);
   const router = useRouter();
+  const [error, setError] = useState<string>("");
 
   const convertToWebP = async (file: File): Promise<Blob> => {
     return new Promise((resolve, reject) => {
@@ -101,14 +102,13 @@ export function AddPictureModal({
       );
 
       const picture = await uploadToStorage(webpFile, userId);
-      if (!picture.fileUrl) throw new Error("Failed to upload to storage");
+      if (!picture.fileUrl) throw new Error("Failed to upload to storage, media limit reached");
 
       formData.append("picture", picture.fileUrl);
       const response = await fetch("/api/profile/addImage", {
         method: "POST",
         body: formData,
       });
-      if (!response.ok) throw new Error("Failed to upload image");
       const data = await response.json();
       const webpUrl = URL.createObjectURL(webpFile);
       onClose({
@@ -119,7 +119,7 @@ export function AddPictureModal({
       });
     } catch (error) {
       console.error("Error uploading image:", error);
-      setError("Failed to upload image. Please try again.");
+      setError(error.message);
     } finally {
       setLoading(false);
     }
@@ -131,6 +131,13 @@ export function AddPictureModal({
         <DialogHeader>
           <DialogTitle>Add New Picture</DialogTitle>
         </DialogHeader>
+        {error && (
+          <Alert variant="destructive" className="mb-4">
+            <AlertCircle className="h-4 w-4" />
+            <AlertTitle>Error</AlertTitle>
+            <AlertDescription>{error}</AlertDescription>
+          </Alert>
+        )}
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <Label htmlFor="picture">Picture</Label>

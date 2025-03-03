@@ -60,7 +60,6 @@ export function OnlineStatusSetter({ }: OnlineStatusSetterProps) {
       parseInt(selectedTime.minute) * 60 * 1000;
 
     if (durationMilliseconds <= 0) {
-      console.log("Invalid Duration: Must be greater than 0.");
       toast({
         variant: "destructive",
         title: "Invalid Duration",
@@ -82,13 +81,7 @@ export function OnlineStatusSetter({ }: OnlineStatusSetterProps) {
       return;
     }
 
-    console.log(`User will be online for: ${durationMilliseconds} milliseconds`);
     setOnlineDialogOpen(false);
-    console.log("Updating availability...");
-    console.log(
-      new Date().toISOString(),
-      futureAvailability.toISOString()
-    )
 
     try {
       const { error } = await supabase

@@ -190,6 +190,7 @@ export function ProfileTabs({
               <Card
                 key={picture.id}
                 className="overflow-hidden hover:shadow-lg transition-shadow"
+                key={picture.id}
               >
                 <div className="aspect-square relative">
                   <Image
@@ -212,9 +213,6 @@ export function ProfileTabs({
                       <Trash2 className="h-4 w-4 text-red-500" />
                     </Button>
                   </div>
-                  <p className="text-sm text-muted-foreground">
-                    Likes: {picture.likes}
-                  </p>
                 </CardContent>
               </Card>
             ))}

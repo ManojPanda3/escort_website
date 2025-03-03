@@ -13,101 +13,188 @@ import {
 } from "@/components/ui/dialog";
 import { useUserData } from "@/lib/useUserData";
 import VideoEditing from "@/components/VideoEditing";
+import { uploadToStorage } from "@/lib/storage";
 
 interface Story {
   url: string;
   title: string;
-  isvideo?: boolean;
+  isVideo?: boolean;
   thumbnail?: string | null;
 }
+
 export function StoryUploadButton() {
-  // TODO: make this workable
-  // -- adding an way to compress the video 
-  // -- get thumbnail from video
-  // -- upload the video to the server
-  // -- or incase of image upload the image to the server 
-  // 
-  const { user, stories } = useUserData()
+  const { user, stories, refetch } = useUserData();
   const [isOpen, setIsOpen] = useState(false);
   const [isVideo, setIsVideo] = useState(false);
-  const [title, setTitle] = useState("");
+  const titleRef = useRef<HTMLInputElement | null>(null);
   const [file, setFile] = useState<File | null>(null);
   const [isUploading, setIsUploading] = useState(false);
-  const [thumbnailURL, setThumbnailURL] = useState<string | null>(null);
+  const [thumbnailUrl, setThumbnailUrl] = useState<string | null>(null);
+  const [thumbnail, setThumbnail] = useState<File | null>(null);
   const [fileError, setFileError] = useState<string | null>(null);
-  const [stories_state, setStories] = useState<Story[]>(stories);
+  const [error, setError] = useState<string | null>(null);
+  const [storiesState, setStories] = useState<Story[]>(stories);
+  const videoEditorRef = useRef<{ trim: () => Promise<void> } | null>(null);
 
-
-  const onUpload = async () => {
-    // Your existing upload logic will be integrated within handleSubmit
-  };
-
+  useEffect(() => {
+    // Update local stories state when stories prop changes
+    setStories(stories);
+  }, [stories]);
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFile = e.target.files?.[0];
     if (!selectedFile) return;
 
-    setFileError(null); // Reset error on new file selection
+    setFileError(null);
     setFile(selectedFile);
 
     if (selectedFile.type.startsWith("video/")) {
-      console.log("Video Not Allowed");
       setIsVideo(true);
-      setThumbnailURL(null); // Clear thumbnail if video is selected.
-      return; // Stop processing if it's a video
+      setThumbnailUrl(null);
+      return;
     } else {
-      console.log("Image are allowed");
+      setIsVideo(false);
     }
 
-    // Image Optimization for non-video files:
     try {
       const optimizedImage = await optimizeImage(selectedFile);
-      setThumbnailURL(URL.createObjectURL(optimizedImage));
-      setFile(optimizedImage)  // Store for upload.
-
-
+      setThumbnailUrl(URL.createObjectURL(optimizedImage));
+      setFile(optimizedImage);
     } catch (error) {
       console.error("Error optimizing image:", error);
       setFileError("Failed to process image.");
-      setThumbnailURL(null);
+      setThumbnailUrl(null);
     }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!file) {
-      setFileError("Please select a file.");
+
+    if (!(titleRef.current && titleRef.current.value.trim() !== "")) {
+      setError("Please enter a proper title");
       return;
     }
 
+    // Clear previous errors
+    setFileError(null);
+    setError(null);
     setIsUploading(true);
 
     try {
-      // Placeholder for your actual upload logic
-      // You'll need to integrate your API calls or cloud storage upload here.
+      let fileToUpload: File | null = null;
+      if (isVideo && videoEditorRef.current) {
+        fileToUpload = await videoEditorRef.current.trim();
+        if (!fileToUpload) fileToUpload = file;
+      } else {
+        fileToUpload = file;
+      }
 
-      // Assuming onUpload() now takes the `file` and processes it.
-      //  await onUpload(file);
-      await new Promise((resolve) => setTimeout(resolve, 1000)); // Simulate upload
+      if (!fileToUpload) {
+        setFileError("Please select a file.");
+        setIsUploading(false);
+        return;
+      }
 
-      setIsOpen(false);
-      resetForm();
-    } catch (error) {
+      const newStory = {
+        url: "",
+        title: titleRef.current.value,
+        isvideo: isVideo,
+        thumbnail: null,
+      };
+
+      // Upload files to storage
+      try {
+        if (isVideo) {
+          if (!thumbnail) {
+            setFileError("Thumbnail is required for video uploads");
+            setIsUploading(false);
+            return;
+          }
+
+          const response = await Promise.all([
+            uploadToStorage(fileToUpload, user.id),
+            uploadToStorage(thumbnail, user.id),
+          ]);
+
+          // Check for upload errors
+          if (response.some(r => !r.success)) {
+            const error = response.find(r => !r.success)?.error || "Upload failed";
+            setFileError(`Storage upload error: ${error}`);
+            setIsUploading(false);
+            return;
+          }
+
+          newStory.url = response[0].fileUrl;
+          newStory.thumbnail = response[1].fileUrl;
+        } else {
+          const response = await uploadToStorage(fileToUpload, user.id);
+
+          if (!response.success) {
+            setFileError(`Storage upload error: ${response.error}`);
+            setIsUploading(false);
+            return;
+          }
+
+          newStory.url = response.fileUrl;
+          newStory.thumbnail = response.fileUrl;
+        }
+      } catch (uploadError: any) {
+        setFileError(`File upload error: ${uploadError.message}`);
+        setIsUploading(false);
+        return;
+      }
+
+      // Save to database
+      try {
+        const response = await fetch("/api/profile/addStory", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify(newStory)
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+          // Handle specific error cases
+          if (response.status === 402 || data.error?.includes("quota")) {
+            setFileError("Upload quota exceeded. Please upgrade your plan to upload more media.");
+          } else if (response.status === 401) {
+            setFileError("Unauthorized. You may need to upgrade your account to upload stories.");
+          } else {
+            setFileError(data.error || "Failed to save story to database");
+          }
+          setIsUploading(false);
+          return;
+        }
+
+        // Success - update the UI
+        await refetch();
+        setIsOpen(false);
+        resetForm();
+      } catch (apiError: any) {
+        setFileError(`API error: ${apiError.message}`);
+        setIsUploading(false);
+      }
+    } catch (error: any) {
       console.error("Error uploading:", error);
-      setFileError("Upload failed. Please try again.");
+      setFileError(error.message || "Upload failed. Please try again.");
+      setIsUploading(false);
     } finally {
       setIsUploading(false);
     }
   };
 
   const resetForm = () => {
-    setTitle("");
     setFile(null);
-    setThumbnailURL(null);
+    setThumbnailUrl(null);
     setFileError(null);
+    setIsVideo(false);
+    setThumbnail(null);
+    setError(null);
   };
 
-  // Image Optimization Function (to WebP, 720p)
   const optimizeImage = (file: File): Promise<File> => {
     return new Promise((resolve, reject) => {
       const img = new Image();
@@ -148,15 +235,13 @@ export function StoryUploadButton() {
             resolve(optimizedFile);
           },
           "image/webp",
-          0.7 // Quality, adjust as needed (0.0 - 1.0)
+          0.7
         );
       };
 
       img.onerror = reject;
     });
   };
-
-
 
   return (
     <div>
@@ -169,36 +254,22 @@ export function StoryUploadButton() {
           >
             <Plus className="h-6 w-6" />
           </Button>
-
-          {stories_state.map((story) => (
-            <div
-              key={story.title + story.url}
-              className="w-16 h-16 rounded-full overflow-hidden border-2 border-primary"
-            >
-              <img
-                src={story.thumbnail || story.url}
-                alt={story.title}
-                className="w-full h-full object-cover"
-              />
-            </div>
-          ))}
         </div>
       </div>
 
-      <Dialog open={isOpen} onOpenChange={setIsOpen}>
-        <DialogContent className="sm:max-w-[425px]">
+      <Dialog open={isOpen} onOpenChange={(open) => {
+        if (!open) resetForm();
+        setIsOpen(open);
+      }}>
+        <DialogContent className="sm:max-w-[425px] max-h-[80vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Upload New Story</DialogTitle>
           </DialogHeader>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="title">Story Title</Label>
-              <Input
-                id="title"
-                value={title}
-                onChange={(e) => setTitle(e.target.value)}
-                required
-              />
+              <Input id="title" ref={titleRef} required />
+              {error && <p className="text-destructive text-sm">{error}</p>}
             </div>
 
             <div className="space-y-2">
@@ -211,28 +282,37 @@ export function StoryUploadButton() {
                 disabled={isUploading}
               />
               {fileError && (
-                <p className="text-destructive text-sm">{fileError}</p>
+                <p className="text-destructive text-sm mt-1">{fileError}</p>
               )}
             </div>
-            {
-              file && isVideo && <VideoEditing
+
+            {file && isVideo && (
+              <VideoEditing
                 videoSrc={URL.createObjectURL(file)}
                 videoFile={file}
+                setFile={setFile}
+                setThumbnailURL={setThumbnailUrl}
+                setThumbnail={setThumbnail}
+                ref={videoEditorRef}
               />
-            }
+            )}
 
-            {thumbnailURL && (
+            {isVideo === false && thumbnailUrl && (
               <div className="space-y-2">
-                <Label>Thumbnail</Label>
+                <Label>Picture</Label>
                 <img
-                  src={thumbnailURL}
-                  alt="Thumbnail"
+                  src={thumbnailUrl}
+                  alt="thumbnail"
                   className="max-h-40 w-auto rounded-lg"
                 />
               </div>
             )}
 
-            <Button type="submit" disabled={isUploading || !file || fileError !== null} className="w-full">
+            <Button
+              type="submit"
+              disabled={isUploading || !file}
+              className="w-full"
+            >
               {isUploading ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />

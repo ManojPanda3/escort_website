@@ -244,7 +244,6 @@ export type Database = {
           created_at: string
           id: string
           isvideo: boolean | null
-          liked_user: string[]
           likes: number | null
           owner: string | null
           thumbnail: string | null
@@ -506,103 +505,103 @@ export type Database = {
     }
     Enums: {
       escort_category:
-        | "Blonde"
-        | "Busty"
-        | "Mature"
-        | "Young"
-        | "Cougar"
-        | "MILF"
-        | "Red Hair"
-        | "Black Hair"
-        | "Brunette"
-        | "Slim"
-        | "Tall"
-        | "BBW"
-        | "Curvy"
-        | "Voluptuous"
-        | "Petite"
-        | "Touring"
-        | "Disability Friendly"
-        | "Tattooed"
-        | "No Tattoo"
-        | "Submissive"
-        | "Shaved"
-        | "Natural Bush"
-        | "Non Smoking"
-        | "Enhanced Breasts"
-        | "Natural Breasts"
-        | "Fitness"
-        | "Massage / Erotic Relaxation"
-        | "Photos Verified"
-        | "Fly Me To You"
-        | "Doubles Profiles"
+      | "Blonde"
+      | "Busty"
+      | "Mature"
+      | "Young"
+      | "Cougar"
+      | "MILF"
+      | "Red Hair"
+      | "Black Hair"
+      | "Brunette"
+      | "Slim"
+      | "Tall"
+      | "BBW"
+      | "Curvy"
+      | "Voluptuous"
+      | "Petite"
+      | "Touring"
+      | "Disability Friendly"
+      | "Tattooed"
+      | "No Tattoo"
+      | "Submissive"
+      | "Shaved"
+      | "Natural Bush"
+      | "Non Smoking"
+      | "Enhanced Breasts"
+      | "Natural Breasts"
+      | "Fitness"
+      | "Massage / Erotic Relaxation"
+      | "Photos Verified"
+      | "Fly Me To You"
+      | "Doubles Profiles"
       gender_type: "male" | "female" | "trans" | "binary"
       "payment status": "pending" | "failed" | "success"
       payment_type: "weekly" | "yearly" | "monthly"
       service_type:
-        | "Affectionate cuddling"
-        | "Affectionate kissing"
-        | "Anal play"
-        | "Anal play - On me"
-        | "Anal play - On you"
-        | "B + D – bondage + discipline"
-        | "BBBJ – bare back blow job"
-        | "BDSM"
-        | "BJ – blow job"
-        | "BLS – balls licking and sucking"
-        | "BS - body slide"
-        | "Body worship"
-        | "Bondage"
-        | "CBJ – covered blow job"
-        | "CBT – cock and ball torture"
-        | "COB – cum on body"
-        | "DATY – oral on me"
-        | "DDP – double digit penetration"
-        | "DP – double penetration"
-        | "DT – deep throat"
-        | "Dinner companion"
-        | "Doggy style"
-        | "Erotic sensual massage"
-        | "FE – female ejaculation (squirting)"
-        | "FS – full service"
-        | "Fetish"
-        | "Fly Me To You"
-        | "Foot fetish"
-        | "For Couples"
-        | "Full oil massage"
-        | "GFE - girlfriend experience"
-        | "Greek – anal sex"
-        | "HJ – hand job"
-        | "Happy ending"
-        | "LK – light kissing"
-        | "Light bondage"
-        | "Light spanking"
-        | "MFF – male female female"
-        | "MMF - male male female"
-        | "MSOG – multiple shots on goal"
-        | "Massage"
-        | "Masturbation"
-        | "Multiple positions"
-        | "Mutual French (oral)"
-        | "Mutual masturbation"
-        | "Mutual natural oral"
-        | "Natural oral"
-        | "Overnight stays"
-        | "PSE – porn star experience"
-        | "Prostate massage"
-        | "Rimming"
-        | "Rimming - On me"
-        | "Sex toys"
-        | "Sexy lingerie"
-        | "Sexy shower for 2"
-        | "Social escort"
-        | "Spanking - On me"
-        | "Spanking - On you"
-        | "Squirting"
-        | "Strap on"
-        | "Strap on - on me"
-        | "Strap on - on you"
-        | "Travel Companion"
+      | "Affectionate cuddling"
+      | "Affectionate kissing"
+      | "Anal play"
+      | "Anal play - On me"
+      | "Anal play - On you"
+      | "B + D – bondage + discipline"
+      | "BBBJ – bare back blow job"
+      | "BDSM"
+      | "BJ – blow job"
+      | "BLS – balls licking and sucking"
+      | "BS - body slide"
+      | "Body worship"
+      | "Bondage"
+      | "CBJ – covered blow job"
+      | "CBT – cock and ball torture"
+      | "COB – cum on body"
+      | "DATY – oral on me"
+      | "DDP – double digit penetration"
+      | "DP – double penetration"
+      | "DT – deep throat"
+      | "Dinner companion"
+      | "Doggy style"
+      | "Erotic sensual massage"
+      | "FE – female ejaculation (squirting)"
+      | "FS – full service"
+      | "Fetish"
+      | "Fly Me To You"
+      | "Foot fetish"
+      | "For Couples"
+      | "Full oil massage"
+      | "GFE - girlfriend experience"
+      | "Greek – anal sex"
+      | "HJ – hand job"
+      | "Happy ending"
+      | "LK – light kissing"
+      | "Light bondage"
+      | "Light spanking"
+      | "MFF – male female female"
+      | "MMF - male male female"
+      | "MSOG – multiple shots on goal"
+      | "Massage"
+      | "Masturbation"
+      | "Multiple positions"
+      | "Mutual French (oral)"
+      | "Mutual masturbation"
+      | "Mutual natural oral"
+      | "Natural oral"
+      | "Overnight stays"
+      | "PSE – porn star experience"
+      | "Prostate massage"
+      | "Rimming"
+      | "Rimming - On me"
+      | "Sex toys"
+      | "Sexy lingerie"
+      | "Sexy shower for 2"
+      | "Social escort"
+      | "Spanking - On me"
+      | "Spanking - On you"
+      | "Squirting"
+      | "Strap on"
+      | "Strap on - on me"
+      | "Strap on - on you"
+      | "Travel Companion"
       "user type": "general" | "bdsm" | "escort" | "couple"
     }
     CompositeTypes: {
@@ -615,95 +614,95 @@ type PublicSchema = Database[Extract<keyof Database, "public">]
 
 export type Tables<
   PublicTableNameOrOptions extends
-    | keyof (PublicSchema["Tables"] & PublicSchema["Views"])
-    | { schema: keyof Database },
+  | keyof (PublicSchema["Tables"] & PublicSchema["Views"])
+  | { schema: keyof Database },
   TableName extends PublicTableNameOrOptions extends { schema: keyof Database }
-    ? keyof (Database[PublicTableNameOrOptions["schema"]]["Tables"] &
-        Database[PublicTableNameOrOptions["schema"]]["Views"])
-    : never = never,
+  ? keyof (Database[PublicTableNameOrOptions["schema"]]["Tables"] &
+    Database[PublicTableNameOrOptions["schema"]]["Views"])
+  : never = never,
 > = PublicTableNameOrOptions extends { schema: keyof Database }
   ? (Database[PublicTableNameOrOptions["schema"]]["Tables"] &
-      Database[PublicTableNameOrOptions["schema"]]["Views"])[TableName] extends {
+    Database[PublicTableNameOrOptions["schema"]]["Views"])[TableName] extends {
       Row: infer R
     }
-    ? R
-    : never
+  ? R
+  : never
   : PublicTableNameOrOptions extends keyof (PublicSchema["Tables"] &
-        PublicSchema["Views"])
-    ? (PublicSchema["Tables"] &
-        PublicSchema["Views"])[PublicTableNameOrOptions] extends {
-        Row: infer R
-      }
-      ? R
-      : never
-    : never
+    PublicSchema["Views"])
+  ? (PublicSchema["Tables"] &
+    PublicSchema["Views"])[PublicTableNameOrOptions] extends {
+      Row: infer R
+    }
+  ? R
+  : never
+  : never
 
 export type TablesInsert<
   PublicTableNameOrOptions extends
-    | keyof PublicSchema["Tables"]
-    | { schema: keyof Database },
+  | keyof PublicSchema["Tables"]
+  | { schema: keyof Database },
   TableName extends PublicTableNameOrOptions extends { schema: keyof Database }
-    ? keyof Database[PublicTableNameOrOptions["schema"]]["Tables"]
-    : never = never,
+  ? keyof Database[PublicTableNameOrOptions["schema"]]["Tables"]
+  : never = never,
 > = PublicTableNameOrOptions extends { schema: keyof Database }
   ? Database[PublicTableNameOrOptions["schema"]]["Tables"][TableName] extends {
-      Insert: infer I
-    }
-    ? I
-    : never
+    Insert: infer I
+  }
+  ? I
+  : never
   : PublicTableNameOrOptions extends keyof PublicSchema["Tables"]
-    ? PublicSchema["Tables"][PublicTableNameOrOptions] extends {
-        Insert: infer I
-      }
-      ? I
-      : never
-    : never
+  ? PublicSchema["Tables"][PublicTableNameOrOptions] extends {
+    Insert: infer I
+  }
+  ? I
+  : never
+  : never
 
 export type TablesUpdate<
   PublicTableNameOrOptions extends
-    | keyof PublicSchema["Tables"]
-    | { schema: keyof Database },
+  | keyof PublicSchema["Tables"]
+  | { schema: keyof Database },
   TableName extends PublicTableNameOrOptions extends { schema: keyof Database }
-    ? keyof Database[PublicTableNameOrOptions["schema"]]["Tables"]
-    : never = never,
+  ? keyof Database[PublicTableNameOrOptions["schema"]]["Tables"]
+  : never = never,
 > = PublicTableNameOrOptions extends { schema: keyof Database }
   ? Database[PublicTableNameOrOptions["schema"]]["Tables"][TableName] extends {
-      Update: infer U
-    }
-    ? U
-    : never
+    Update: infer U
+  }
+  ? U
+  : never
   : PublicTableNameOrOptions extends keyof PublicSchema["Tables"]
-    ? PublicSchema["Tables"][PublicTableNameOrOptions] extends {
-        Update: infer U
-      }
-      ? U
-      : never
-    : never
+  ? PublicSchema["Tables"][PublicTableNameOrOptions] extends {
+    Update: infer U
+  }
+  ? U
+  : never
+  : never
 
 export type Enums<
   PublicEnumNameOrOptions extends
-    | keyof PublicSchema["Enums"]
-    | { schema: keyof Database },
+  | keyof PublicSchema["Enums"]
+  | { schema: keyof Database },
   EnumName extends PublicEnumNameOrOptions extends { schema: keyof Database }
-    ? keyof Database[PublicEnumNameOrOptions["schema"]]["Enums"]
-    : never = never,
+  ? keyof Database[PublicEnumNameOrOptions["schema"]]["Enums"]
+  : never = never,
 > = PublicEnumNameOrOptions extends { schema: keyof Database }
   ? Database[PublicEnumNameOrOptions["schema"]]["Enums"][EnumName]
   : PublicEnumNameOrOptions extends keyof PublicSchema["Enums"]
-    ? PublicSchema["Enums"][PublicEnumNameOrOptions]
-    : never
+  ? PublicSchema["Enums"][PublicEnumNameOrOptions]
+  : never
 
 export type CompositeTypes<
   PublicCompositeTypeNameOrOptions extends
-    | keyof PublicSchema["CompositeTypes"]
-    | { schema: keyof Database },
+  | keyof PublicSchema["CompositeTypes"]
+  | { schema: keyof Database },
   CompositeTypeName extends PublicCompositeTypeNameOrOptions extends {
     schema: keyof Database
   }
-    ? keyof Database[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"]
-    : never = never,
+  ? keyof Database[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"]
+  : never = never,
 > = PublicCompositeTypeNameOrOptions extends { schema: keyof Database }
   ? Database[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"][CompositeTypeName]
   : PublicCompositeTypeNameOrOptions extends keyof PublicSchema["CompositeTypes"]
-    ? PublicSchema["CompositeTypes"][PublicCompositeTypeNameOrOptions]
-    : never
+  ? PublicSchema["CompositeTypes"][PublicCompositeTypeNameOrOptions]
+  : never

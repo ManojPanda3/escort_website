@@ -50,13 +50,15 @@ export function NavBar({ userId }: { userId: string }) {
   useEffect(() => {
     // Initial check (in case userId changes before onAuthStateChange fires)
     setIsUserExist(!!userId);
+    const storage = localStorage.userData && JSON.parse(localStorage.userData);
+    const isCached = storage && storage.expiresAt > Date.now() && storage.data.user.id === userId;
 
     const { data: authListener } = supabase.auth.onAuthStateChange(
-      (event, session) => {
+      async (event, session) => {
         // Update isUserExist based on the session
         setIsUserExist(!!session?.user);
-        if (!isUserExist && session?.user) {
-          refetch();
+        if (!isCached) {
+          await refetch();
         }
       },
     );

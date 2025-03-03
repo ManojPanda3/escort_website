@@ -14,7 +14,12 @@ import { LoadingSpinner } from "@/components/ui/loading";
 import { Success } from "@/components/ui/success";
 import { PasswordInput } from "@/components/password-input.tsx";
 import type { Database } from "@/types/supabase"; // Import Database type
+import { useUserData } from "@/lib/useUserData";
+
+
+
 export default function LoginPage() {
+  const { refetch } = useUserData()
   const router = useRouter();
   const supabase = createClientComponentClient<Database>();
   const [showPassword, setShowPassword] = useState(false);
@@ -59,6 +64,7 @@ export default function LoginPage() {
       if (error) {
         setError(error.message);
       } else {
+        await refetch();
         router.push("/profile");
       }
     } catch (err: any) {
@@ -81,7 +87,6 @@ export default function LoginPage() {
       const { error } = await supabase.auth.resetPasswordForEmail(email, {
         redirectTo: `${window.location.origin}/auth/update-password`,
       });
-      console.log(`${window.location.origin}/auth/update-password`)
       if (error) {
         setError(error.message);
       } else {

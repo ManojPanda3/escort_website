@@ -16,7 +16,6 @@ const getData = unstable_cache(
       usersResponse,
       ageProofResponse,
       offersResponse,
-      locationsResponse,
     ] = await Promise.all([
       supabaseAdmin
         .from("transactions")
@@ -32,10 +31,7 @@ const getData = unstable_cache(
         .eq("isverified", false),
       supabaseAdmin
         .from("offers")
-        .select("*"),
-      supabaseAdmin
-        .from("locations")
-        .select("*"),
+        .select("*")
     ]);
 
     return {
@@ -47,8 +43,6 @@ const getData = unstable_cache(
       ageProofError: ageProofResponse.error,
       offers: offersResponse.data || [],
       offersError: offersResponse.error,
-      locations: locationsResponse.data || [],
-      locationsError: locationsResponse.error,
     };
   },
   [],
@@ -57,11 +51,9 @@ const getData = unstable_cache(
 
 export default async function AdminPage() {
   if (!await checkAdmin()) {
-    // Redirect or show an error (uncomment router.push to redirect)
     return <div>Access Denied</div>;
   }
 
-  // Generate last 12 months
   const months = Array.from(
     { length: 12 },
     (_, i) =>
@@ -71,11 +63,9 @@ export default async function AdminPage() {
       ),
   ).reverse();
 
-  // Date 1 year ago
   const date = new Date(new Date().setFullYear(new Date().getFullYear() - 1))
     .toISOString();
 
-  // Fetch data from cache or database
   const {
     transactions,
     transactionError,
@@ -85,21 +75,17 @@ export default async function AdminPage() {
     ageProofError,
     offers,
     offersError,
-    locations,
-    locationsError,
   } = await getData(date);
 
   // Handle errors
   if (
-    transactionError || usersError || ageProofError || offersError ||
-    locationsError
+    transactionError || usersError || ageProofError || offersError
   ) {
     console.error("Error fetching data:", {
       transactionError,
       usersError,
       ageProofError,
       offersError,
-      locationsError,
     });
     return <div>Error loading data</div>;
   }
@@ -126,7 +112,6 @@ export default async function AdminPage() {
     userStats[month] = (userStats[month] || 0) + 1;
   });
 
-  // Prepare data for charts
   const transactionStats = months.map((month) => ({
     name: month,
     transactions: transactionVolume[month] || 0,
@@ -146,7 +131,6 @@ export default async function AdminPage() {
       totalEarnings={totalEarnings}
       ageProof={ageProof}
       offers={offers}
-      locations={locations}
     />
   );
 }

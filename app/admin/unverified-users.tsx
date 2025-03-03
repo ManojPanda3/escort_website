@@ -60,7 +60,6 @@ export function UnverifiedUsers({ users: initialUsers }: UnverifiedUsersProps) {
       setIsLoading(false);
       setIsDialogOpen(false); // Close dialog after successful verification
 
-      console.log("User verified successfully!");
     } catch (error) {
       console.error("Verification failed:", error);
       setIsLoading(false);

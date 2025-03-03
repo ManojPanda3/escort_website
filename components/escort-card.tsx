@@ -48,7 +48,6 @@ export function EscortCard({
 
   useEffect(() => {
     const t_isOnline = isUserOnline(availability, availability_exp)
-    console.log(t_isOnline);
     setisOnline(t_isOnline);
   }, []);
 

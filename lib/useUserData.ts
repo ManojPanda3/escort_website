@@ -52,7 +52,6 @@ export function useUserData(): UserData {
 
   const fetchData = useCallback(async () => {
     setUserData((prev) => ({ ...prev, isLoading: true, error: null }));
-    console.log("Fetching Data ...")
 
     try {
       const {
@@ -60,7 +59,6 @@ export function useUserData(): UserData {
         error: authError,
       } = await supabase.auth.getUser();
       if (authError || !user) {
-        console.log(authError?.message || "User not authenticated");
         return;
       }
 
@@ -156,12 +154,16 @@ export function useUserData(): UserData {
         return;
       } else {
         clearCache(); // Clear expired cache
+        fetchData()
       }
     } else {
       if (!userData.isLoading) {
         fetchData();
+      } else {
+        setUserData(n => ({ ...n, refetch: fetchData }))
       }
     }
+    setUserData((prev) => ({ ...prev, isLoading: false, error: null }));
 
   }, [fetchData, clearCache]); // Include clearCache in dependency array
 

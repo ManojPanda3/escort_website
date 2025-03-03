@@ -9,7 +9,7 @@ interface Story {
   url: string;
   thumbnail: string;
   title: string;
-  isVideo?: boolean;
+  isvideo?: boolean;
   likes: number;
   owner: string;
 }

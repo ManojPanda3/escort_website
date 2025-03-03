@@ -22,9 +22,6 @@ export function ProfileTabsWrapper({ userId }: ProfileTabsWrapperProps) {
   } = useUserData();
   const services = user?.services;
 
-  if (isLoading) {
-    return <div>Loading...</div>; // Or your LoadingSpinner
-  }
 
   if (error) {
     return <div>Error: {error}</div>; // Or a more styled error message

@@ -48,13 +48,9 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Bad Request: fileName and fileType are required." }, { status: 400 });
     }
 
-    // Construct a more robust Key
-    const key = `user/${userId}/${Date.now()}-${fileName}`;
-
-
     const command = new PutObjectCommand({
       Bucket: process.env.R2_BUCKET_NAME!,
-      Key: key, // Use the constructed key
+      Key: fileName,
       ContentType: fileType,
     });
 
@@ -67,20 +63,17 @@ export async function POST(request: NextRequest) {
       .eq("id", userData.id);
 
     if (mediaUpdateError) {
-      // Consider *not* throwing here, but logging and returning a 500 error.
-      // The signed URL *was* generated, but the DB update failed.  Throwing could
-      // make retries problematic.
       console.error("Supabase media update error:", mediaUpdateError);
       return NextResponse.json({ error: "Internal Server Error: Failed to update media count." }, { status: 500 });
     }
 
-    const publicUrl = `${process.env.R2_PUBLIC_URL}/${key}`; // Construct the public URL with the Key
+    const publicUrl = `${process.env.NEXT_PUBLIC_R2_PUBLIC_URL}/${fileName}`; // Construct the public URL with the Key
 
 
     return NextResponse.json({
       message: "Signed URL generated successfully.",
       url: signedUrl,
-      publicUrl, // Return the constructed public URL
+      publicUrl,
     }, { status: 200 });
 
   } catch (error: any) {
@@ -98,20 +91,9 @@ export async function DELETE(request: NextRequest) {
       return NextResponse.json({ error: "Unauthorized: No session found." }, { status: 401 });
     }
 
-    let userId: string | null = null;
-    if (session.access_token) {
-      try {
-        const decodedToken = decode(session.access_token) as JwtPayload | null; // Use JwtPayload
-        userId = decodedToken?.sub;
-        if (!userId) {
-          return NextResponse.json({ error: "Unauthorized: User ID not found in token." }, { status: 401 });
-        }
-      } catch (error) {
-        console.error("Error decoding JWT:", error);
-        return NextResponse.json({ error: "Unauthorized: Invalid token." }, { status: 401 });
-      }
-    } else {
-      return NextResponse.json({ error: "Unauthorized: No access token found." }, { status: 401 });
+    let userId: string = session.user.id;
+    if (!userId) {
+      return NextResponse.json({ error: "Unauthorized: User ID not found in token." }, { status: 401 });
     }
 
     const { fileName } = await request.json();

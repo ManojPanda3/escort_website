@@ -23,13 +23,10 @@ import { supabase } from "@/lib/supabase"
 import { useState, useEffect } from "react"
 
 
-export default function AdminPages({ userStats, transactionStats, totalUsers, totalTransactions, totalEarnings, ageProof, offers, locations }) {
-
+export default function AdminPages({ userStats, transactionStats, totalUsers, totalTransactions, totalEarnings, ageProof, offers }) {
   const [activeTab, setActiveTab] = useState('transactions')
   const [[page, direction], setPage] = useState([0, 0]);
 
-
-  // Placeholder data for recent transactions
   const recentTransactions = [
     { id: 1, user: 'john_doe', amount: 19.99, date: '2023-06-01', status: 'Completed' },
     { id: 2, user: 'jane_smith', amount: 29.99, date: '2023-06-02', status: 'Pending' },
@@ -154,7 +151,7 @@ export default function AdminPages({ userStats, transactionStats, totalUsers, to
           setActiveTab(newTab);
           paginate(tabIndex[newTab as keyof typeof tabIndex] - tabIndex[activeTab as keyof typeof tabIndex]);
         }}>
-          <TabsList className="grid w-full grid-cols-4 mb-8">
+          <TabsList className="grid w-full grid-cols-3 mb-8">
             <TabsTrigger value="transactions">Transactions</TabsTrigger>
             <TabsTrigger value="packages">Pricing Packages</TabsTrigger>
             <TabsTrigger value="users">Unverified Users</TabsTrigger>

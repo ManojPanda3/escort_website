@@ -29,7 +29,7 @@ export async function POST(request: NextRequest) {
       status: 401
     }, { status: 401 });
   }
-  const total_media_allowed: number = user.current_offer.max_media - user.total_media - 2;
+  const total_media_allowed: number = user.current_offer.max_media - user.total_media + 2;
   if (total_media_allowed <= 0) {
     return NextResponse.json({
       error: "Your media upload quota has been exhausted. To upload more media, please upgrade your Premium plan or purchase additional quota.",
@@ -38,52 +38,31 @@ export async function POST(request: NextRequest) {
     }, { status: 401 });
   }
 
-  const formData = await request.formData();
-  const file = formData.get("file") as File;
-  const title = formData.get("title") as string;
+  const formData = await request.json();
+  const url = formData["url"] as string;
+  const title = formData["title"] as string;
+  const isvideo = formData["isvideo"] as boolean;
+  const thumbnail = formData["thumbnail"] as string;
 
-  if (!file || !title) {
-    return NextResponse.json({ error: "File and title are required" }, {
+  if (!(
+    url &&
+    title &&
+    isvideo !== undefined &&
+    thumbnail
+  )) {
+    return NextResponse.json({ error: "All fields are required" }, {
       status: 400,
     });
-  }
-
-  const fileExt = file.name.split(".").pop();
-  const fileName = `${session.user.id}/${Date.now()}.${fileExt}`;
-
-  const { error: uploadError, data } = await supabase.storage
-    .from("stories")
-    .upload(fileName, file);
-
-  if (uploadError) {
-    return NextResponse.json({ error: uploadError.message }, { status: 400 });
-  }
-
-  const {
-    data: { publicUrl },
-  } = supabase.storage.from("stories").getPublicUrl(fileName);
-
-  const isVideo = file.type.startsWith("video/");
-
-  //Get the thumbnail if it is video
-  let thumbnailUrl = null;
-  if (isVideo) {
-    const { data: thumbData } = await supabase.storage
-      .from("stories")
-      .createSignedUrl(fileName, 60); // Create a short-lived URL
-    if (thumbData) {
-      thumbnailUrl = thumbData.signedUrl;
-    }
   }
 
   const { error: dbError, data: storyData } = await supabase
     .from("story")
     .insert({
       owner: session.user.id,
-      url: publicUrl,
+      url,
       title,
-      isVideo,
-      thumbnail: thumbnailUrl,
+      isvideo,
+      thumbnail,
     })
     .select()
     .single();

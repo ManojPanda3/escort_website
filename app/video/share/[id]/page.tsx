@@ -1,9 +1,8 @@
 import { notFound } from "next/navigation";
-import { StoryViewer } from "@/components/story-viewer";
 import { createServerComponentClient } from "@supabase/auth-helpers-nextjs";
 import { cookies } from "next/headers";
 import getRandomImage from "@/lib/randomImage";
-import StoryWrapper from "@/app/(profile)/profile/story-wrapper";
+import StoryWrapper from "./story-wrapper";
 
 export default async function SharedStoryPage(
   props: { params: Promise<{ id: string }> },

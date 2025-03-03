@@ -93,8 +93,8 @@ export function ProfileTabs({
         <Star
           key={i}
           className={`h-6 w-6 cursor-pointer ${i <= currentRating
-              ? "fill-yellow-500 text-yellow-500"
-              : "text-gray-300"
+            ? "fill-yellow-500 text-yellow-500"
+            : "text-gray-300"
             }`}
           onClick={() => isEditing ? setEditRating(i) : setRating(i)} // IMPORTANT:  Set the correct rating state!
         />,
@@ -269,9 +269,6 @@ export function ProfileTabs({
                 </div>
                 <CardContent className="p-4">
                   <p className="font-medium truncate">{picture.title}</p>
-                  <p className="text-sm text-muted-foreground">
-                    {picture.likes} likes
-                  </p>
                 </CardContent>
               </Card>
             ))}
