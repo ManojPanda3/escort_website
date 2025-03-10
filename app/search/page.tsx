@@ -85,3 +85,4 @@ export default async function SearchPage(
     </div>
   );
 }
+export const runtime = "edge"

@@ -74,3 +74,4 @@ export async function POST(request: NextRequest) {
   return NextResponse.json({ success: true, story: storyData }); // Return created story
 }
 
+export const runtime = "edge"

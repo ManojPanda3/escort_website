@@ -119,3 +119,4 @@ export async function DELETE(request: NextRequest) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }
+export const runtime = "edge"

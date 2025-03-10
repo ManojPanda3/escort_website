@@ -141,3 +141,4 @@ export async function PUT(request: NextRequest) {
     }, { status: 500 }); // Internal Server Error
   }
 }
+export const runtime = "edge"

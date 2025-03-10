@@ -58,3 +58,4 @@ export default async function BDSMPage(
     </div>
   );
 }
+export const runtime = "edge"

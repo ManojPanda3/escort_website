@@ -24,3 +24,4 @@ export default async function EditProfilePage() {
 }
 
 
+export const runtime = "edge"

@@ -75,3 +75,4 @@ export async function DELETE(request: NextRequest) {
 
   return NextResponse.json({ success: true })
 }
+export const runtime = "edge"

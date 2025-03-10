@@ -22,3 +22,4 @@ export default async function SwipePage() {
     </div>
   )
 }
+export const runtime = "edge"

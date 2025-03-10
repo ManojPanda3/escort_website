@@ -23,3 +23,4 @@ export async function PUT(request: NextRequest) {
 
   return NextResponse.json({ message: 'Profile updated successfully' })
 }
+export const runtime = "edge"

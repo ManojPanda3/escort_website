@@ -136,3 +136,4 @@ export default function EtiquettePage() {
   );
 }
 
+export const runtime = "edge"

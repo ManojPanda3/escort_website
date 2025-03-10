@@ -28,3 +28,4 @@ export default function CategoriesPage() {
     </div>
   );
 }
+export const runtime = "edge"

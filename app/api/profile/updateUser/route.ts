@@ -45,3 +45,4 @@ export async function PATCH(request: NextRequest) {
 
   return NextResponse.json({ success: true });
 }
+export const runtime = "edge"

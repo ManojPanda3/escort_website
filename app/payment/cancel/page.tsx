@@ -104,3 +104,4 @@ export default async function PaymentFailedPage(
   }
 }
 
+export const runtime = "edge"

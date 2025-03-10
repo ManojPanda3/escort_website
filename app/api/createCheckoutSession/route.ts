@@ -116,3 +116,4 @@ export async function POST(req: NextRequest) {
     ); // Explicitly return the error response.
   }
 }
+export const runtime = "edge"

@@ -92,3 +92,4 @@ export async function DELETE(request: NextRequest) {
   return NextResponse.json({ success: true, id }); // Return the deleted ID
 }
 
+export const runtime = "edge"

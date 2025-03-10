@@ -62,3 +62,4 @@ export default async function EscortsPage(
     </div>
   );
 }
+export const runtime = "edge"

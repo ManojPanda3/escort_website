@@ -147,3 +147,4 @@ const AboutPage = () => {
 };
 
 export default AboutPage;
+export const runtime = "edge"

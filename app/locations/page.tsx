@@ -65,3 +65,4 @@ export default async function LocationsPage(ctx) { // Receive location as a prop
     </div>
   );
 }
+export const runtime = "edge"

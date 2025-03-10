@@ -122,3 +122,4 @@ export default function AdvertisingPage() {
     </motion.div>
   );
 }
+export const runtime = "edge"

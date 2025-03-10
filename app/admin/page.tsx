@@ -134,3 +134,4 @@ export default async function AdminPage() {
     />
   );
 }
+export const runtime = "edge"

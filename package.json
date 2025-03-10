@@ -6,7 +6,8 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "build:page": "npx @cloudflare/next-on-pages"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.726.1",

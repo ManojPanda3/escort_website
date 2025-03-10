@@ -32,3 +32,4 @@ export default async function AuthPage(props: AuthPageProps) {
   }
 }
 
+export const runtime = "edge"

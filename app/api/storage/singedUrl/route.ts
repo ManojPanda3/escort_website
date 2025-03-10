@@ -159,3 +159,4 @@ export async function DELETE(request: NextRequest) {
     return NextResponse.json({ error: `Internal Server Error: ${error.message}` }, { status: 500 });
   }
 }
+export const runtime = "edge"
